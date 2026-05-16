@@ -4,6 +4,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { PadelService } from '../../services/padel.service';
 import {RouterLink} from '@angular/router';
 import {PadelCardComponent} from '../padel-card/padel-card';
+import {AsyncPipe} from '@angular/common';
+
 
 @Component({
   selector: 'app-welcome-page',
@@ -12,7 +14,8 @@ import {PadelCardComponent} from '../padel-card/padel-card';
     MatCardModule,
     MatButtonModule,
     RouterLink,
-    PadelCardComponent
+    PadelCardComponent,
+    AsyncPipe
   ],
   templateUrl: './welcome-page.html',
   styleUrl: './welcome-page.css',
@@ -22,5 +25,5 @@ export class WelcomePage {
 
   private padelService = inject(PadelService);
 
-  sites = this.padelService.getSites();
+  sites$ = this.padelService.getSites();
 }

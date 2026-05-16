@@ -40,7 +40,9 @@ export class ReservationPage implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.site.set(this.padelService.getSiteById(id));
+      this.padelService.getSiteById(id).subscribe(site => {
+        this.site.set(site);
+      });
     }
   }
 

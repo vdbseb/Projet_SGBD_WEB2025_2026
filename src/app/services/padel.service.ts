@@ -2,12 +2,64 @@ import {inject, Injectable} from '@angular/core';
 import { PadelSite } from '../shared/site.model';
 import { uuid } from '../shared/uuid';
 import {HttpClient} from '@angular/common/http';
+import {map, Observable} from 'rxjs';
+
+interface SiteDTO {
+  id: string;
+  name: string;
+  city: string;
+  openingTime: string;
+  closingTime: string;
+  active: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PadelService {
-  httpClient: HttpClient = inject(HttpClient);
+  private readonly HttpClient = inject(HttpClient);
+  private readonly apiUrl = 'http://localhost:8080/api/sites';
+
+  getSites(): Observable<PadelSite[]> {
+    return this.HttpClient.get<SiteDTO[]>(this.apiUrl).pipe(
+      map(sites => sites.map(site => this.toPadelSite(site)))
+    );
+  }
+
+  getSiteById(id: string): Observable<PadelSite> {
+    return this.HttpClient.get<SiteDTO>(`${this.apiUrl}/${id}`).pipe(
+      map(site => this.toPadelSite(site))
+    );
+  }
+
+  private toPadelSite(site: SiteDTO): PadelSite {
+    return {
+      id: site.id,
+      city: site.city,
+      clubName: site.name,
+      image: this.getImageForCity(site.city),
+      initial: site.city.charAt(0).toUpperCase(),
+      description: `Ouvert de ${site.openingTime} à ${site.closingTime}`,
+      courts: [
+        { id: `${site.id}-court-1`, name: 'Court 1', type: 'Indoor' },
+        { id: `${site.id}-court-2`, name: 'Court 2', type: 'Outdoor' }
+      ]
+    };
+  }
+
+  private getImageForCity(city: string): string {
+    switch (city.toLowerCase()) {
+      case 'bruxelles': return 'images/bruxelles.jpg';
+      case 'liège':
+      case 'liege': return 'images/liege.jpg';
+      case 'arlon': return 'images/arlon.jpg';
+      default: return 'images/bruxelles.jpg';
+    }
+  }
+}
+
+
+  /*
   private readonly sites: PadelSite[] = [
     {
       id: uuid(),
@@ -53,3 +105,4 @@ export class PadelService {
     return this.sites.find(site => site.id === id);
   }
 }
+*/
