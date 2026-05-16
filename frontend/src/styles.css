@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Scrollbar styles for date selector */
+.date-strip-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.date-strip-container::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .date-strip-container {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+}

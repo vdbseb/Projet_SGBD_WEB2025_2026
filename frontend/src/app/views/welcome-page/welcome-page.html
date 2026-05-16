@@ -1,0 +1,29 @@
+<div class="min-h-screen bg-slate-50 p-6 md:p-12 font-sans">
+
+  <header class="text-center mb-16">
+    <h1 class="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter">Réserve un terrain</h1>
+    <p class="text-slate-500 mt-4 text-sm md:text-base">
+      Sélectionne ton centre pour accéder aux différents terrains ainsi qu’à leurs disponibilités.
+    </p>
+    <div class="w-16 h-1 bg-slate-900 mx-auto mt-4 rounded-full"></div>
+  </header>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto items-stretch">
+    @for (site of sites; track site.id) {
+      <app-padel-card
+        [title]="site.city"
+        [subtitle]="site.clubName"
+        [initial]="site.initial"
+        [image]="site.image"
+        [buttonLabel]="'Réserve à ' + site.city"
+        [routerLink]="['/reserver', site.id]">
+
+        <p class="text-slate-500 leading-relaxed text-sm">
+          {{ site.description }}
+        </p>
+
+      </app-padel-card>
+    }
+  </div>
+
+</div>
