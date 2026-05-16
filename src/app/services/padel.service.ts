@@ -1,8 +1,8 @@
 import {inject, Injectable} from '@angular/core';
-import { PadelSite } from '../shared/site.model';
+import {PadelCourt, PadelSite} from '../shared/site.model';
 import { uuid } from '../shared/uuid';
 import {HttpClient} from '@angular/common/http';
-import {map, Observable} from 'rxjs';
+import {forkJoin, map, Observable} from 'rxjs';
 
 interface SiteDTO {
   id: string;
@@ -13,26 +13,51 @@ interface SiteDTO {
   active: boolean;
 }
 
+interface CourtDTO {
+  id: string;
+  name: string;
+  type: 'Indoor' | 'Outdoor';
+  siteId: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class PadelService {
-  private readonly HttpClient = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/sites';
+  private readonly httpClient = inject(HttpClient);
+  private readonly sitesUrl = 'http://localhost:8080/api/sites';
+  private readonly courtsUrl = 'http://localhost:8080/api/courts';
 
   getSites(): Observable<PadelSite[]> {
-    return this.HttpClient.get<SiteDTO[]>(this.apiUrl).pipe(
-      map(sites => sites.map(site => this.toPadelSite(site)))
+    return this.httpClient.get<SiteDTO[]>(this.sitesUrl).pipe(
+      map(sites => sites.map(site => this.toPadelSite(site, [])))
     );
   }
 
   getSiteById(id: string): Observable<PadelSite> {
-    return this.HttpClient.get<SiteDTO>(`${this.apiUrl}/${id}`).pipe(
-      map(site => this.toPadelSite(site))
+    return forkJoin({
+      site: this.httpClient.get<SiteDTO>(`${this.sitesUrl}/${id}`),
+      courts: this.httpClient.get<CourtDTO[]>(this.courtsUrl)
+    }).pipe(
+      map(({ site, courts }) => {
+        const siteCourts = courts
+          .filter(court => court.siteId === site.id)
+          .map(court => this.toPadelCourt(court));
+
+        return this.toPadelSite(site, siteCourts);
+      })
     );
   }
 
-  private toPadelSite(site: SiteDTO): PadelSite {
+  private toPadelCourt(court: CourtDTO): PadelCourt {
+    return {
+      id: court.id,
+      name: court.name,
+      type: court.type
+    };
+  }
+
+  private toPadelSite(site: SiteDTO, courts: PadelCourt[]): PadelSite {
     return {
       id: site.id,
       city: site.city,
@@ -40,20 +65,21 @@ export class PadelService {
       image: this.getImageForCity(site.city),
       initial: site.city.charAt(0).toUpperCase(),
       description: `Ouvert de ${site.openingTime} à ${site.closingTime}`,
-      courts: [
-        { id: `${site.id}-court-1`, name: 'Court 1', type: 'Indoor' },
-        { id: `${site.id}-court-2`, name: 'Court 2', type: 'Outdoor' }
-      ]
+      courts
     };
   }
 
   private getImageForCity(city: string): string {
     switch (city.toLowerCase()) {
-      case 'bruxelles': return 'images/bruxelles.jpg';
+      case 'bruxelles':
+        return 'images/bruxelles.jpg';
       case 'liège':
-      case 'liege': return 'images/liege.jpg';
-      case 'arlon': return 'images/arlon.jpg';
-      default: return 'images/bruxelles.jpg';
+      case 'liege':
+        return 'images/liege.jpg';
+      case 'arlon':
+        return 'images/arlon.jpg';
+      default:
+        return 'images/bruxelles.jpg';
     }
   }
 }
