@@ -34,6 +34,9 @@ export class ReservationPage implements OnInit {
   selectedCourt = signal<PadelCourt | undefined>(undefined);
   selectedDate = signal<Date | null>(new Date());
   selectedTime = signal<string | null>(null);
+  members = signal<any[]>([]);
+  selectedMemberId = signal<string | null>(null);
+
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -42,6 +45,12 @@ export class ReservationPage implements OnInit {
         this.site.set(site);
       });
     }
+    this.padelService.getMembers().subscribe(members => {
+      this.members.set(members);
+    });
+  }
+  onMemberSelected(memberId: string) {
+    this.selectedMemberId.set(memberId);
   }
 
   onTimeSelected(time: string) {
@@ -64,7 +73,7 @@ export class ReservationPage implements OnInit {
     const date = this.selectedDate();
     const time = this.selectedTime();
 
-    if (court && date && time) {
+    if (court && date && time && this.selectedMemberId()) {
       const startTime = `${time}:00`;
 
       const [hour, minute] = time.split(':').map(Number);
@@ -76,7 +85,7 @@ export class ReservationPage implements OnInit {
         id: null,
         courtId: court.id,
         courtName: null,
-        memberId: '3e15764c-7a0f-47b8-a192-26dd77f917ba', //hardcodé !
+        memberId: this.selectedMemberId(),
         playerMatricule: null,
         date: date.toISOString().split('T')[0],
         startTime: startTime,

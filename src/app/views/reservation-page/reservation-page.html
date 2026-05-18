@@ -36,6 +36,20 @@
         <app-time-slots
           (slotSelected)="onTimeSelected($event)">
         </app-time-slots>
+        <label for="member">Choisir un membre :</label>
+
+        <select
+          id="member"
+          (change)="onMemberSelected($any($event.target).value)"
+        >
+          <option value="">-- Sélectionner --</option>
+
+          @for (member of members(); track member.id) {
+            <option [value]="member.id">
+              {{ member.firstName }} {{ member.lastName }} ({{ member.matricule }})
+            </option>
+          }
+        </select>
 
         @if (selectedTime()) {
           <div class="mt-10 p-8 rounded-[2rem] shadow-xl bg-slate-900 text-white border border-slate-800 animate-in">
