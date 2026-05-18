@@ -10,7 +10,6 @@ import {PadelCardComponent} from '../padel-card/padel-card';
 import {DateSelectorComponent} from '../date-selector/date-selector';
 import {TimeSlotsComponent} from '../time-slot/time-slot';
 import {DatePipe} from '@angular/common';
-import {ReservationService} from '../../services/reservation';
 
 @Component({
   selector: 'app-reservation-page',
@@ -30,7 +29,6 @@ import {ReservationService} from '../../services/reservation';
 export class ReservationPage implements OnInit {
   private route = inject(ActivatedRoute);
   private padelService = inject(PadelService);
-  private reservationService = inject(ReservationService);
 
   site = signal<PadelSite | undefined>(undefined);
   selectedCourt = signal<PadelCourt | undefined>(undefined);
@@ -61,22 +59,35 @@ export class ReservationPage implements OnInit {
     this.selectedCourt.set(court);
     this.selectedTime.set(null);
   }
-  onConfirmBooking(){
+  onConfirmBooking() {
     const court = this.selectedCourt();
     const date = this.selectedDate();
-    const time= this.selectedTime();
+    const time = this.selectedTime();
 
-    if (court && date && time){
+    if (court && date && time) {
+      const startTime = `${time}:00`;
+
+      const [hour, minute] = time.split(':').map(Number);
+      const endTime = `${(hour + 1).toString().padStart(2, '0')}:${minute
+        .toString()
+        .padStart(2, '0')}:00`;
+
       const newReservation = {
-        courtName: court.name,
-        date: date,
-        timeSlot: time,
-        playerName: 'TEST'
+        id: null,
+        courtId: court.id,
+        courtName: null,
+        memberId: '3e15764c-7a0f-47b8-a192-26dd77f917ba', //hardcodé !
+        playerMatricule: null,
+        date: date.toISOString().split('T')[0],
+        startTime: startTime,
+        endTime: endTime
       };
-      this.reservationService.saveReservation(newReservation).subscribe({
-        next: (reservation) => {
-          console.log('Réservation enregistrée avec succès :', reservation);
+
+      this.padelService.createReservation(newReservation).subscribe({
+        next: () => {
+          console.log('Réservation enregistrée avec succès');
           alert('Réservation confirmée !');
+          this.selectedTime.set(null);
         },
         error: (error) => {
           console.error('Erreur lors de l\'enregistrement de la réservation :', error);

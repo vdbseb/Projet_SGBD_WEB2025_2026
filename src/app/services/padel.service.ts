@@ -26,6 +26,8 @@ export class PadelService {
   private readonly httpClient = inject(HttpClient);
   private readonly sitesUrl = 'http://localhost:8080/api/sites';
   private readonly courtsUrl = 'http://localhost:8080/api/courts';
+  private readonly apiBaseUrl = 'http://localhost:8080/api';
+
 
   getSites(): Observable<PadelSite[]> {
     return this.httpClient.get<SiteDTO[]>(this.sitesUrl).pipe(
@@ -80,6 +82,24 @@ export class PadelService {
       default:
         return 'images/bruxelles.jpg';
     }
+  }
+  getReservations(courtId: string, date: string) {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/reservations?courtId=${courtId}&date=${date}`
+    );
+  }
+
+  createReservation(reservation: any) {
+    return this.httpClient.post(
+      `${this.apiBaseUrl}/reservations`,
+      reservation
+    );
+  }
+
+  getMembers() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/members`
+    );
   }
 }
 
