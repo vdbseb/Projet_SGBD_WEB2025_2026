@@ -1,6 +1,5 @@
 import {inject, Injectable} from '@angular/core';
 import {PadelCourt, PadelSite} from '../shared/site.model';
-import { uuid } from '../shared/uuid';
 import {HttpClient} from '@angular/common/http';
 import {forkJoin, map, Observable} from 'rxjs';
 
