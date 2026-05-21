@@ -1,4 +1,4 @@
-import { Component, output, model } from '@angular/core'; // Ajoute 'model' ici
+import { Component, output, model } from '@angular/core';
 import { MatTimepickerModule } from '@angular/material/timepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
