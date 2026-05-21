@@ -10,7 +10,7 @@ import {PadelCardComponent} from '../padel-card/padel-card';
 import {DateSelectorComponent} from '../date-selector/date-selector';
 import {TimeSlotsComponent} from '../time-slot/time-slot';
 import {DatePipe} from '@angular/common';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-reservation-page',
@@ -123,15 +123,10 @@ export class ReservationPage implements OnInit {
         error: (error) => {
           console.error(error);
 
-          const backendMessage =
-            error?.error?.message ||
-            error?.error?.detail ||
-            error?.message;
-
           const message =
-            typeof backendMessage === 'string'
-              ? backendMessage
-              : 'Erreur lors de la réservation. Veuillez réessayer.';
+            error?.error?.detail ??
+            error?.error?.message ??
+            'Erreur lors de la réservation. Veuillez réessayer.';
 
           this.snackBar.open(message, 'OK', {
             duration: 5000
