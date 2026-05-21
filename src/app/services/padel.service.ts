@@ -101,6 +101,11 @@ export class PadelService {
       `${this.apiBaseUrl}/members`
     );
   }
+  getMemberByMatricule(matricule: string) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/members/matricule/${matricule}`
+    );
+  }
 }
 
 

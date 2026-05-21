@@ -126,7 +126,7 @@ export class ReservationPage implements OnInit {
           const message =
             error?.error?.detail ??
             error?.error?.message ??
-            'Ce terrain est déjà réservé sur ce créneau.';
+            'Erreur lors de la réservation. Veuillez réessayer.';
 
           this.snackBar.open(message, 'OK', {
             duration: 5000

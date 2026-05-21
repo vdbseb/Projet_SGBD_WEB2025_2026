@@ -17,7 +17,7 @@
         [initial]="site.initial"
         [image]="site.image"
         [buttonLabel]="'Réserve à ' + site.city"
-        [routerLink]="['/reserver', site.id]">
+        (click)="goToReservation(site.id)">
 
         <p class="text-slate-500 leading-relaxed text-sm">
           {{ site.description }}
@@ -27,5 +27,4 @@
     }
     }
   </div>
-
 </div>
