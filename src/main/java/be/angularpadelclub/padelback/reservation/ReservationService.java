@@ -4,7 +4,10 @@ import be.angularpadelclub.padelback.court.CourtEntity;
 import be.angularpadelclub.padelback.court.CourtRepository;
 import be.angularpadelclub.padelback.member.MemberEntity;
 import be.angularpadelclub.padelback.member.MemberRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.time.LocalTime;
 
 import java.time.LocalDate;
@@ -62,16 +65,22 @@ public class ReservationService {
             throw new RuntimeException("Réservation en dehors des heures d'ouverture.");
         }
 
-        boolean conflict = reservationRepository
-                .existsByCourtAndDateAndStartTimeLessThanAndEndTimeGreaterThan(
-                        court,
-                        dto.date(),
-                        blockedEndTime,
-                        startTime
-                );
+        List<ReservationEntity> existingReservations =
+                reservationRepository.findByCourtAndDate(court, dto.date());
 
-        if (conflict) {
-            throw new RuntimeException("Ce terrain est déjà réservé sur ce créneau.");
+        for (ReservationEntity existing : existingReservations) {
+            LocalTime existingBlockedEnd = existing.getEndTime().plusMinutes(15);
+
+            boolean overlap =
+                    startTime.isBefore(existingBlockedEnd) &&
+                            blockedEndTime.isAfter(existing.getStartTime());
+
+            if (overlap) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Ce terrain est déjà réservé sur ce créneau."
+                );
+            }
         }
 
         ReservationEntity reservation = reservationMapper.toEntity(dto, court, member);

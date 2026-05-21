@@ -16,4 +16,5 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
             LocalTime startTime
     );
     List<ReservationEntity> findByCourtIdAndDate(UUID courtId, LocalDate date);
+    List<ReservationEntity> findByCourtAndDate(CourtEntity court, LocalDate date);
 }
