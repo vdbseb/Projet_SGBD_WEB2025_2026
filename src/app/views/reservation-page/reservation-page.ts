@@ -118,7 +118,13 @@ export class ReservationPage implements OnInit {
         },
         error: (error) => {
           console.error('Erreur lors de l\'enregistrement de la réservation :', error);
-          alert('Erreur lors de la réservation. Veuillez réessayer.');
+
+          const message =
+            error?.error?.message ||
+            error?.error?.detail ||
+            'Erreur lors de la réservation. Veuillez réessayer.';
+
+          alert(message);
         }
       });
     }
