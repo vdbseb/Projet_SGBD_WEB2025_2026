@@ -4,17 +4,22 @@
   </h2>
 
   <mat-form-field class="w-full" appearance="outline">
-    @if (errorMessage) {
-      <p class="text-red-500 text-sm font-semibold mt-2">
-        {{ errorMessage }}
-      </p>
-    }
     <mat-label>Heure de début</mat-label>
-    <input matInput
-           [matTimepicker]="picker"
-           [(ngModel)]="selectedTime"
-           (ngModelChange)="onTimeChange($event)">
+
+    <input
+      matInput
+      [matTimepicker]="picker"
+      [(ngModel)]="selectedTime"
+      (ngModelChange)="onTimeChange($event)"
+    >
+
     <mat-timepicker-toggle matIconSuffix [for]="picker"></mat-timepicker-toggle>
     <mat-timepicker #picker></mat-timepicker>
   </mat-form-field>
+
+  @if (errorMessage) {
+    <p class="text-red-500 text-sm font-semibold mt-2">
+      {{ errorMessage }}
+    </p>
+  }
 </div>

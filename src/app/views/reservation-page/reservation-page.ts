@@ -10,6 +10,7 @@ import {PadelCardComponent} from '../padel-card/padel-card';
 import {DateSelectorComponent} from '../date-selector/date-selector';
 import {TimeSlotsComponent} from '../time-slot/time-slot';
 import {DatePipe} from '@angular/common';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-reservation-page',
@@ -37,6 +38,7 @@ export class ReservationPage implements OnInit {
   members = signal<any[]>([]);
   selectedMemberId = signal<string | null>(null);
   reservedTimes = signal<string[]>([]);
+  private snackBar = inject(MatSnackBar);
 
 
   ngOnInit() {
@@ -112,19 +114,21 @@ export class ReservationPage implements OnInit {
 
       this.padelService.createReservation(newReservation).subscribe({
         next: () => {
-          console.log('Réservation enregistrée avec succès');
-          alert('Réservation confirmée !');
+          this.snackBar.open('Réservation confirmée !', 'OK', {
+            duration: 3000
+          });
+
           this.selectedTime.set(null);
         },
         error: (error) => {
-          console.error('Erreur lors de l\'enregistrement de la réservation :', error);
-
           const message =
             error?.error?.message ||
             error?.error?.detail ||
             'Erreur lors de la réservation. Veuillez réessayer.';
 
-          alert(message);
+          this.snackBar.open(message, 'OK', {
+            duration: 5000
+          });
         }
       });
     }
