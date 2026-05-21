@@ -1,6 +1,8 @@
 package be.angularpadelclub.padelback.member;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,5 +43,15 @@ public class MemberController {
     @DeleteMapping("/{id}")
     public void deleteMember(@PathVariable UUID id) {
         memberService.deleteMember(id);
+    }
+
+    @GetMapping(value = "/matricule/{matricule}", produces = "application/json")
+    public MemberDTO findByMatricule(@PathVariable String matricule) {
+        return memberService.findByMatricule(matricule)
+                .map(memberMapper::toDTO)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Aucun membre trouvé avec ce matricule."
+                ));
     }
 }
