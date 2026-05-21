@@ -5,6 +5,7 @@ import be.angularpadelclub.padelback.court.CourtRepository;
 import be.angularpadelclub.padelback.member.MemberEntity;
 import be.angularpadelclub.padelback.member.MemberRepository;
 import org.springframework.stereotype.Service;
+import java.time.LocalTime;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -50,12 +51,23 @@ public class ReservationService {
         MemberEntity member = memberRepository.findById(dto.memberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
+        LocalTime startTime = dto.startTime();
+        LocalTime endTime = startTime.plusMinutes(90);
+        LocalTime blockedEndTime = endTime.plusMinutes(15);
+
+        LocalTime openingTime = court.getSite().getOpeningTime();
+        LocalTime closingTime = court.getSite().getClosingTime();
+
+        if (startTime.isBefore(openingTime) || endTime.isAfter(closingTime)) {
+            throw new RuntimeException("Réservation en dehors des heures d'ouverture.");
+        }
+
         boolean conflict = reservationRepository
                 .existsByCourtAndDateAndStartTimeLessThanAndEndTimeGreaterThan(
                         court,
                         dto.date(),
-                        dto.endTime(),
-                        dto.startTime()
+                        blockedEndTime,
+                        startTime
                 );
 
         if (conflict) {
@@ -64,6 +76,7 @@ public class ReservationService {
 
         ReservationEntity reservation = reservationMapper.toEntity(dto, court, member);
         reservation.setId(null);
+        reservation.setEndTime(endTime);
 
         reservationRepository.save(reservation);
     }

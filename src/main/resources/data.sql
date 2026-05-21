@@ -18,4 +18,4 @@ INSERT INTO members (id, matricule, first_name, last_name, type, site_id)
 VALUES
     ('44444444-4444-4444-4444-444444444444', 'G1234', 'Vincent', 'Harmegnies', 'GLOBAL', null),
     ('55555555-5555-5555-5555-555555555555', 'G5678', 'Sophie', 'Dupont', 'GLOBAL', null),
-    ('66666666-6666-6666-6666-666666666666', 'G9012', 'Jean', 'Martin', 'GLOBAL', null)
+    ('66666666-6666-6666-6666-666666666666', 'G9012', 'Jean', 'Martin', 'GLOBAL', null);
