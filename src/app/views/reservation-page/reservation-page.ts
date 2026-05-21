@@ -121,10 +121,17 @@ export class ReservationPage implements OnInit {
           this.selectedTime.set(null);
         },
         error: (error) => {
-          const message =
+          console.error(error);
+
+          const backendMessage =
             error?.error?.message ||
             error?.error?.detail ||
-            'Erreur lors de la réservation. Veuillez réessayer.';
+            error?.message;
+
+          const message =
+            typeof backendMessage === 'string'
+              ? backendMessage
+              : 'Erreur lors de la réservation. Veuillez réessayer.';
 
           this.snackBar.open(message, 'OK', {
             duration: 5000
