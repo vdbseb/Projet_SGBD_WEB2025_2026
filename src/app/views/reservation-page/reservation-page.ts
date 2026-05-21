@@ -36,6 +36,7 @@ export class ReservationPage implements OnInit {
   selectedTime = signal<string | null>(null);
   members = signal<any[]>([]);
   selectedMemberId = signal<string | null>(null);
+  reservedTimes = signal<string[]>([]);
 
 
   ngOnInit() {
@@ -62,11 +63,28 @@ export class ReservationPage implements OnInit {
     console.log('Nouvelle date sélectionnée :', date);
     this.selectedDate.set(date);
     this.selectedTime.set(null);
+    this.loadReservedTimes();
   }
 
   selectCourt(court: PadelCourt) {
     this.selectedCourt.set(court);
     this.selectedTime.set(null);
+    this.loadReservedTimes();
+  }
+  loadReservedTimes() {
+    const court = this.selectedCourt();
+    const date = this.selectedDate();
+
+    if (!court || !date) {
+      this.reservedTimes.set([]);
+      return;
+    }
+
+    const formattedDate = date.toISOString().split('T')[0];
+
+    this.padelService.getReservations(court.id, formattedDate).subscribe(reservations => {
+      this.reservedTimes.set(reservations.map(r => r.startTime));
+    });
   }
   onConfirmBooking() {
     const court = this.selectedCourt();

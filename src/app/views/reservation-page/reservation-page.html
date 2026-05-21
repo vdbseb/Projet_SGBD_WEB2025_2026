@@ -34,6 +34,7 @@
           (dateChange)="onDateSelected($event)">
         </app-date-selector>
         <app-time-slots
+          [reservedTimes]="reservedTimes()"
           (slotSelected)="onTimeSelected($event)">
         </app-time-slots>
         <label for="member">Choisir un membre :</label>
