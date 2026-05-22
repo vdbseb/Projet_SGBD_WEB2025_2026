@@ -1,19 +1,14 @@
 package be.angularpadelclub.Repository;
 
 import be.angularpadelclub.Entity.MemberEntity;
-import be.angularpadelclub.Entity.MemberType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import java.util.Optional;
 
-public interface MemberRepository
-        extends JpaRepository<MemberEntity, String> {
 
-    List<MemberEntity> findByType(MemberType type);
+public interface MemberRepository extends JpaRepository<MemberEntity, Integer> {
 
-    List<MemberEntity> findBySiteId(Integer siteId);
+    Optional<MemberEntity> findByMatricule(String matricule);
 
     boolean existsByMatricule(String matricule);
-
-    boolean existsByEmail(String email);
 }

@@ -1,56 +1,43 @@
 package be.angularpadelclub.Entity;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Entity
-@Table(name = "member")
+import jakarta.persistence.*;
+import lombok.*;
+
+
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "membre")
 public class MemberEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(nullable = false)
+    private boolean actif;
+
+    @Column(nullable = false)
+    private String email;
+
     @Column(nullable = false, unique = true)
     private String matricule;
 
     @Column(nullable = false)
-    private String nom;
-
-    @Column(nullable = false)
     private String prenom;
 
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberType type;
+    private String nom;
 
-    /**
-     * Seulement pour les membres SITE
-     * null pour GLOBAL et LIBRE
-     */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "type_membre_id", nullable = false)
+    private TypeMembreEntity type;
+
     @ManyToOne
     @JoinColumn(name = "site_id")
     private SiteEntity site;
-
-    /**
-     * Empêche réservation si dette > 0
-     */
-    @Column(nullable = false)
-    private Double soldeDu = 0.0;
-
-    /**
-     * Nombre de jours de pénalité de réservation
-     */
-    @Column(nullable = false)
-    private Integer penaliteJours = 0;
-
-    @Column(nullable = false)
-    private Boolean actif = true;
 }

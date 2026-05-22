@@ -2,22 +2,39 @@ package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.CourtDTO;
 import be.angularpadelclub.Service.CourtService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
-@RequestMapping("/api/terrains")
-@RequiredArgsConstructor
+@RequestMapping("/api/courts")
+@CrossOrigin(origins = "http://localhost:4200")
 public class CourtController {
 
     private final CourtService courtService;
 
-    @GetMapping("/{siteId}")
-    public List<CourtDTO> getCourtsBySiteId(
-            @PathVariable Integer siteId
-    ) {
-        return courtService.getCourtsBySiteId(siteId);
+    public CourtController(CourtService courtService) {
+        this.courtService = courtService;
+    }
+
+    @GetMapping
+    public List<CourtDTO> getAllCourts() {
+        return courtService.getAllCourts();
+    }
+
+    @GetMapping("/{id}")
+    public CourtDTO getCourtById(@PathVariable int id) {
+        return courtService.getCourtById(id);
+    }
+
+    @PostMapping
+    public CourtDTO createCourt(@RequestBody CourtDTO dto) {
+        return courtService.createCourt(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteCourt(@PathVariable int id) {
+        courtService.deleteCourt(id);
     }
 }

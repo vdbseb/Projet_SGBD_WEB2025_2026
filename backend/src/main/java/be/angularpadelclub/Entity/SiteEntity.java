@@ -1,17 +1,17 @@
 package be.angularpadelclub.Entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-@Entity
-@Table(name = "site")
+import java.util.List;
+
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "site")
 public class SiteEntity {
 
     @Id
@@ -21,17 +21,25 @@ public class SiteEntity {
     @Column(nullable = false)
     private String nom;
 
+    @Column(nullable = false)
     private String adresse;
 
+    @Column(nullable = false)
     private String ville;
 
-    @Column(name = "code_postal")
-    private String codePostal;
+    @Column (nullable = false)
+    private String code_postal;
 
-    private Boolean actif;
+    @Column(nullable = false)
+    private boolean actif;
 
+    @Column(nullable = false)
     private String description;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+
+    @Column(nullable = false)
+    private String image_url;
+
+    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<HoraireSiteEntity> horaire;
 }
