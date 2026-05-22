@@ -1,0 +1,13 @@
+GET http://localhost:8080/reservations
+Content-Type: application/json
+###
+POST http://localhost:8080/reservations
+Content-Type: application/json
+
+{
+  "id": "d1e8c9b2-5f3a-4c9e-8b1a-2f3e4d5f6a7b",
+  "courtName": "Court 2",
+  "date": "2026-03-28",
+  "timeSlot": "22:30",
+  "playerID": "joueur123"
+}
