@@ -1,4 +1,4 @@
-package be.angularpadelclub.padelback.Mapper;
+package be.angularpadelclub.Mapper;
 
 import be.angularpadelclub.padelback.DTO.CourtDTO;
 import be.angularpadelclub.padelback.Entity.CourtEntity;

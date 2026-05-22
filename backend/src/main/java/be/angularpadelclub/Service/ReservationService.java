@@ -1,4 +1,4 @@
-package be.angularpadelclub.padelback.reservation;
+package be.angularpadelclub.Service;
 
 import org.springframework.stereotype.Service;
 
@@ -11,6 +11,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
 
+    public ReservationService(ReservationRepository reservationRepository) {
         this.reservationRepository = reservationRepository;
     }
 
@@ -22,7 +23,8 @@ public class ReservationService {
         return reservationRepository.findById(id);
     }
 
-        reservationRepository.save(reservation);
+    public ReservationEntity saveReservation(ReservationEntity reservation) {
+        return reservationRepository.save(reservation);
     }
 
     public void deleteReservation(UUID id) {

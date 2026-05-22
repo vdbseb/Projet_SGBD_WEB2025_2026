@@ -1,4 +1,4 @@
-package be.angularpadelclub.padelback.reservation;
+package be.angularpadelclub.Mapper;
 
 import be.angularpadelclub.padelback.court.CourtEntity;
 import be.angularpadelclub.padelback.member.MemberEntity;

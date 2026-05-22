@@ -1,4 +1,4 @@
-package be.angularpadelclub.padelback.reservation;
+package be.angularpadelclub.Controler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

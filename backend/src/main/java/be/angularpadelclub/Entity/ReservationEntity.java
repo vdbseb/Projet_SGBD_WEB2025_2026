@@ -1,4 +1,4 @@
-package be.angularpadelclub.padelback.reservation;
+package be.angularpadelclub.Entity;
 import jakarta.persistence.*;
 
 import java.util.UUID;
