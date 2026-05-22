@@ -106,6 +106,11 @@ export class PadelService {
       `${this.apiBaseUrl}/members/matricule/${matricule}`
     );
   }
+  getAllReservations() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/reservations`
+    );
+  }
 }
 
 

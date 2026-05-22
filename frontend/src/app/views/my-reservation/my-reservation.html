@@ -1,0 +1,33 @@
+<section class="max-w-5xl mx-auto px-8 py-12">
+  <h1 class="text-3xl font-black mb-8 uppercase">
+    Mes réservations
+  </h1>
+
+  @if (reservations().length === 0) {
+    <p class="text-slate-500">
+      Aucune réservation trouvée.
+    </p>
+  }
+
+  <div class="grid gap-4">
+    @for (reservation of reservations(); track reservation.id) {
+      <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+        <p class="font-bold text-lg">
+          {{ reservation.courtName }}
+        </p>
+
+        <p class="text-slate-500">
+          Date : {{ reservation.date | date:'dd/MM/yyyy' }}
+        </p>
+
+        <p class="text-slate-500">
+          Heure : {{ reservation.startTime }} - {{ reservation.endTime }}
+        </p>
+
+        <p class="text-slate-400 text-sm mt-2">
+          Matricule : {{ reservation.playerMatricule }}
+        </p>
+      </div>
+    }
+  </div>
+</section>

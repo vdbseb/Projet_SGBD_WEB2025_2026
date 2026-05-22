@@ -6,4 +6,10 @@ import {ReservationPage} from './views/reservation-page/reservation-page';
 export const routes: Routes = [
   { path: '', component: WelcomePage },
   { path: 'reserver/:id', component: ReservationPage },
+  {
+    path: 'mes-reservation',
+    loadComponent: () =>
+      import('./views/my-reservation/my-reservation')
+        .then(m => m.MyReservations)
+  }
 ];
