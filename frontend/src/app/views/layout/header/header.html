@@ -17,12 +17,22 @@
       Nos Centres
     </a>
 
-    <a routerLink="/mes-reservations" class="hover:text-slate-900 transition-colors cursor-pointer no-underline">
-      Mes Réservations
-    </a>
+    @if (authService.isLoggedIn()) {
+      <a
+        routerLink="/mes-reservations"
+        class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
+      >
+        Mes Réservations
+      </a>
+    }
 
     <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
-      <mat-icon class="text-slate-500 scale-125">account_circle</mat-icon>
+      <mat-icon
+        (click)="authService.isLoggedIn() ? logout() : openLogin()"
+        class="cursor-pointer"
+      >
+        {{ authService.isLoggedIn() ? 'logout' : 'account_circle' }}
+      </mat-icon>
     </div>
   </nav>
 
