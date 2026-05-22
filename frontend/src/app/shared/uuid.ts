@@ -1,6 +1,5 @@
-export type UUID = string;
-import {v4 as uuidv4} from 'uuid';
+export type Id = number;
 
-export function uuid(): UUID {
-  return uuidv4()
+export function uuid(): Id {
+  return Math.floor(Math.random() * 1_000_000_000);
 }

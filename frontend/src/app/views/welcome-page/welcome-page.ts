@@ -32,7 +32,7 @@ export class WelcomePage {
 
   sites$ = this.padelService.getSites();
 
-  goToReservation(siteId: string) {
+  goToReservation(siteId: number) {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/reserver', siteId]);
       return;
