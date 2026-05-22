@@ -1,8 +1,14 @@
 package be.angularpadelclub.Entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "terrain")
 public class CourtEntity {
 
@@ -14,7 +20,7 @@ public class CourtEntity {
     @JoinColumn(name = "site_id", nullable = false)
     private SiteEntity site;
 
-    private Integer numero;
+    private String name;
 
     private Boolean couvert;
 
@@ -39,12 +45,12 @@ public class CourtEntity {
         this.site = site;
     }
 
-    public Integer getNumero() {
-        return numero;
+    public String getName() {
+        return name;
     }
 
-    public void setNumero(Integer numero) {
-        this.numero = numero;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Boolean getCouvert() {

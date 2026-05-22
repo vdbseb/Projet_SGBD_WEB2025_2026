@@ -1,7 +1,7 @@
 package be.angularpadelclub.Mapper;
 
-import be.angularpadelclub.padelback.DTO.CourtDTO;
-import be.angularpadelclub.padelback.Entity.CourtEntity;
+import be.angularpadelclub.DTO.CourtDTO;
+import be.angularpadelclub.Entity.CourtEntity;
 
 public class CourtMapper {
 
@@ -9,7 +9,7 @@ public class CourtMapper {
         CourtDTO dto = new CourtDTO();
 
         dto.setId(court.getId());
-        dto.setName("Terrain " + court.getNumero());
+        dto.setName("Terrain " + court.getName());
         dto.setType(court.getCouvert() ? "Indoor" : "Outdoor");
 
         return dto;

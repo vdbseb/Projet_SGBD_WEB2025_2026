@@ -1,14 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="changement architecture &#10;Tentative de passage de H2 à postgr">
+    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="correction package name">
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/MemberController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/DTO/MemberDTO.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/MemberEntity.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/MemberType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/MemberMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Repository/MemberRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Service/MemberService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/ReservationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/ReservationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/SiteController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/SiteController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/DTO/ReservationDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/DTO/ReservationDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/CourtEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/CourtEntity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/ReservationEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/ReservationEntity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/SiteEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Entity/SiteEntity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/CourtMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/CourtMapper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/ReservationMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/ReservationMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/SiteMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Mapper/SiteMapper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Repository/ReservationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Repository/ReservationRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Service/ReservationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Service/ReservationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/padelback/PadelBackApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/padelback/ReservationMapperTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/ReservationMapperTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/padelback/ReservationRepositoryTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/ReservationRepositoryTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/padelback/ReservationServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/test/java/be/angularpadelclub/ReservationServiceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/services/auth.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/services/auth.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,16 +69,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;1-db-docker&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Sébastien/IdeaProjects/Projet_SGBD_WEB2025_2026/backend/src/main/java/be/angularpadelclub/Repository&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "1-db-docker",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Sébastien/IdeaProjects/Projet_SGBD_WEB2025_2026/backend/src/main/java/be/angularpadelclub/Repository",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Repository" />
@@ -69,11 +89,11 @@
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\padelback\terrain" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\test\java\be\angularpadelclub" />
+      <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\test\java\be\angularpadelclub\padelback" />
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Repository" />
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Service" />
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Controler" />
-      <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Entity" />
-      <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\DTO" />
     </key>
   </component>
   <component name="RunManager">
@@ -118,7 +138,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779446428497</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="correction package name">
+      <option name="closed" value="true" />
+      <created>1779446864134</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1779446864134</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -135,6 +163,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Création db,&#10;dockerisation de la db&#10;verification des donnée" />
     <MESSAGE value="changement architecture &#10;Tentative de passage de H2 à postgr" />
-    <option name="LAST_COMMIT_MESSAGE" value="changement architecture &#10;Tentative de passage de H2 à postgr" />
+    <MESSAGE value="correction package name" />
+    <option name="LAST_COMMIT_MESSAGE" value="correction package name" />
   </component>
 </project>

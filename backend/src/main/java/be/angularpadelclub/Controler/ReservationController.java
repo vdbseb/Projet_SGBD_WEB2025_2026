@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
+import be.angularpadelclub.Service.ReservationService;
+import be.angularpadelclub.DTO.ReservationDTO;
+import be.angularpadelclub.Mapper.ReservationMapper;
+
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,13 +44,11 @@ public class ReservationController {
         reservationService.deleteReservation(id);
     }
 
-    @GetMapping(params = {"courtId", "date"}, produces = "application/json")
-    public List<ReservationDTO> reservationsByCourtAndDate(
-            @RequestParam UUID courtId,
-            @RequestParam LocalDate date
+    @GetMapping("/court/{courtId}/date/{date}")
+    public List<ReservationDTO> getReservationsByCourtAndDate(
+            @PathVariable Integer courtId,
+            @PathVariable LocalDate date
     ) {
-        return reservationMapper.toDTOList(
-                reservationService.findByCourtAndDate(courtId, date)
-        );
+        return reservationService.findByCourtAndDate(courtId, date);
     }
 }

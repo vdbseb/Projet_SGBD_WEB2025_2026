@@ -1,13 +1,11 @@
 package be.angularpadelclub.Controler;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RequestBody;
+import be.angularpadelclub.Service.SiteService;
+import be.angularpadelclub.DTO.SiteDTO;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/sites")
@@ -15,10 +13,6 @@ import java.util.UUID;
 public class SiteController {
 
     private final SiteService siteService;
-
-    public SiteController(SiteService siteService) {
-        this.siteService = siteService;
-    }
 
     @GetMapping
     public List<SiteDTO> getAllSites() {

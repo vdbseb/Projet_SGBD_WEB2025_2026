@@ -1,9 +1,9 @@
 package be.angularpadelclub.Mapper;
 
-import be.angularpadelclub.padelback.DTO.CourtDTO;
-import be.angularpadelclub.padelback.DTO.SiteDTO;
-import be.angularpadelclub.padelback.Entity.CourtEntity;
-import be.angularpadelclub.padelback.Entity.SiteEntity;
+import be.angularpadelclub.DTO.CourtDTO;
+import be.angularpadelclub.DTO.SiteDTO;
+import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.SiteEntity;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public class SiteMapper {
 
         dto.setCourts(
                 courts.stream()
-                        .map(CourtMapper::courtToDTO)
+                        .map(CourtMapper::toDTO)
                         .toList()
         );
 

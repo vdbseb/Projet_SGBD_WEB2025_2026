@@ -1,7 +1,9 @@
 package be.angularpadelclub.Mapper;
 
-import be.angularpadelclub.padelback.court.CourtEntity;
-import be.angularpadelclub.padelback.member.MemberEntity;
+import be.angularpadelclub.DTO.ReservationDTO;
+import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.MemberEntity;
+import be.angularpadelclub.Entity.ReservationEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,7 +16,7 @@ public class ReservationMapper {
                 entity.getId(),
                 entity.getCourt().getId(),
                 entity.getCourt().getName(),
-                entity.getMember().getId(),
+                entity.getMember().getMatricule(),
                 entity.getMember().getMatricule(),
                 entity.getDate(),
                 entity.getStartTime(),
@@ -35,6 +37,8 @@ public class ReservationMapper {
         entity.setDate(dto.date());
         entity.setStartTime(dto.startTime());
         entity.setEndTime(dto.endTime());
+        entity.getMember().getMatricule();
+        entity.getMember().getMatricule();
 
         return entity;
     }
