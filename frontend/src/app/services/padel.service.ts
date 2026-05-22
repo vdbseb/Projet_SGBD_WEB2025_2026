@@ -4,7 +4,7 @@ import {HttpClient} from '@angular/common/http';
 import {forkJoin, map, Observable} from 'rxjs';
 
 interface SiteDTO {
-  id: string;
+  id: number;
   name: string;
   city: string;
   openingTime: string;
@@ -13,10 +13,10 @@ interface SiteDTO {
 }
 
 interface CourtDTO {
-  id: string;
+  id: number;
   name: string;
   type: 'Indoor' | 'Outdoor';
-  siteId: string;
+  siteId: number;
 }
 
 @Injectable({
@@ -35,7 +35,7 @@ export class PadelService {
     );
   }
 
-  getSiteById(id: string): Observable<PadelSite> {
+  getSiteById(id: number): Observable<PadelSite> {
     return forkJoin({
       site: this.httpClient.get<SiteDTO>(`${this.sitesUrl}/${id}`),
       courts: this.httpClient.get<CourtDTO[]>(this.courtsUrl)
@@ -83,7 +83,7 @@ export class PadelService {
         return 'images/bruxelles.jpg';
     }
   }
-  getReservations(courtId: string, date: string) {
+  getReservations(courtId: number, date: string) {
     return this.httpClient.get<any[]>(
       `${this.apiBaseUrl}/reservations?courtId=${courtId}&date=${date}`
     );
@@ -104,6 +104,11 @@ export class PadelService {
   getMemberByMatricule(matricule: string) {
     return this.httpClient.get<any>(
       `${this.apiBaseUrl}/members/matricule/${matricule}`
+    );
+  }
+  getAllReservations() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/reservations`
     );
   }
 }

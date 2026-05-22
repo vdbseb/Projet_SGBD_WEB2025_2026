@@ -10,7 +10,7 @@
 
 
 export interface ReservationDto { 
-    uuid?: string;
+    uuid?: number;
     courtName?: string;
     date?: string;
     timeSlot?: string;
