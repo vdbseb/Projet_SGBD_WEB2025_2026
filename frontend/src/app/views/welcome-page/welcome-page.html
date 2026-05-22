@@ -9,14 +9,15 @@
   </header>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto items-stretch">
-    @for (site of sites; track site.id) {
+    @if (sites$ | async; as sites) {
+      @for (site of sites; track site.id) {
       <app-padel-card
         [title]="site.city"
         [subtitle]="site.clubName"
         [initial]="site.initial"
         [image]="site.image"
         [buttonLabel]="'Réserve à ' + site.city"
-        [routerLink]="['/reserver', site.id]">
+        (click)="goToReservation(site.id)">
 
         <p class="text-slate-500 leading-relaxed text-sm">
           {{ site.description }}
@@ -24,6 +25,6 @@
 
       </app-padel-card>
     }
+    }
   </div>
-
 </div>

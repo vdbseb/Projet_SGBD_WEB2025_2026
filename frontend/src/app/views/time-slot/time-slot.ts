@@ -1,4 +1,4 @@
-import { Component, output, model } from '@angular/core'; // Ajoute 'model' ici
+import {Component, output, model, input} from '@angular/core';
 import { MatTimepickerModule } from '@angular/material/timepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,13 +19,14 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 })
 export class TimeSlotsComponent {
   slotSelected = output<string>();
+  reservedTimes = input<string[]>([]);
+  errorMessage = '';
 
 
   selectedTime = model<Date | null>(null);
 
 
   onTimeChange(event: any) {
-    // Le Timepicker peut renvoyer soit l'objet event, soit event.value
     const date = event?.value !== undefined ? event.value : event;
 
     if (date instanceof Date) {
@@ -34,6 +35,15 @@ export class TimeSlotsComponent {
         minute: '2-digit'
       });
 
+      const formattedWithSeconds = `${formattedTime}:00`;
+
+      if (this.reservedTimes().includes(formattedWithSeconds)) {
+        this.errorMessage = 'Ce créneau est déjà réservé.';
+        this.selectedTime.set(null);
+        return;
+      }
+
+      this.errorMessage = '';
       this.slotSelected.emit(formattedTime);
     }
   }
