@@ -1,4 +1,4 @@
-package be.angularpadelclub.padelback.reservation;
+package be.angularpadelclub.DTO;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
