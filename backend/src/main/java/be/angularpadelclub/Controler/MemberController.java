@@ -1,36 +1,48 @@
 package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.MemberDTO;
+import be.angularpadelclub.Mapper.MemberMapper;
 import be.angularpadelclub.Service.MemberService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/members")
-@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:4200")
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberMapper memberMapper;
 
-    @GetMapping
-    public List<MemberDTO> getAllMembers() {
-        return memberService.getAllMembers();
+    public MemberController(
+            MemberService memberService,
+            MemberMapper memberMapper
+    ) {
+        this.memberService = memberService;
+        this.memberMapper = memberMapper;
     }
 
-    @GetMapping("/{matricule}")
-    public MemberDTO getMemberByMatricule(@PathVariable String matricule) {
-        return memberService.getMemberByMatricule(matricule);
+    @GetMapping(produces = "application/json")
+    public List<MemberDTO> findAll() {
+        return memberMapper.toDTOList(memberService.findAll());
     }
 
-    @PostMapping
-    public MemberDTO createMember(@RequestBody MemberDTO memberDTO) {
-        return memberService.createMember(memberDTO);
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public MemberDTO findById(@PathVariable int id) {
+        return memberService.findById(id)
+                .map(memberMapper::toDTO)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
     }
 
-    @DeleteMapping("/{matricule}")
-    public void deleteMember(@PathVariable String matricule) {
-        memberService.deleteMember(matricule);
+    @PostMapping(consumes = "application/json")
+    public void addMember(@RequestBody MemberDTO dto) {
+        memberService.addMember(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteMember(@PathVariable int id) {
+        memberService.deleteMember(id);
     }
 }

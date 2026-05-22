@@ -15,8 +15,8 @@ public class ReservationMapper {
         return new ReservationDTO(
                 entity.getId(),
                 entity.getCourt().getId(),
-                entity.getCourt().getName(),
-                entity.getMember().getMatricule(),
+                entity.getCourt().getNom(),
+                entity.getMember().getId(),
                 entity.getMember().getMatricule(),
                 entity.getDate(),
                 entity.getStartTime(),
@@ -37,8 +37,6 @@ public class ReservationMapper {
         entity.setDate(dto.date());
         entity.setStartTime(dto.startTime());
         entity.setEndTime(dto.endTime());
-        entity.getMember().getMatricule();
-        entity.getMember().getMatricule();
 
         return entity;
     }

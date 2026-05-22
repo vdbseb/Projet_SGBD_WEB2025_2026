@@ -3,50 +3,43 @@ package be.angularpadelclub.Mapper;
 import be.angularpadelclub.DTO.MemberDTO;
 import be.angularpadelclub.Entity.MemberEntity;
 import be.angularpadelclub.Entity.SiteEntity;
+import org.springframework.stereotype.Component;
 
+import java.util.List;
+
+@Component
 public class MemberMapper {
 
-    public static MemberDTO toDTO(MemberEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        MemberDTO dto = new MemberDTO();
-
-        dto.setMatricule(entity.getMatricule());
-        dto.setNom(entity.getNom());
-        dto.setPrenom(entity.getPrenom());
-        dto.setEmail(entity.getEmail());
-        dto.setType(entity.getType());
-        dto.setSoldeDu(entity.getSoldeDu());
-        dto.setPenaliteJours(entity.getPenaliteJours());
-        dto.setActif(entity.getActif());
-
-        if (entity.getSite() != null) {
-            dto.setSiteId(entity.getSite().getId());
-            dto.setSiteNom(entity.getSite().getNom());
-        }
-
-        return dto;
+    public MemberDTO toDTO(MemberEntity entity) {
+        return new MemberDTO(
+                entity.getId(),
+                entity.isActif(),
+                entity.getEmail(),
+                entity.getMatricule(),
+                entity.getPrenom(),
+                entity.getNom(),
+                entity.getType(),
+                entity.getSite() != null ? entity.getSite().getId() : null,
+                entity.getSite() != null ? entity.getSite().getNom() : null
+        );
     }
 
-    public static MemberEntity toEntity(MemberDTO dto, SiteEntity site) {
-        if (dto == null) {
-            return null;
-        }
-
+    public MemberEntity toEntity(MemberDTO dto, SiteEntity site) {
         MemberEntity entity = new MemberEntity();
 
-        entity.setMatricule(dto.getMatricule());
-        entity.setNom(dto.getNom());
-        entity.setPrenom(dto.getPrenom());
-        entity.setEmail(dto.getEmail());
-        entity.setType(dto.getType());
+        entity.setId(dto.id());
+        entity.setMatricule(dto.matricule());
+        entity.setPrenom(dto.firstName());
+        entity.setNom(dto.lastName());
+        entity.setType(dto.type());
         entity.setSite(site);
-        entity.setSoldeDu(dto.getSoldeDu() != null ? dto.getSoldeDu() : 0.0);
-        entity.setPenaliteJours(dto.getPenaliteJours() != null ? dto.getPenaliteJours() : 0);
-        entity.setActif(dto.getActif() != null ? dto.getActif() : true);
 
         return entity;
+    }
+
+    public List<MemberDTO> toDTOList(List<MemberEntity> entities) {
+        return entities.stream()
+                .map(this::toDTO)
+                .toList();
     }
 }

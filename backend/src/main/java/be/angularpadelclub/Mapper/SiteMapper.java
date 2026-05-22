@@ -1,42 +1,41 @@
 package be.angularpadelclub.Mapper;
 
-import be.angularpadelclub.DTO.CourtDTO;
 import be.angularpadelclub.DTO.SiteDTO;
-import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.SiteEntity;
+import be.angularpadelclub.Service.SiteService;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public class SiteMapper {
 
-    public static SiteDTO toDTO(
-            SiteEntity site,
-            List<CourtEntity> courts
-    ) {
-
-        SiteDTO dto = new SiteDTO();
-
-        dto.setId(site.getId());
-        dto.setCity(site.getVille());
-        dto.setClubName(site.getNom());
-        dto.setDescription(site.getDescription());
-        dto.setImage(site.getImageUrl());
-
-        // B, L, A...
-        dto.setInitial(
-                site.getVille()
-                        .substring(0, 1)
-                        .toUpperCase()
+    public SiteDTO toDTO(SiteEntity entity, HoraireSiteEntity horaire) {
+        return new SiteDTO(
+                entity.getId(),
+                entity.getNom(),
+                entity.getVille(),
+                entity.getAdresse(),
+                entity.getDescription(),
+                horaire.getHeure_debut(),
+                horaire.getHeure_fin(),
+                entity.isActif(),
+                entity.getImage_url()
         );
-
-        dto.setCourts(
-                courts.stream()
-                        .map(CourtMapper::toDTO)
-                        .toList()
-        );
-
-        return dto;
     }
+    public SiteEntity toEntity(SiteDTO dto) {
+        SiteEntity entity = new SiteEntity();
 
+        entity.setId(dto.id());
+        entity.setNom(dto.name());
+        entity.setVille(dto.city());
+        entity.setAdresse(dto.adresse());
+        entity.setDescription(dto.description());
+        entity.setActif(dto.active());
+        entity.setImage_url(dto.imageURL());
+
+        return entity;
+    }
 
 }

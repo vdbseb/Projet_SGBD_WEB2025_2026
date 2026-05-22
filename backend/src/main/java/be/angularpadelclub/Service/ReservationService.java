@@ -2,57 +2,110 @@ package be.angularpadelclub.Service;
 
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.MemberEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Repository.CourtRepository;
+import be.angularpadelclub.Repository.HoraireSiteRepository;
 import be.angularpadelclub.Repository.MemberRepository;
 import be.angularpadelclub.Repository.ReservationRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalTime;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+
 
 @Service
-@RequiredArgsConstructor
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final CourtRepository courtRepository;
     private final MemberRepository memberRepository;
+    private final HoraireSiteRepository horaireSiteRepository;
     private final ReservationMapper reservationMapper;
 
+    public ReservationService(
+            ReservationRepository reservationRepository,
+            CourtRepository courtRepository,
+            MemberRepository memberRepository,
+            HoraireSiteRepository horaireSiteRepository,
+            ReservationMapper reservationMapper
+    ) {
+        this.reservationRepository = reservationRepository;
+        this.courtRepository = courtRepository;
+        this.memberRepository = memberRepository;
+        this.horaireSiteRepository = horaireSiteRepository;
+        this.reservationMapper = reservationMapper;
+    }
     public List<ReservationEntity> findAll() {
         return reservationRepository.findAll();
     }
 
-    public Optional<ReservationEntity> findById(UUID id) {
+    public Optional<ReservationEntity> findById(int id) {
         return reservationRepository.findById(id);
     }
 
-    public ReservationDTO addReservation(ReservationDTO dto) {
-        CourtEntity court = courtRepository.findById(dto.courtId())
-                .orElseThrow(() -> new RuntimeException("Court not found"));
-
-        MemberEntity member = memberRepository.findById(dto.playerMatricule())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
-
-        ReservationEntity entity = reservationMapper.toEntity(dto, court, member);
-
-        return reservationMapper.toDTO(reservationRepository.save(entity));
+    public List<ReservationEntity> findByCourtAndDate(int courtId, LocalDate date) {
+        return reservationRepository.findByCourtIdAndDate(courtId, date);
     }
 
-    public void deleteReservation(UUID id) {
+    public void deleteReservation(int id) {
         reservationRepository.deleteById(id);
     }
 
-    public List<ReservationDTO> findByCourtAndDate(Integer courtId, LocalDate date) {
-        return reservationRepository.findByCourtIdAndDate(courtId, date)
-                .stream()
-                .map(reservationMapper::toDTO)
-                .toList();
+    public void addReservation(ReservationDTO dto) {
+        CourtEntity court = courtRepository.findById(dto.courtId())
+                .orElseThrow(() -> new RuntimeException("Court not found"));
+
+        MemberEntity member = memberRepository.findById(dto.memberId())
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+
+        int currentYear = dto.date().getYear();
+
+        HoraireSiteEntity horaire = horaireSiteRepository
+                .findBySite_IdAndAnnee(court.getSite().getId(), currentYear)
+                .orElseThrow(() -> new RuntimeException("Aucun horaire défini pour ce site et cette année"));
+
+        LocalTime startTime = dto.startTime();
+        LocalTime endTime = startTime.plusMinutes(horaire.getDuree_match_minutes());
+        LocalTime blockedEndTime = endTime.plusMinutes(horaire.getPause_minutes());
+
+        LocalTime openingTime = horaire.getHeure_debut();
+        LocalTime closingTime = horaire.getHeure_fin();
+
+        if (startTime.isBefore(openingTime) || endTime.isAfter(closingTime)) {
+            throw new RuntimeException("Réservation en dehors des heures d'ouverture.");
+        }
+
+        List<ReservationEntity> existingReservations =
+                reservationRepository.findByCourtAndDate(court, dto.date());
+
+        for (ReservationEntity existing : existingReservations) {
+            LocalTime existingBlockedEnd =
+                    existing.getEndTime().plusMinutes(horaire.getPause_minutes());
+
+            boolean overlap =
+                    startTime.isBefore(existingBlockedEnd) &&
+                            blockedEndTime.isAfter(existing.getStartTime());
+
+            if (overlap) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Ce terrain est déjà réservé sur ce créneau."
+                );
+            }
+        }
+
+        ReservationEntity reservation = reservationMapper.toEntity(dto, court, member);
+        reservation.setId(null);
+        reservation.setEndTime(endTime);
+
+        reservationRepository.save(reservation);
     }
 }

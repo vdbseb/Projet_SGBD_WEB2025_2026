@@ -1,17 +1,15 @@
 package be.angularpadelclub.Controler;
 
+import be.angularpadelclub.DTO.ReservationDTO;
+import be.angularpadelclub.Mapper.ReservationMapper;
+import be.angularpadelclub.Service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestBody;
-import be.angularpadelclub.Service.ReservationService;
-import be.angularpadelclub.DTO.ReservationDTO;
-import be.angularpadelclub.Mapper.ReservationMapper;
-
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -27,7 +25,7 @@ public class ReservationController {
     }
 
     @GetMapping(path = "/{id}", produces = "application/json")
-    public ResponseEntity<ReservationDTO> reservation(@PathVariable UUID id) {
+    public ResponseEntity<ReservationDTO> reservation(@PathVariable int id) {
         return ResponseEntity.of(
                 reservationService.findById(id)
                         .map(reservationMapper::toDTO)
@@ -40,15 +38,17 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteReservation(@PathVariable UUID id) {
+    public void deleteReservation(@PathVariable int id) {
         reservationService.deleteReservation(id);
     }
 
-    @GetMapping("/court/{courtId}/date/{date}")
-    public List<ReservationDTO> getReservationsByCourtAndDate(
-            @PathVariable Integer courtId,
-            @PathVariable LocalDate date
+    @GetMapping(params = {"courtId", "date"}, produces = "application/json")
+    public List<ReservationDTO> reservationsByCourtAndDate(
+            @RequestParam int courtId,
+            @RequestParam LocalDate date
     ) {
-        return reservationService.findByCourtAndDate(courtId, date);
+        return reservationMapper.toDTOList(
+                reservationService.findByCourtAndDate(courtId, date)
+        );
     }
 }

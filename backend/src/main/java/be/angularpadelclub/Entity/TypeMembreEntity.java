@@ -3,30 +3,22 @@ package be.angularpadelclub.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "terrain")
-
-public class CourtEntity {
+@Table(name = "type_membre")
+public class TypeMembreEntity {
 
     @Id
+    @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false)
-    private String nom;
+    private String code; // GLOBAL, SITE, LIBRE
 
     @Column(nullable = false)
-    private boolean couvert;
-
-    @Column(nullable = false)
-    private boolean actif;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "site_id", nullable = false)
-    private SiteEntity site;
+    private String libelle;
 }

@@ -6,57 +6,62 @@ import be.angularpadelclub.Entity.SiteEntity;
 import be.angularpadelclub.Mapper.MemberMapper;
 import be.angularpadelclub.Repository.MemberRepository;
 import be.angularpadelclub.Repository.SiteRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
+
 
 @Service
-@RequiredArgsConstructor
 public class MemberService {
 
     private final MemberRepository memberRepository;
     private final SiteRepository siteRepository;
+    private final MemberMapper memberMapper;
 
-    public List<MemberDTO> getAllMembers() {
-        return memberRepository.findAll()
-                .stream()
-                .map(MemberMapper::toDTO)
-                .collect(Collectors.toList());
+    public MemberService(
+            MemberRepository memberRepository,
+            SiteRepository siteRepository,
+            MemberMapper memberMapper
+    ) {
+        this.memberRepository = memberRepository;
+        this.siteRepository = siteRepository;
+        this.memberMapper = memberMapper;
     }
 
-    public MemberDTO getMemberByMatricule(String matricule) {
-        return memberRepository.findById(matricule)
-                .map(MemberMapper::toDTO)
-                .orElse(null);
+    public List<MemberEntity> findAll() {
+        return memberRepository.findAll();
     }
 
-    public MemberDTO createMember(MemberDTO dto) {
+    public Optional<MemberEntity> findById(int id) {
+        return memberRepository.findById(id);
+    }
 
-        if (memberRepository.existsByMatricule(dto.getMatricule())) {
-            throw new RuntimeException("Matricule already exists");
-        }
+    public Optional<MemberEntity> findByMatricule(String matricule) {
+        return memberRepository.findByMatricule(matricule);
+    }
 
-        if (memberRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email already exists");
+    public void addMember(MemberDTO dto) {
+
+        if (memberRepository.existsByMatricule(dto.matricule())) {
+            throw new RuntimeException("Matricule already exists.");
         }
 
         SiteEntity site = null;
 
-        if (dto.getSiteId() != null) {
-            site = siteRepository.findById(dto.getSiteId())
+        if (dto.siteId() != null) {
+            site = siteRepository.findById(dto.siteId())
                     .orElseThrow(() -> new RuntimeException("Site not found"));
         }
 
-        MemberEntity member = MemberMapper.toEntity(dto, site);
+        MemberEntity member = memberMapper.toEntity(dto, site);
 
-        return MemberMapper.toDTO(
-                memberRepository.save(member)
-        );
+        member.setId(null);
+
+        memberRepository.save(member);
     }
 
-    public void deleteMember(String matricule) {
-        memberRepository.deleteById(matricule);
+    public void deleteMember(int id) {
+        memberRepository.deleteById(id);
     }
 }

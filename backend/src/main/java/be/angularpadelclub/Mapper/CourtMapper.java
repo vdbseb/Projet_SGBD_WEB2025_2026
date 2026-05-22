@@ -2,16 +2,29 @@ package be.angularpadelclub.Mapper;
 
 import be.angularpadelclub.DTO.CourtDTO;
 import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.SiteEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CourtMapper {
 
-    public static CourtDTO toDTO(CourtEntity court) {
-        CourtDTO dto = new CourtDTO();
+    public CourtDTO toDTO(CourtEntity entity) {
+        return new CourtDTO(
+                entity.getId(),
+                entity.getNom(),
+                entity.getSite().getId(),
+                entity.isCouvert(),
+                entity.isActif()
+        );
+    }
 
-        dto.setId(court.getId());
-        dto.setName("Terrain " + court.getName());
-        dto.setType(court.getCouvert() ? "Indoor" : "Outdoor");
-
-        return dto;
+    public CourtEntity toEntity(CourtDTO dto, SiteEntity site) {
+        CourtEntity entity = new CourtEntity();
+        entity.setId(dto.id());
+        entity.setNom(dto.name());
+        entity.setSite(site);
+        entity.setCouvert(dto.indoor());
+        entity.setActif(dto.active());
+        return entity;
     }
 }
