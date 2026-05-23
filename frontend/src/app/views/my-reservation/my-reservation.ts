@@ -17,6 +17,7 @@ export class MyReservations implements OnInit {
 
   reservations = signal<any[]>([]);
   sites = signal<any[]>([]);
+  selectedFilter = signal<'all' | 'upcoming' | 'past'>('all');
 
   ngOnInit() {
     const member = this.authService.currentMember();
@@ -90,5 +91,23 @@ export class MyReservations implements OnInit {
       case 'past':
         return 'bg-slate-100 text-slate-500';
     }
+  }
+  getFilteredReservations() {
+    const filter = this.selectedFilter();
+
+    if (filter === 'all') {
+      return this.reservations();
+    }
+
+    if (filter === 'upcoming') {
+      return this.reservations().filter(reservation => {
+        const status = this.getReservationStatus(reservation);
+        return status === 'today' || status === 'upcoming';
+      });
+    }
+
+    return this.reservations().filter(reservation =>
+      this.getReservationStatus(reservation) === 'past'
+    );
   }
 }

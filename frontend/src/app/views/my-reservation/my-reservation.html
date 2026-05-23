@@ -2,6 +2,37 @@
   <h1 class="text-3xl font-black mb-8 uppercase">
     Mes réservations
   </h1>
+  <div class="flex gap-3 mb-8">
+    <button
+      (click)="selectedFilter.set('all')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'all'
+      ? 'bg-slate-900 text-white'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      Toutes
+    </button>
+
+    <button
+      (click)="selectedFilter.set('upcoming')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'upcoming'
+      ? 'bg-blue-600 text-white'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      À venir
+    </button>
+
+    <button
+      (click)="selectedFilter.set('past')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'past'
+      ? 'bg-slate-500 text-white'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      Passées
+    </button>
+  </div>
 
   @if (reservations().length === 0) {
     <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
@@ -23,7 +54,7 @@
   }
 
   <div class="grid gap-4">
-    @for (reservation of reservations(); track reservation.id) {
+    @for (reservation of getFilteredReservations(); track reservation.id) {
       <div class="relative bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
 
         <span
