@@ -15,6 +15,7 @@ export class MyReservations implements OnInit {
   authService = inject(AuthService);
 
   reservations = signal<any[]>([]);
+  sites = signal<any[]>([]);
 
   ngOnInit() {
     const member = this.authService.currentMember();
@@ -23,6 +24,10 @@ export class MyReservations implements OnInit {
       this.reservations.set([]);
       return;
     }
+
+    this.padelService.getSites().subscribe(sites => {
+      this.sites.set(sites);
+    });
 
     this.padelService.getAllReservations().subscribe(reservations => {
       const filteredReservations = reservations
@@ -36,6 +41,13 @@ export class MyReservations implements OnInit {
 
       this.reservations.set(filteredReservations);
     });
+  }
+  getSiteName(reservation: any): string {
+    const site = this.sites().find(site =>
+      site.courts?.some((court: any) => court.id === reservation.courtId)
+    );
+
+    return site?.clubName || 'Club inconnu';
   }
   getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
     const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);

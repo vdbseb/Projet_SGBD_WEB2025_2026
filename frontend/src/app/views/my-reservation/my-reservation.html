@@ -36,6 +36,9 @@
         <p class="font-bold text-lg">
           {{ reservation.courtName }}
         </p>
+        <p class="text-slate-400 text-sm mb-2">
+          {{ getSiteName(reservation) }}
+        </p>
 
         <p class="text-slate-500">
           Date : {{ reservation.date | date:'dd/MM/yyyy' }}
