@@ -2,6 +2,18 @@
   <h1 class="text-3xl font-black mb-8 uppercase">
     Mes réservations
   </h1>
+  @if (authService.currentMember(); as member) {
+    <p class="text-slate-500 mb-6">
+      Connecté en tant que
+      <span class="font-bold text-slate-900">
+      {{ member.firstName }} {{ member.lastName }}
+    </span>
+      —
+      <span class="font-mono">
+      {{ member.matricule }}
+    </span>
+    </p>
+  }
   <div class="flex gap-3 mb-8">
     <button
       (click)="selectedFilter.set('all')"
