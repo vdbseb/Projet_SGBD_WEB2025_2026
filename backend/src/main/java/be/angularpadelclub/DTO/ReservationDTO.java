@@ -6,11 +6,9 @@ import java.time.LocalTime;
 
 public record ReservationDTO(
         Integer id,
-        Integer courtId,
-        String courtName,
-        Integer memberId,
-        String playerMatricule,
         LocalDate date,
+        LocalTime endTime,
         LocalTime startTime,
-        LocalTime endTime
+        Integer courtId,
+        Integer memberId
 ) {}
