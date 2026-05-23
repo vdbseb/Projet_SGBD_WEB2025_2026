@@ -25,11 +25,16 @@ export class MyReservations implements OnInit {
     }
 
     this.padelService.getAllReservations().subscribe(reservations => {
-      this.reservations.set(
-        reservations.filter(reservation =>
-          reservation.memberId === member.id
-        )
-      );
+      const filteredReservations = reservations
+        .filter(reservation => reservation.memberId === member.id)
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
+          const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
+
+          return dateA - dateB;
+        });
+
+      this.reservations.set(filteredReservations);
     });
   }
 }
