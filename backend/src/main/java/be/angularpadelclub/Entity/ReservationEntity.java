@@ -1,37 +1,47 @@
 package be.angularpadelclub.Entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.LocalDateTime;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "reservation")
+@Table(name = "match_padel")
 public class ReservationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "date", nullable = false)
-    private LocalDate date;
-
-    @Column(name = "end_time", nullable = false)
-    private LocalTime endTime;
-
-    @Column(name = "start_time", nullable = false)
-    private LocalTime startTime;
-
     @ManyToOne(optional = false)
-    @JoinColumn(name = "court_id", nullable = false)
+    @JoinColumn(name = "terrain_id", nullable = false)
     private CourtEntity court;
 
+    @Column(nullable = false)
+    private LocalDate date;
+
+    @Column(nullable = false)
+    private LocalTime startTime;
+
+    @Column(nullable = false)
+    private LocalTime endTime;
+
     @ManyToOne(optional = false)
-    @JoinColumn(name = "membre_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = false)
     private MemberEntity member;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
