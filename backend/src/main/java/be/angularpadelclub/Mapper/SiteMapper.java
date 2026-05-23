@@ -3,23 +3,23 @@ package be.angularpadelclub.Mapper;
 import be.angularpadelclub.DTO.SiteDTO;
 import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.SiteEntity;
-import be.angularpadelclub.Service.SiteService;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class SiteMapper {
 
     public SiteDTO toDTO(SiteEntity entity, HoraireSiteEntity horaire) {
+        var openingTime = horaire != null ? horaire.getHeure_debut() : null;
+        var closingTime = horaire != null ? horaire.getHeure_fin() : null;
+
         return new SiteDTO(
                 entity.getId(),
                 entity.getNom(),
                 entity.getVille(),
                 entity.getAdresse(),
                 entity.getDescription(),
-                horaire.getHeure_debut(),
-                horaire.getHeure_fin(),
+                openingTime,
+                closingTime,
                 entity.isActif(),
                 entity.getImage_url()
         );

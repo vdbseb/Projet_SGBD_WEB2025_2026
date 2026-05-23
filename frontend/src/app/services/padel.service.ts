@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
 import {PadelCourt, PadelSite} from '../shared/site.model';
 import {HttpClient} from '@angular/common/http';
-import {forkJoin, map, Observable} from 'rxjs';
+import {catchError, forkJoin, map, Observable} from 'rxjs';
 
 interface SiteDTO {
   id: number;
@@ -102,8 +102,16 @@ export class PadelService {
     );
   }
   getMemberByMatricule(matricule: string) {
+    const normalized = encodeURIComponent(matricule.trim().toUpperCase());
+
     return this.httpClient.get<any>(
-      `${this.apiBaseUrl}/members/matricule/${matricule}`
+      `${this.apiBaseUrl}/members/matricule/${normalized}`
+    ).pipe(
+      catchError(() =>
+        this.httpClient.get<any>(
+          `${this.apiBaseUrl}/members/${normalized}`
+        )
+      )
     );
   }
   getAllReservations() {

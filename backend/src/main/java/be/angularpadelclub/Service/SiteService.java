@@ -50,7 +50,7 @@ public class SiteService {
 
         HoraireSiteEntity horaire = horaireSiteRepository
                 .findBySite_IdAndAnnee(site.getId(), currentYear)
-                .orElseThrow(() -> new RuntimeException("Horaire not found"));
+                .orElse(null);
 
         return siteMapper.toDTO(site, horaire);
     }

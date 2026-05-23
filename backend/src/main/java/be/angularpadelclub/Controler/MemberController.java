@@ -36,6 +36,13 @@ public class MemberController {
                 .orElseThrow(() -> new RuntimeException("Member not found"));
     }
 
+    @GetMapping(value = "/matricule/{matricule}", produces = "application/json")
+    public MemberDTO findByMatricule(@PathVariable String matricule) {
+        return memberService.findByMatricule(matricule)
+                .map(memberMapper::toDTO)
+                .orElseThrow(() -> new RuntimeException("Member not found"));
+    }
+
     @PostMapping(consumes = "application/json")
     public void addMember(@RequestBody MemberDTO dto) {
         memberService.addMember(dto);

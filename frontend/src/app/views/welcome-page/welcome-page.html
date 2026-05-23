@@ -17,7 +17,7 @@
         [initial]="site.initial"
         [image]="site.image"
         [buttonLabel]="'Réserve à ' + site.city"
-        (click)="goToReservation(site.id)">
+        (cardClick)="goToReservation(site.id)">
 
         <p class="text-slate-500 leading-relaxed text-sm">
           {{ site.description }}
