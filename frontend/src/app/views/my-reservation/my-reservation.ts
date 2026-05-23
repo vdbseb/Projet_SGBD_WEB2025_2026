@@ -37,4 +37,45 @@ export class MyReservations implements OnInit {
       this.reservations.set(filteredReservations);
     });
   }
+  getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
+    const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
+    const now = new Date();
+
+    const sameDay =
+      reservationDate.getFullYear() === now.getFullYear() &&
+      reservationDate.getMonth() === now.getMonth() &&
+      reservationDate.getDate() === now.getDate();
+
+    if (sameDay) {
+      return 'today';
+    }
+
+    return reservationDate > now ? 'upcoming' : 'past';
+  }
+
+  getStatusLabel(reservation: any): string {
+    const status = this.getReservationStatus(reservation);
+
+    switch (status) {
+      case 'today':
+        return 'Aujourd’hui';
+      case 'upcoming':
+        return 'À venir';
+      case 'past':
+        return 'Passée';
+    }
+  }
+
+  getStatusClass(reservation: any): string {
+    const status = this.getReservationStatus(reservation);
+
+    switch (status) {
+      case 'today':
+        return 'bg-orange-100 text-orange-700';
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-700';
+      case 'past':
+        return 'bg-slate-100 text-slate-500';
+    }
+  }
 }

@@ -24,7 +24,15 @@
 
   <div class="grid gap-4">
     @for (reservation of reservations(); track reservation.id) {
-      <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+      <div class="relative bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+
+        <span
+          class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest"
+          [class]="getStatusClass(reservation)"
+        >
+          {{ getStatusLabel(reservation) }}
+        </span>
+
         <p class="font-bold text-lg">
           {{ reservation.courtName }}
         </p>
@@ -40,6 +48,7 @@
         <p class="text-slate-400 text-sm mt-2">
           Matricule : {{ reservation.playerMatricule }}
         </p>
+
       </div>
     }
   </div>
