@@ -33,24 +33,36 @@
           {{ getStatusLabel(reservation) }}
         </span>
 
-        <p class="font-bold text-lg">
-          {{ reservation.courtName }}
-        </p>
-        <p class="text-slate-400 text-sm mb-2">
-          {{ getSiteName(reservation) }}
-        </p>
+        <div class="flex items-center gap-2 mb-1">
+          <mat-icon class="text-slate-700">sports_tennis</mat-icon>
+          <p class="font-bold text-lg m-0">
+            {{ reservation.courtName }}
+          </p>
+        </div>
 
-        <p class="text-slate-500">
-          Date : {{ reservation.date | date:'dd/MM/yyyy' }}
-        </p>
+        <div class="flex items-center gap-2 text-slate-400 text-sm mb-4">
+          <mat-icon class="text-base">location_city</mat-icon>
+          <span>{{ getSiteName(reservation) }}</span>
+        </div>
 
-        <p class="text-slate-500">
-          Heure : {{ reservation.startTime }} - {{ reservation.endTime }}
-        </p>
+        <div class="flex items-center gap-2 text-slate-500 mb-2">
+          <mat-icon class="text-base">calendar_month</mat-icon>
+          <span>
+            {{ reservation.date | date:'dd/MM/yyyy' }}
+          </span>
+        </div>
 
-        <p class="text-slate-400 text-sm mt-2">
-          Matricule : {{ reservation.playerMatricule }}
-        </p>
+        <div class="flex items-center gap-2 text-slate-500 mb-2">
+          <mat-icon class="text-base">schedule</mat-icon>
+          <span>
+            {{ reservation.startTime }} - {{ reservation.endTime }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-400 text-sm mt-3">
+          <mat-icon class="text-base">badge</mat-icon>
+          <span>{{ reservation.playerMatricule }}</span>
+        </div>
 
       </div>
     }

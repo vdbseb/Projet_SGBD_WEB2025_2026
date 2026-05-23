@@ -3,11 +3,12 @@ import { DatePipe } from '@angular/common';
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-my-reservation',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, MatIconModule],
   templateUrl: './my-reservation.html'
 })
 export class MyReservations implements OnInit {
