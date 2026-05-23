@@ -28,6 +28,8 @@ public class MemberMapper {
         MemberEntity entity = new MemberEntity();
 
         entity.setId(dto.id());
+        entity.setActif(dto.active());
+        entity.setEmail(dto.email());
         entity.setMatricule(dto.matricule());
         entity.setPrenom(dto.firstName());
         entity.setNom(dto.lastName());
