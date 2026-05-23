@@ -29,9 +29,9 @@ public class MemberController {
         return memberMapper.toDTOList(memberService.findAll());
     }
 
-    @GetMapping(value = "/{id}", produces = "application/json")
-    public MemberDTO findById(@PathVariable int id) {
-        return memberService.findById(id)
+    @GetMapping(value = "/{matricule}", produces = "application/json")
+    public MemberDTO findById(@PathVariable String matricule) {
+        return memberService.findByMatricule(matricule)
                 .map(memberMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
     }

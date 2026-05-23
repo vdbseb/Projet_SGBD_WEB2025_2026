@@ -1,13 +1,11 @@
-export type UUID = string;
-
 export interface PadelCourt {
-  id: string;
+  id: number;
   name: string;
   type: 'Indoor' | 'Outdoor';
 }
 
 export interface PadelSite {
-  id: UUID;
+  id: number;
   city: string;
   clubName: string;
   description: string;

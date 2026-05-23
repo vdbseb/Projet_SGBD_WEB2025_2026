@@ -1,0 +1,113 @@
+<section class="max-w-5xl mx-auto px-8 py-12">
+  <h1 class="text-3xl font-black mb-8 uppercase">
+    Mes réservations
+  </h1>
+  @if (authService.currentMember(); as member) {
+    <p class="text-slate-500 mb-6">
+      Connecté en tant que
+      <span class="font-bold text-slate-900">
+      {{ member.firstName }} {{ member.lastName }}
+    </span>
+      —
+      <span class="font-mono">
+      {{ member.matricule }}
+    </span>
+    </p>
+  }
+  <div class="flex gap-3 mb-8">
+    <button
+      (click)="selectedFilter.set('all')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'all'
+      ? 'bg-slate-900 text-white'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      Toutes ({{ countAllReservations() }})
+    </button>
+
+    <button
+      (click)="selectedFilter.set('upcoming')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'upcoming'
+      ? 'bg-blue-600 text-white'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      À venir ({{ countUpcomingReservations() }})
+    </button>
+
+    <button
+      (click)="selectedFilter.set('past')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'past'
+      ? 'bg-slate-500 text-white'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      Passées ({{ countPastReservations() }})
+    </button>
+  </div>
+
+  @if (reservations().length === 0) {
+    <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+      <h2 class="text-xl font-black text-slate-900 mb-2">
+        Aucune réservation
+      </h2>
+
+      <p class="text-slate-500 mb-6">
+        Vous n’avez encore aucune réservation.
+      </p>
+
+      <a
+        routerLink="/"
+        class="inline-block bg-slate-900 text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest no-underline"
+      >
+        Réserver un terrain
+      </a>
+    </div>
+  }
+
+  <div class="grid gap-4">
+    @for (reservation of getFilteredReservations(); track reservation.id) {
+      <div class="relative bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+
+        <span
+          class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest"
+          [class]="getStatusClass(reservation)"
+        >
+          {{ getStatusLabel(reservation) }}
+        </span>
+
+        <div class="flex items-center gap-2 mb-1">
+          <mat-icon class="text-slate-700">sports_tennis</mat-icon>
+          <p class="font-bold text-lg m-0">
+            {{ reservation.courtName }}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-400 text-sm mb-4">
+          <mat-icon class="text-base">location_city</mat-icon>
+          <span>{{ getSiteName(reservation) }}</span>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-500 mb-2">
+          <mat-icon class="text-base">calendar_month</mat-icon>
+          <span>
+            {{ reservation.date | date:'dd/MM/yyyy' }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-500 mb-2">
+          <mat-icon class="text-base">schedule</mat-icon>
+          <span>
+            {{ reservation.startTime }} - {{ reservation.endTime }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-400 text-sm mt-3">
+          <mat-icon class="text-base">badge</mat-icon>
+          <span>{{ reservation.playerMatricule }}</span>
+        </div>
+
+      </div>
+    }
+  </div>
+</section>

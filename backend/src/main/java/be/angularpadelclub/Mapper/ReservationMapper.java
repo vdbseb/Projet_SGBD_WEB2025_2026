@@ -14,15 +14,15 @@ public class ReservationMapper {
     public ReservationDTO toDTO(ReservationEntity entity) {
         return new ReservationDTO(
                 entity.getId(),
-                entity.getCourt().getId(),
-                entity.getCourt().getNom(),
-                entity.getMember().getId(),
-                entity.getMember().getMatricule(),
                 entity.getDate(),
                 entity.getStartTime(),
-                entity.getEndTime()
+                entity.getEndTime(),
+                entity.getCourt().getId(),
+                entity.getMember().getId()
         );
     }
+
+
 
     public ReservationEntity toEntity(
             ReservationDTO dto,
@@ -32,11 +32,11 @@ public class ReservationMapper {
         ReservationEntity entity = new ReservationEntity();
 
         entity.setId(dto.id());
-        entity.setCourt(court);
-        entity.setMember(member);
         entity.setDate(dto.date());
         entity.setStartTime(dto.startTime());
         entity.setEndTime(dto.endTime());
+        entity.setCourt(court);
+        entity.setMember(member);
 
         return entity;
     }

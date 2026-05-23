@@ -36,14 +36,15 @@ export class ReservationPage implements OnInit {
   selectedDate = signal<Date | null>(new Date());
   selectedTime = signal<string | null>(null);
   members = signal<any[]>([]);
-  selectedMemberId = signal<string | null>(null);
+  selectedMemberId = signal<number | null>(null);
   reservedTimes = signal<string[]>([]);
   private snackBar = inject(MatSnackBar);
 
 
   ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    const id = idParam ? Number(idParam) : NaN;
+    if (Number.isFinite(id)) {
       this.padelService.getSiteById(id).subscribe(site => {
         this.site.set(site);
       });
@@ -53,7 +54,8 @@ export class ReservationPage implements OnInit {
     });
   }
   onMemberSelected(memberId: string) {
-    this.selectedMemberId.set(memberId);
+    const numericId = Number(memberId);
+    this.selectedMemberId.set(Number.isFinite(numericId) ? numericId : null);
   }
 
   onTimeSelected(time: string) {

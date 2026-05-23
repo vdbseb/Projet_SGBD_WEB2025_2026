@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="correction package name">
+      <change beforePath="$PROJECT_DIR$/.idea/Projet_SGBD_WEB2025_2026.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Projet_SGBD_WEB2025_2026.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/init.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/initold.sql/init.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/SiteController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/be/angularpadelclub/Controler/SiteController.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -14,7 +17,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="8-1gérer-les-sites" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -39,6 +42,17 @@
     &quot;accountId&quot;: &quot;8ec9325b-2c44-462a-9b2d-b7fc1d0a2b0e&quot;
   }
 }</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
 }</component>
@@ -52,7 +66,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "Population-DB",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/Sébastien/IdeaProjects/Projet_SGBD_WEB2025_2026/backend/src/main/java/be/angularpadelclub/Repository",
     "settings.editor.selected.configurable": "preferences.pluginManager"
@@ -77,7 +91,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.33514.17" />
       </set>
     </attachedChunks>
   </component>

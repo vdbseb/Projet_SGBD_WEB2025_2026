@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Reservation {
-  id?: string;
+  id?: number;
   courtName: string;
   date: string;
   timeSlot: string;
