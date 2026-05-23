@@ -7,7 +7,7 @@ export const routes: Routes = [
   { path: '', component: WelcomePage },
   { path: 'reserver/:id', component: ReservationPage },
   {
-    path: 'mes-reservation',
+    path: 'mes-reservations',
     loadComponent: () =>
       import('./views/my-reservation/my-reservation')
         .then(m => m.MyReservations)
