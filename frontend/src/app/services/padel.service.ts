@@ -15,7 +15,7 @@ interface SiteDTO {
 interface CourtDTO {
   id: number;
   name: string;
-  type: 'Indoor' | 'Outdoor';
+  indoor: boolean;
   siteId: number;
 }
 
@@ -54,7 +54,7 @@ export class PadelService {
     return {
       id: court.id,
       name: court.name,
-      type: court.type
+      type: court.indoor ? 'Indoor' : 'Outdoor'
     };
   }
 
