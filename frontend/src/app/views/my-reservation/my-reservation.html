@@ -4,9 +4,22 @@
   </h1>
 
   @if (reservations().length === 0) {
-    <p class="text-slate-500">
-      Aucune réservation trouvée.
-    </p>
+    <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center shadow-sm">
+      <h2 class="text-xl font-black text-slate-900 mb-2">
+        Aucune réservation
+      </h2>
+
+      <p class="text-slate-500 mb-6">
+        Vous n’avez encore aucune réservation.
+      </p>
+
+      <a
+        routerLink="/"
+        class="inline-block bg-slate-900 text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest no-underline"
+      >
+        Réserver un terrain
+      </a>
+    </div>
   }
 
   <div class="grid gap-4">
