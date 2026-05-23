@@ -20,5 +20,5 @@ public class TypeMembreEntity {
     private String code; // GLOBAL, SITE, LIBRE
 
     @Column(nullable = false)
-    private String libelle;
+    private int delai_reservation_jours;
 }
