@@ -40,6 +40,14 @@ public class MemberService {
         return memberRepository.findByMatricule(matricule);
     }
 
+    public List<MemberEntity> findByNomAndPrenom(
+            String nom,
+            String prenom
+    ) {
+        return memberRepository
+                .findByNomIgnoreCaseAndPrenomIgnoreCase(nom, prenom);
+    }
+
     public void addMember(MemberDTO dto) {
 
         if (memberRepository.existsByMatricule(dto.matricule())) {

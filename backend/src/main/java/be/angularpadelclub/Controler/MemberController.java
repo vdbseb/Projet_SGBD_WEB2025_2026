@@ -29,6 +29,17 @@ public class MemberController {
         return memberMapper.toDTOList(memberService.findAll());
     }
 
+    @GetMapping("/search")
+    public List<MemberDTO> findByNomAndPrenom(
+            @RequestParam String nom,
+            @RequestParam String prenom
+    ) {
+        return memberService
+                .findByNomAndPrenom(nom, prenom)
+                .stream().map(memberMapper::toDTO)
+                .toList();
+    }
+
     @GetMapping(value = "/{matricule}", produces = "application/json")
     public MemberDTO findById(@PathVariable String matricule) {
         return memberService.findByMatricule(matricule)
