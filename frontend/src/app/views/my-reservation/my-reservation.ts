@@ -109,5 +109,23 @@ export class MyReservations implements OnInit {
     return this.reservations().filter(reservation =>
       this.getReservationStatus(reservation) === 'past'
     );
+
+  }
+
+  countAllReservations(): number {
+    return this.reservations().length;
+  }
+
+  countUpcomingReservations(): number {
+    return this.reservations().filter(reservation => {
+      const status = this.getReservationStatus(reservation);
+      return status === 'today' || status === 'upcoming';
+    }).length;
+  }
+
+  countPastReservations(): number {
+    return this.reservations().filter(reservation =>
+      this.getReservationStatus(reservation) === 'past'
+    ).length;
   }
 }

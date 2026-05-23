@@ -10,7 +10,7 @@
       ? 'bg-slate-900 text-white'
       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
     >
-      Toutes
+      Toutes ({{ countAllReservations() }})
     </button>
 
     <button
@@ -20,7 +20,7 @@
       ? 'bg-blue-600 text-white'
       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
     >
-      À venir
+      À venir ({{ countUpcomingReservations() }})
     </button>
 
     <button
@@ -30,7 +30,7 @@
       ? 'bg-slate-500 text-white'
       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
     >
-      Passées
+      Passées ({{ countPastReservations() }})
     </button>
   </div>
 
