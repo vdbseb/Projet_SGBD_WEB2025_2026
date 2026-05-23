@@ -10,11 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/sites")
 public class SiteController {
-//    @GetMapping("/test")
-//    public String test() {
-//        return "ok";
-//    }
-//
+
 
     private final SiteService siteService;
 
