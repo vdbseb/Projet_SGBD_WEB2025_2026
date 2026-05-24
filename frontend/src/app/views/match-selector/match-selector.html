@@ -1,0 +1,68 @@
+<div class="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 mb-10">
+  <h2 class="font-black uppercase tracking-widest text-sm mb-6 text-slate-900">
+    4. Type de match
+  </h2>
+
+  <div class="flex gap-4 mb-6">
+    <button
+      type="button"
+      class="px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all"
+      [class]="matchType() === 'PRIVATE'
+        ? 'bg-slate-900 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+      (click)="selectMatchType('PRIVATE')"
+    >
+      Privé
+    </button>
+
+    <button
+      type="button"
+      class="px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all"
+      [class]="matchType() === 'PUBLIC'
+        ? 'bg-blue-600 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+      (click)="selectMatchType('PUBLIC')"
+    >
+      Public ouvert
+    </button>
+  </div>
+
+  @if (matchType() === 'PRIVATE') {
+    <p class="text-slate-500 mb-4">
+      Ajoute les 3 autres joueurs par matricule.
+    </p>
+    @if (currentMember(); as member) {
+      <div class="bg-slate-50 rounded-xl px-4 py-3 mb-4 border border-slate-100">
+        <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-1">
+          Joueur 1 — toi
+        </p>
+
+        <p class="font-bold text-slate-900">
+          {{ member.firstName }} {{ member.lastName }}
+        </p>
+
+        <p class="font-mono text-slate-500 text-sm">
+          {{ member.matricule }}
+        </p>
+      </div>
+    }
+    @if (isPrivateIncomplete()) {
+      <p class="text-red-500 text-sm font-semibold mt-2">
+        Pour un match privé, les 3 autres joueurs sont obligatoires.
+      </p>
+    }
+
+    @for (participant of participantMatricules(); track $index) {
+      <input
+        class="w-full border border-slate-200 rounded-xl px-4 py-3 mb-3 uppercase"
+        placeholder="Matricule joueur {{ $index + 2 }}"
+        [value]="participant"
+        (input)="updateParticipant($index, $any($event.target).value)"
+      />
+    }
+  } @else {
+    <div class="bg-blue-50 text-blue-700 rounded-xl p-4 font-semibold">
+      Match public : tu réserves ta place, les 3 autres joueurs pourront rejoindre le match.
+    </div>
+  }
+</div>
