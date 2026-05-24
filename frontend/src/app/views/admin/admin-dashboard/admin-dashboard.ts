@@ -10,7 +10,7 @@ import { AdminCardComponent } from '../admin-card/admin-card';
   templateUrl: './admin-dashboard.html'
 })
 export class AdminDashboard {
-  adminType = signal<'GLOBAL' | 'SITE'>('SITE');
+  adminType = signal<'GLOBAL' | 'SITE'>('GLOBAL');
 
   isGlobalAdmin(): boolean {
     return this.adminType() === 'GLOBAL';
