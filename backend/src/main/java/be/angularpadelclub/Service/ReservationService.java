@@ -66,6 +66,14 @@ public class ReservationService {
         MembreEntity member = membreRepository.findById(dto.memberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
+        // AC : vérifier statut membre
+        if (!member.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Réservation impossible : membre inactif."
+            );
+        }
+
         int currentYear = dto.date().getYear();
 
         HoraireSiteEntity horaire = horaireSiteRepository
