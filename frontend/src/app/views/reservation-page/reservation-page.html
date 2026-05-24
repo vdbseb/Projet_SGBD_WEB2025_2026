@@ -37,12 +37,13 @@
           [reservedTimes]="reservedTimes()"
           (slotSelected)="onTimeSelected($event)">
         </app-time-slots>
-
         <app-match-selector
           [(matchType)]="selectedMatchType"
+          [currentMember]="authService.currentMember()"
           (participantsChanged)="onParticipantsChanged($event)"
           (validityChanged)="onMatchValidityChanged($event)">
         </app-match-selector>
+
 
         @if (selectedTime()) {
           <div class="mt-10 p-8 rounded-4xl shadow-xl bg-slate-900 text-white border border-slate-800 animate-in">

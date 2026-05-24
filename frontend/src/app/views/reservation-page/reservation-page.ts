@@ -37,7 +37,7 @@ import { MatchSelectorComponent, MatchType } from '../match-selector/match-selec
 export class ReservationPage implements OnInit {
   private route = inject(ActivatedRoute);
   private padelService = inject(PadelService);
-  private authService = inject(AuthService);
+  authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
 
   site = signal<PadelSite | undefined>(undefined);
