@@ -1,17 +1,20 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PadelService } from '../../services/padel.service';
-import { PadelSite, PadelCourt } from '../../shared/site.model';
+import { DatePipe } from '@angular/common';
+
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import {PadelCardComponent} from '../padel-card/padel-card';
-import {DateSelectorComponent} from '../date-selector/date-selector';
-import {TimeSlotsComponent} from '../time-slot/time-slot';
-import {DatePipe} from '@angular/common';
-import { MatSnackBar} from '@angular/material/snack-bar';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
+import { PadelService } from '../../services/padel.service';
+import { AuthService } from '../../services/auth.service';
+import { PadelSite, PadelCourt } from '../../shared/site.model';
+
+import { PadelCardComponent } from '../padel-card/padel-card';
+import { DateSelectorComponent } from '../date-selector/date-selector';
+import { TimeSlotsComponent } from '../time-slot/time-slot';
 import { MatchSelectorComponent, MatchType } from '../match-selector/match-selector';
 
 @Component({
@@ -22,55 +25,47 @@ import { MatchSelectorComponent, MatchType } from '../match-selector/match-selec
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatSnackBarModule,
     PadelCardComponent,
     DateSelectorComponent,
     TimeSlotsComponent,
     MatchSelectorComponent,
-    DatePipe,
-    MatSnackBarModule
+    DatePipe
   ],
   templateUrl: './reservation-page.html'
 })
 export class ReservationPage implements OnInit {
   private route = inject(ActivatedRoute);
   private padelService = inject(PadelService);
+  private authService = inject(AuthService);
+  private snackBar = inject(MatSnackBar);
 
   site = signal<PadelSite | undefined>(undefined);
   selectedCourt = signal<PadelCourt | undefined>(undefined);
   selectedDate = signal<Date | null>(new Date());
   selectedTime = signal<string | null>(null);
-  members = signal<any[]>([]);
-  selectedMemberId = signal<number | null>(null);
   reservedTimes = signal<string[]>([]);
-  private snackBar = inject(MatSnackBar);
+
   selectedMatchType = signal<MatchType>('PRIVATE');
   participantMatricules = signal<string[]>([]);
-
+  isMatchSelectionValid = signal(false);
 
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
+
     if (Number.isFinite(id)) {
       this.padelService.getSiteById(id).subscribe(site => {
         this.site.set(site);
       });
     }
-    this.padelService.getMembers().subscribe(members => {
-      this.members.set(members);
-    });
-  }
-  onMemberSelected(memberId: string) {
-    const numericId = Number(memberId);
-    this.selectedMemberId.set(Number.isFinite(numericId) ? numericId : null);
   }
 
   onTimeSelected(time: string) {
-    console.log('Heure sélectionnée :', time);
     this.selectedTime.set(time);
   }
 
   onDateSelected(date: Date) {
-    console.log('Nouvelle date sélectionnée :', date);
     this.selectedDate.set(date);
     this.selectedTime.set(null);
     this.loadReservedTimes();
@@ -81,6 +76,7 @@ export class ReservationPage implements OnInit {
     this.selectedTime.set(null);
     this.loadReservedTimes();
   }
+
   loadReservedTimes() {
     const court = this.selectedCourt();
     const date = this.selectedDate();
@@ -96,56 +92,6 @@ export class ReservationPage implements OnInit {
       this.reservedTimes.set(reservations.map(r => r.startTime));
     });
   }
-  onConfirmBooking() {
-    const court = this.selectedCourt();
-    const date = this.selectedDate();
-    const time = this.selectedTime();
-
-
-    if (court && date && time && this.selectedMemberId()) {
-      const startTime = `${time}:00`;
-
-      const [hour, minute] = time.split(':').map(Number);
-      const endTime = `${(hour + 1).toString().padStart(2, '0')}:${minute
-        .toString()
-        .padStart(2, '0')}:00`;
-
-      const newReservation = {
-        id: null,
-        courtId: court.id,
-        courtName: null,
-        memberId: this.selectedMemberId(),
-        playerMatricule: null,
-        date: date.toISOString().split('T')[0],
-        startTime: startTime,
-        endTime: endTime,
-        matchType: this.selectedMatchType(),
-        participantMatricules: this.participantMatricules()
-      };
-
-      this.padelService.createReservation(newReservation).subscribe({
-        next: () => {
-          this.snackBar.open('Réservation confirmée !', 'OK', {
-            duration: 3000
-          });
-
-          this.selectedTime.set(null);
-        },
-        error: (error) => {
-          console.error(error);
-
-          const message =
-            error?.error?.detail ??
-            error?.error?.message ??
-            'Erreur lors de la réservation. Veuillez réessayer.';
-
-          this.snackBar.open(message, 'OK', {
-            duration: 5000
-          });
-        }
-      });
-    }
-  }
 
   onMatchTypeChanged(type: MatchType) {
     this.selectedMatchType.set(type);
@@ -153,5 +99,64 @@ export class ReservationPage implements OnInit {
 
   onParticipantsChanged(participants: string[]) {
     this.participantMatricules.set(participants);
+  }
+
+  onMatchValidityChanged(isValid: boolean) {
+    this.isMatchSelectionValid.set(isValid);
+  }
+
+  onConfirmBooking() {
+    const court = this.selectedCourt();
+    const date = this.selectedDate();
+    const time = this.selectedTime();
+    const currentMember = this.authService.currentMember();
+
+    if (!court || !date || !time || !currentMember || !this.isMatchSelectionValid()) {
+      this.snackBar.open('Veuillez compléter toutes les informations de réservation.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    const startTime = `${time}:00`;
+
+    const [hour, minute] = time.split(':').map(Number);
+    const endTime = `${(hour + 1).toString().padStart(2, '0')}:${minute
+      .toString()
+      .padStart(2, '0')}:00`;
+
+    const newReservation = {
+      id: null,
+      courtId: court.id,
+      courtName: null,
+      memberId: currentMember.id,
+      playerMatricule: null,
+      date: date.toISOString().split('T')[0],
+      startTime,
+      endTime,
+      matchType: this.selectedMatchType(),
+      participantMatricules: this.participantMatricules()
+    };
+
+    this.padelService.createReservation(newReservation).subscribe({
+      next: () => {
+        this.snackBar.open('Réservation confirmée !', 'OK', {
+          duration: 3000
+        });
+
+        this.selectedTime.set(null);
+        this.loadReservedTimes();
+      },
+      error: (error) => {
+        const message =
+          error?.error?.detail ??
+          error?.error?.message ??
+          'Erreur lors de la réservation. Veuillez réessayer.';
+
+        this.snackBar.open(message, 'OK', {
+          duration: 5000
+        });
+      }
+    });
   }
 }
