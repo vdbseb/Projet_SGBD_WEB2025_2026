@@ -3,13 +3,13 @@ package be.angularpadelclub.Service;
 import be.angularpadelclub.DTO.MatchDTO;
 import be.angularpadelclub.Entity.CourtEntity;
 import be.angularpadelclub.Entity.MatchEntity;
-import be.angularpadelclub.Entity.MemberEntity;
+import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ParticipationEntity;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
 import be.angularpadelclub.Repository.CourtRepository;
 import be.angularpadelclub.Repository.MatchRepository;
-import be.angularpadelclub.Repository.MemberRepository;
+import be.angularpadelclub.Repository.MembreRepository;
 import be.angularpadelclub.Repository.ParticipationRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,18 +21,18 @@ public class MatchService {
 
     private final MatchRepository matchRepository;
     private final CourtRepository courtRepository;
-    private final MemberRepository memberRepository;
+    private final MembreRepository membreRepository;
     private final ParticipationRepository participationRepository;
 
     public MatchService(
             MatchRepository matchRepository,
             CourtRepository courtRepository,
-            MemberRepository memberRepository,
+            MembreRepository membreRepository,
             ParticipationRepository participationRepository
     ) {
         this.matchRepository = matchRepository;
         this.courtRepository = courtRepository;
-        this.memberRepository = memberRepository;
+        this.membreRepository = membreRepository;
         this.participationRepository = participationRepository;
     }
 
@@ -41,7 +41,7 @@ public class MatchService {
         CourtEntity court = courtRepository.findById(dto.terrainId())
                 .orElseThrow(() -> new RuntimeException("Terrain introuvable"));
 
-        MemberEntity organisateur = memberRepository.findById(dto.organisateurId())
+        MembreEntity organisateur = membreRepository.findById(dto.organisateurId())
                 .orElseThrow(() -> new RuntimeException("Organisateur introuvable"));
 
         int nombreJoueurs = 1;
@@ -76,7 +76,7 @@ public class MatchService {
 
         if (dto.playerMatricules() != null) {
             for (String matricule : dto.playerMatricules()) {
-                MemberEntity player = memberRepository.findByMatricule(matricule)
+                MembreEntity player = membreRepository.findByMatricule(matricule)
                         .orElseThrow(() -> new RuntimeException("Joueur introuvable : " + matricule));
 
                 createParticipation(savedMatch, player);
@@ -90,7 +90,7 @@ public class MatchService {
         return matchRepository.findAll();
     }
 
-    private void createParticipation(MatchEntity match, MemberEntity membre) {
+    private void createParticipation(MatchEntity match, MembreEntity membre) {
         ParticipationEntity participation = new ParticipationEntity();
         participation.setMatch(match);
         participation.setMembre(membre);

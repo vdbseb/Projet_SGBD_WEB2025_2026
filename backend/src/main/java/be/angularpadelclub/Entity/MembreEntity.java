@@ -12,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @Entity
 @Table(name = "membre")
-public class MemberEntity {
+public class MembreEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

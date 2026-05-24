@@ -2,7 +2,7 @@ package be.angularpadelclub.Mapper;
 
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.CourtEntity;
-import be.angularpadelclub.Entity.MemberEntity;
+import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +27,7 @@ public class ReservationMapper {
     public ReservationEntity toEntity(
             ReservationDTO dto,
             CourtEntity court,
-            MemberEntity member
+            MembreEntity member
     ) {
         ReservationEntity entity = new ReservationEntity();
 

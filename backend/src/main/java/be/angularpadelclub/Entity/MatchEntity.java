@@ -5,7 +5,6 @@ import be.angularpadelclub.Enum.MatchType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -29,7 +28,7 @@ public class MatchEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "organisateur_id", nullable = false)
-    private MemberEntity organisateur;
+    private MembreEntity organisateur;
 
     @Column(name = "date_match", nullable = false)
     private LocalDate dateMatch;

@@ -3,7 +3,7 @@ package be.angularpadelclub.DTO;
 
 import be.angularpadelclub.Entity.TypeMembreEntity;
 
-public record MemberDTO(
+public record MembreDTO(
         Integer id,
         boolean active,
         String email,

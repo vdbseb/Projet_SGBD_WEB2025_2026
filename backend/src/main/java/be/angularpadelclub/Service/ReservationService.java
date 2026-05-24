@@ -3,12 +3,12 @@ package be.angularpadelclub.Service;
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.CourtEntity;
 import be.angularpadelclub.Entity.HoraireSiteEntity;
-import be.angularpadelclub.Entity.MemberEntity;
+import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Repository.CourtRepository;
 import be.angularpadelclub.Repository.HoraireSiteRepository;
-import be.angularpadelclub.Repository.MemberRepository;
+import be.angularpadelclub.Repository.MembreRepository;
 import be.angularpadelclub.Repository.ReservationRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,20 +26,20 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final CourtRepository courtRepository;
-    private final MemberRepository memberRepository;
+    private final MembreRepository membreRepository;
     private final HoraireSiteRepository horaireSiteRepository;
     private final ReservationMapper reservationMapper;
 
     public ReservationService(
             ReservationRepository reservationRepository,
             CourtRepository courtRepository,
-            MemberRepository memberRepository,
+            MembreRepository membreRepository,
             HoraireSiteRepository horaireSiteRepository,
             ReservationMapper reservationMapper
     ) {
         this.reservationRepository = reservationRepository;
         this.courtRepository = courtRepository;
-        this.memberRepository = memberRepository;
+        this.membreRepository = membreRepository;
         this.horaireSiteRepository = horaireSiteRepository;
         this.reservationMapper = reservationMapper;
     }
@@ -63,7 +63,7 @@ public class ReservationService {
         CourtEntity court = courtRepository.findById(dto.courtId())
                 .orElseThrow(() -> new RuntimeException("Court not found"));
 
-        MemberEntity member = memberRepository.findById(dto.memberId())
+        MembreEntity member = membreRepository.findById(dto.memberId())
                 .orElseThrow(() -> new RuntimeException("Member not found"));
 
         int currentYear = dto.date().getYear();

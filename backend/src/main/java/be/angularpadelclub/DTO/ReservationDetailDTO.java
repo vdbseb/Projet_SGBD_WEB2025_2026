@@ -19,7 +19,7 @@ public record ReservationDetailDTO (
     String organizerMatricule,
     String organizerName,
 
-    List<MemberDTO> members,
+    List<MembreDTO> members,
 
     String paiementStatut
 )
