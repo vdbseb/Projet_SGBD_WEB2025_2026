@@ -1,0 +1,16 @@
+<a
+  [routerLink]="route()"
+  class="block bg-white rounded-4xl p-8 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all no-underline"
+>
+  <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mb-6">
+    <mat-icon>{{ icon() }}</mat-icon>
+  </div>
+
+  <h2 class="text-xl font-black text-slate-900 mb-2">
+    {{ title() }}
+  </h2>
+
+  <p class="text-slate-500">
+    {{ subtitle() }}
+  </p>
+</a>

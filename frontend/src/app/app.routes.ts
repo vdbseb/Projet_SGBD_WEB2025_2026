@@ -11,5 +11,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./views/my-reservation/my-reservation')
         .then(m => m.MyReservations)
+  },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./views/admin/admin-dashboard/admin-dashboard')
+        .then(m => m.AdminDashboard)
   }
 ];

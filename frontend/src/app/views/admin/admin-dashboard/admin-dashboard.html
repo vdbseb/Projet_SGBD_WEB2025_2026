@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-slate-50 p-8 md:p-12">
+  <header class="text-center mb-16">
+    <h1 class="text-5xl font-black uppercase tracking-tighter text-slate-900">
+      Administration
+    </h1>
+
+    <p class="text-slate-500 mt-4">
+      Gestion du club
+    </p>
+  </header>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+
+    <app-admin-card
+      title="Sites"
+      subtitle="Gérer les centres"
+      icon="location_city"
+      route="/admin/sites">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Terrains"
+      subtitle="Gérer les terrains"
+      icon="sports_tennis"
+      route="/admin/courts">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Membres"
+      subtitle="Gestion des membres"
+      icon="groups"
+      route="/admin/members">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Réservations"
+      subtitle="Voir toutes les réservations"
+      icon="calendar_month"
+      route="/admin/reservations">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Matchs"
+      subtitle="Gestion des matchs"
+      icon="emoji_events"
+      route="/admin/matches">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Paiements"
+      subtitle="Suivi des paiements"
+      icon="payments"
+      route="/admin/payments">
+    </app-admin-card>
+
+  </div>
+  <a
+    routerLink="/"
+    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    Retour au site
+  </a>
+</div>
