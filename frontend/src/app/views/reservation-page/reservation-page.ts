@@ -11,6 +11,7 @@ import {DateSelectorComponent} from '../date-selector/date-selector';
 import {TimeSlotsComponent} from '../time-slot/time-slot';
 import {DatePipe} from '@angular/common';
 import { MatSnackBar} from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-reservation-page',
@@ -23,7 +24,8 @@ import { MatSnackBar} from '@angular/material/snack-bar';
     PadelCardComponent,
     DateSelectorComponent,
     TimeSlotsComponent,
-    DatePipe
+    DatePipe,
+    MatSnackBarModule
   ],
   templateUrl: './reservation-page.html'
 })
