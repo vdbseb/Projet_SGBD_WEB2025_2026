@@ -12,6 +12,7 @@ import {TimeSlotsComponent} from '../time-slot/time-slot';
 import {DatePipe} from '@angular/common';
 import { MatSnackBar} from '@angular/material/snack-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatchSelectorComponent, MatchType } from '../match-selector/match-selector';
 
 @Component({
   selector: 'app-reservation-page',
@@ -24,6 +25,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     PadelCardComponent,
     DateSelectorComponent,
     TimeSlotsComponent,
+    MatchSelectorComponent,
     DatePipe,
     MatSnackBarModule
   ],
@@ -41,6 +43,8 @@ export class ReservationPage implements OnInit {
   selectedMemberId = signal<number | null>(null);
   reservedTimes = signal<string[]>([]);
   private snackBar = inject(MatSnackBar);
+  selectedMatchType = signal<MatchType>('PRIVATE');
+  participantMatricules = signal<string[]>([]);
 
 
   ngOnInit() {
@@ -97,6 +101,7 @@ export class ReservationPage implements OnInit {
     const date = this.selectedDate();
     const time = this.selectedTime();
 
+
     if (court && date && time && this.selectedMemberId()) {
       const startTime = `${time}:00`;
 
@@ -113,7 +118,9 @@ export class ReservationPage implements OnInit {
         playerMatricule: null,
         date: date.toISOString().split('T')[0],
         startTime: startTime,
-        endTime: endTime
+        endTime: endTime,
+        matchType: this.selectedMatchType(),
+        participantMatricules: this.participantMatricules()
       };
 
       this.padelService.createReservation(newReservation).subscribe({
@@ -138,5 +145,13 @@ export class ReservationPage implements OnInit {
         }
       });
     }
+  }
+
+  onMatchTypeChanged(type: MatchType) {
+    this.selectedMatchType.set(type);
+  }
+
+  onParticipantsChanged(participants: string[]) {
+    this.participantMatricules.set(participants);
   }
 }

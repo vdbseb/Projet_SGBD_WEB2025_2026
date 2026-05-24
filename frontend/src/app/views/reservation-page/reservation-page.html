@@ -37,20 +37,10 @@
           [reservedTimes]="reservedTimes()"
           (slotSelected)="onTimeSelected($event)">
         </app-time-slots>
-        <label for="member">Choisir un membre :</label>
-
-        <select
-          id="member"
-          (change)="onMemberSelected($any($event.target).value)"
-        >
-          <option value="">-- Sélectionner --</option>
-
-          @for (member of members(); track member.id) {
-            <option [value]="member.id">
-              {{ member.firstName }} {{ member.lastName }} ({{ member.matricule }})
-            </option>
-          }
-        </select>
+        <app-match-selector
+          [(matchType)]="selectedMatchType"
+          (participantsChanged)="onParticipantsChanged($event)">
+        </app-match-selector>
 
         @if (selectedTime()) {
           <div class="mt-10 p-8 rounded-4xl shadow-xl bg-slate-900 text-white border border-slate-800 animate-in">
