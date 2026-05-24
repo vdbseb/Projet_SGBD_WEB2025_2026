@@ -54,11 +54,19 @@
 
     @for (participant of participantMatricules(); track $index) {
       <input
-        class="w-full border border-slate-200 rounded-xl px-4 py-3 mb-3 uppercase"
+        class="w-full border border-slate-200 rounded-xl px-4 py-3 uppercase"
         placeholder="Matricule joueur {{ $index + 2 }}"
         [value]="participant"
         (input)="updateParticipant($index, $any($event.target).value)"
       />
+
+      @if (invalidParticipants()[$index]) {
+        <p class="text-red-500 text-sm mt-1 mb-3">
+          Matricule inconnu.
+        </p>
+      } @else {
+        <div class="mb-3"></div>
+      }
     }
   } @else {
     <div class="bg-blue-50 text-blue-700 rounded-xl p-4 font-semibold">

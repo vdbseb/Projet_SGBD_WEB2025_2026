@@ -1,4 +1,5 @@
-import { Component, input, model, output, signal } from '@angular/core';
+import {Component, inject, input, model, output, signal} from '@angular/core';
+import {PadelService} from '../../services/padel.service';
 
 export type MatchType = 'PRIVATE' | 'PUBLIC';
 
@@ -14,8 +15,10 @@ export class MatchSelectorComponent {
 
   participantsChanged = output<string[]>();
   validityChanged = output<boolean>();
+  private padelService = inject(PadelService);
 
   participantMatricules = signal<string[]>(['', '', '']);
+  invalidParticipants = signal<string[]>([]);
 
   selectMatchType(type: MatchType) {
     this.matchType.set(type);
@@ -30,10 +33,22 @@ export class MatchSelectorComponent {
     const currentMatricule = this.currentMember()?.matricule?.toUpperCase();
 
     const participants = [...this.participantMatricules()];
+    const invalids = [...this.invalidParticipants()];
+
+    if (!normalizedValue) {
+      participants[index] = '';
+      invalids[index] = '';
+      this.participantMatricules.set(participants);
+      this.invalidParticipants.set(invalids);
+      this.emitState();
+      return;
+    }
 
     if (normalizedValue === currentMatricule) {
       participants[index] = '';
+      invalids[index] = '';
       this.participantMatricules.set(participants);
+      this.invalidParticipants.set(invalids);
       this.emitState();
       return;
     }
@@ -44,24 +59,44 @@ export class MatchSelectorComponent {
 
     if (duplicate) {
       participants[index] = '';
+      invalids[index] = '';
       this.participantMatricules.set(participants);
+      this.invalidParticipants.set(invalids);
       this.emitState();
       return;
     }
 
-    participants[index] = normalizedValue;
-    this.participantMatricules.set(participants);
+    this.padelService.getMemberByMatricule(normalizedValue).subscribe({
+      next: () => {
+        participants[index] = normalizedValue;
+        invalids[index] = '';
 
-    this.emitState();
+        this.participantMatricules.set(participants);
+        this.invalidParticipants.set(invalids);
+
+        this.emitState();
+      },
+      error: () => {
+        participants[index] = normalizedValue;
+        invalids[index] = normalizedValue;
+
+        this.participantMatricules.set(participants);
+        this.invalidParticipants.set(invalids);
+
+        this.emitState();
+      }
+    });
   }
 
   emitState() {
     const filledParticipants = this.participantMatricules().filter(p => p !== '');
+    const hasInvalidParticipants = this.invalidParticipants().some(p => p !== '');
 
     this.participantsChanged.emit(filledParticipants);
 
     this.validityChanged.emit(
-      this.matchType() === 'PUBLIC' || filledParticipants.length === 3
+      this.matchType() === 'PUBLIC' ||
+      (filledParticipants.length === 3 && !hasInvalidParticipants)
     );
   }
 
