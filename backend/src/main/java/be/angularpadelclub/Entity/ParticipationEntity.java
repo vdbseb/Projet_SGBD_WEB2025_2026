@@ -25,7 +25,7 @@ public class ParticipationEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
-    private MemberEntity membre;
+    private MembreEntity membre;
 
     @Column(name = "date_inscription")
     private LocalDateTime dateInscription;

@@ -1,6 +1,6 @@
 package be.angularpadelclub.Mapper;
 
-import be.angularpadelclub.DTO.MemberDTO;
+import be.angularpadelclub.DTO.MembreDTO;
 import be.angularpadelclub.DTO.ReservationDetailDTO;
 import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.ParticipationEntity;
@@ -11,10 +11,10 @@ import java.util.List;
 @Component
 public class ReservationDetailMapper {
 
-    private final MemberMapper memberMapper;
+    private final MembreMapper membreMapper;
 
-    public ReservationDetailMapper(MemberMapper memberMapper) {
-        this.memberMapper = memberMapper;
+    public ReservationDetailMapper(MembreMapper membreMapper) {
+        this.membreMapper = membreMapper;
     }
 
     public ReservationDetailDTO toDetailsDTO(
@@ -22,8 +22,8 @@ public class ReservationDetailMapper {
             List<ParticipationEntity> participations,
             String currentMatricule
     ) {
-        List<MemberDTO> members = participations.stream()
-                .map(participation -> memberMapper.toDTO(participation.getMembre()))
+        List<MembreDTO> members = participations.stream()
+                .map(participation -> membreMapper.toDTO(participation.getMembre()))
                 .toList();
 
         String myPaymentStatus = participations.stream()

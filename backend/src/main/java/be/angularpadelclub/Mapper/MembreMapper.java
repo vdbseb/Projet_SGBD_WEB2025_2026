@@ -1,17 +1,17 @@
 package be.angularpadelclub.Mapper;
 
-import be.angularpadelclub.DTO.MemberDTO;
-import be.angularpadelclub.Entity.MemberEntity;
+import be.angularpadelclub.DTO.MembreDTO;
+import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.SiteEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-public class MemberMapper {
+public class MembreMapper {
 
-    public MemberDTO toDTO(MemberEntity entity) {
-        return new MemberDTO(
+    public MembreDTO toDTO(MembreEntity entity) {
+        return new MembreDTO(
                 entity.getId(),
                 entity.isActif(),
                 entity.getEmail(),
@@ -24,8 +24,8 @@ public class MemberMapper {
         );
     }
 
-    public MemberEntity toEntity(MemberDTO dto, SiteEntity site) {
-        MemberEntity entity = new MemberEntity();
+    public MembreEntity toEntity(MembreDTO dto, SiteEntity site) {
+        MembreEntity entity = new MembreEntity();
 
         entity.setId(dto.id());
         entity.setActif(dto.active());
@@ -39,7 +39,7 @@ public class MemberMapper {
         return entity;
     }
 
-    public List<MemberDTO> toDTOList(List<MemberEntity> entities) {
+    public List<MembreDTO> toDTOList(List<MembreEntity> entities) {
         return entities.stream()
                 .map(this::toDTO)
                 .toList();

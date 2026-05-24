@@ -33,5 +33,5 @@ public class ReservationEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
-    private MemberEntity member;
+    private MembreEntity member;
 }

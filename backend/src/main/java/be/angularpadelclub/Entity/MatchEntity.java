@@ -1,12 +1,14 @@
 package be.angularpadelclub.Entity;
 
+import be.angularpadelclub.Enum.MatchStatus;
+import be.angularpadelclub.Enum.MatchType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,7 +28,7 @@ public class MatchEntity {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "organisateur_id", nullable = false)
-    private MemberEntity organisateur;
+    private MembreEntity organisateur;
 
     @Column(name = "date_match", nullable = false)
     private LocalDate dateMatch;
@@ -37,15 +39,20 @@ public class MatchEntity {
     @Column(name = "heure_fin", nullable = false)
     private LocalTime heureFin;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type_match", nullable = false)
-    private String typeMatch;
+    private MatchType typeMatch;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "statut", nullable = false)
-    private String statut;
+    private MatchStatus statut;
 
     @Column(name = "prix_total", nullable = false)
-    private BigDecimal prixTotal;
+    private Integer prixTotal;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL)
+    private List<ParticipationEntity> participations;
 }
