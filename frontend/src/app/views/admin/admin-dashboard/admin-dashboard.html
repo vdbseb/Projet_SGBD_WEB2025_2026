@@ -1,0 +1,122 @@
+<div class="min-h-screen bg-slate-50 p-8 md:p-12">
+
+  <a
+    routerLink="/"
+    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    Retour au site
+  </a>
+
+  <header
+    class="rounded-4xl p-10 text-white mb-16"
+    [class]="isGlobalAdmin()
+      ? 'bg-linear-to-r from-violet-700 to-indigo-800'
+      : 'bg-linear-to-r from-emerald-500 to-teal-600'"
+  >
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center">
+        <mat-icon class="scale-150">
+          {{ isGlobalAdmin() ? 'shield' : 'storefront' }}
+        </mat-icon>
+      </div>
+
+      <div>
+        <h1 class="text-5xl font-black uppercase tracking-tighter">
+          {{ isGlobalAdmin() ? 'Super Admin' : 'Admin Site' }}
+        </h1>
+
+        <p class="mt-2 opacity-90 text-lg">
+          {{
+            isGlobalAdmin()
+              ? 'Gestion globale Angular Padel Club'
+              : 'Gestion de votre club'
+          }}
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+
+    @if (isGlobalAdmin()) {
+      <app-admin-card
+        title="Sites"
+        subtitle="Gérer tous les centres"
+        icon="location_city"
+        route="/admin/sites">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Terrains"
+        subtitle="Gestion globale des terrains"
+        icon="sports_tennis"
+        route="/admin/courts">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Membres"
+        subtitle="Gestion des membres"
+        icon="groups"
+        route="/admin/members">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Réservations"
+        subtitle="Toutes les réservations"
+        icon="calendar_month"
+        route="/admin/reservations">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Matchs"
+        subtitle="Gestion des matchs"
+        icon="emoji_events"
+        route="/admin/matches">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Paiements"
+        subtitle="Suivi global des paiements"
+        icon="payments"
+        route="/admin/payments">
+      </app-admin-card>
+    } @else {
+      <app-admin-card
+        title="Mon site"
+        subtitle="Informations du club"
+        icon="location_city"
+        route="/admin/site">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Mes terrains"
+        subtitle="Gestion des terrains"
+        icon="sports_tennis"
+        route="/admin/courts">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Réservations"
+        subtitle="Réservations du site"
+        icon="calendar_month"
+        route="/admin/reservations">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Matchs"
+        subtitle="Gestion des matchs"
+        icon="emoji_events"
+        route="/admin/matches">
+      </app-admin-card>
+
+      <app-admin-card
+        title="Paiements"
+        subtitle="Paiements du club"
+        icon="payments"
+        route="/admin/payments">
+      </app-admin-card>
+    }
+
+  </div>
+</div>
