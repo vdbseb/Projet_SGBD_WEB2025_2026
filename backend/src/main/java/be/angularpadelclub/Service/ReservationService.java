@@ -1,17 +1,18 @@
 package be.angularpadelclub.Service;
 
 import be.angularpadelclub.DTO.ReservationDTO;
-import be.angularpadelclub.Entity.CourtEntity;
-import be.angularpadelclub.Entity.HoraireSiteEntity;
-import be.angularpadelclub.Entity.MembreEntity;
-import be.angularpadelclub.Entity.ReservationEntity;
+import be.angularpadelclub.Entity.*;
+import be.angularpadelclub.Enum.MatchStatus;
+import be.angularpadelclub.Enum.MatchType;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,8 @@ public class ReservationService {
     private final JourFermetureRepository jourFermetureRepository;
     private final ReservationMapper reservationMapper;
     private final PenaliteRepository penaliteRepository;
+    private final MatchRepository matchRepository;
+    private final ParticipationRepository participationRepository;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -34,7 +37,8 @@ public class ReservationService {
             HoraireSiteRepository horaireSiteRepository,
             JourFermetureRepository jourFermetureRepository,
             ReservationMapper reservationMapper,
-            PenaliteRepository penaliteRepository
+            PenaliteRepository penaliteRepository,
+            MatchRepository matchRepository, ParticipationRepository participationRepository
 
     ) {
         this.reservationRepository = reservationRepository;
@@ -44,6 +48,8 @@ public class ReservationService {
         this.jourFermetureRepository = jourFermetureRepository;
         this.reservationMapper = reservationMapper;
         this.penaliteRepository = penaliteRepository;
+        this.matchRepository = matchRepository;
+        this.participationRepository = participationRepository;
     }
 
     public List<ReservationEntity> findAll() {
@@ -62,6 +68,7 @@ public class ReservationService {
         reservationRepository.deleteById(id);
     }
 
+    @Transactional
     public void addReservation(ReservationDTO dto) {
 
         CourtEntity court = courtRepository.findById(dto.courtId())
@@ -175,12 +182,55 @@ public class ReservationService {
             }
         }
 
-        ReservationEntity reservation =
-                reservationMapper.toEntity(dto, court, member);
-
+        ReservationEntity reservation = reservationMapper.toEntity(dto, court, member);
         reservation.setId(null);
         reservation.setEndTime(endTime);
 
         reservationRepository.save(reservation);
+
+        MatchEntity match = new MatchEntity();
+        match.setTerrain(court);
+        match.setOrganisateur(member);
+        match.setDateMatch(dto.date());
+        match.setHeureDebut(dto.startTime());
+        match.setHeureFin(endTime);
+        match.setPrixTotal(60);
+        match.setStatut(MatchStatus.OUVERT);
+        match.setCreatedAt(LocalDateTime.now());
+
+        if (dto.participantMatricules() == null || dto.participantMatricules().isEmpty()) {
+            match.setTypeMatch(MatchType.PUBLIC);
+        } else {
+            match.setTypeMatch(MatchType.PRIVE);
+            match.setStatut(MatchStatus.COMPLET);
+        }
+        MatchEntity savedMatch =
+                matchRepository.save(match);
+
+        // participation organisateur
+        ParticipationEntity participation = new ParticipationEntity();
+        participation.setMatch(savedMatch);
+        participation.setDateInscription(LocalDateTime.now());
+        participation.setMembre(member);
+
+        participationRepository.save(participation);
+
+        // participations autres joueurs si match privé
+        if (dto.participantMatricules() != null) {
+            for (String matricule : dto.participantMatricules()) {
+                MembreEntity joueur = membreRepository.findByMatricule(matricule)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Joueur introuvable : " + matricule
+                        ));
+
+                ParticipationEntity p = new ParticipationEntity();
+                p.setMatch(savedMatch);
+                p.setMembre(joueur);
+                p.setDateInscription(LocalDateTime.now());
+
+                participationRepository.save(p);
+            }
+        }
     }
 }
