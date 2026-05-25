@@ -32,4 +32,7 @@ export class Header {
   logout() {
     this.authService.logout();
   }
+  logoutAdmin(){
+    this.authService.logoutAdmin ();
+  }
 }

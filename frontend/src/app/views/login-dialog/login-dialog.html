@@ -1,10 +1,12 @@
 <div class="p-6 min-w-[320px]">
-  <h2 class="text-xl font-bold mb-4">Connexion membre</h2>
+  <h2 class="text-xl font-bold mb-4">
+    {{ isAdminMode() ? 'Connexion administrateur' : 'Connexion membre' }}
+  </h2>
 
   <input
     type="text"
-    placeholder="Ex: G1234"
-    class="w-full border rounded-lg px-4 py-3 mb-4"
+    [placeholder]="isAdminMode() ? 'Ex: AG01' : 'Ex: G1234'"
+    class="w-full border rounded-lg px-4 py-3 mb-4 uppercase"
     [ngModel]="matricule()"
     (ngModelChange)="matricule.set($event)"
   />
