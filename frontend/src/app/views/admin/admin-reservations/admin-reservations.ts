@@ -16,6 +16,9 @@ export class AdminReservations implements OnInit {
   reservations = signal<any[]>([]);
   search = signal('');
   selectedFilter = signal<'all' | 'today' | 'upcoming' | 'past'>('all');
+  courts = signal<any[]>([]);
+  sites = signal<any[]>([]);
+  members = signal<any[]>([]);
 
   ngOnInit() {
     this.padelService.getAllReservations().subscribe(reservations => {
@@ -26,6 +29,17 @@ export class AdminReservations implements OnInit {
       });
 
       this.reservations.set(sorted);
+    });
+    this.padelService.getCourts().subscribe(courts => {
+      this.courts.set(courts);
+    });
+
+    this.padelService.getSites().subscribe(sites => {
+      this.sites.set(sites);
+    });
+
+    this.padelService.getMembers().subscribe(members => {
+      this.members.set(members);
     });
   }
 
@@ -92,5 +106,60 @@ export class AdminReservations implements OnInit {
     return data.filter(reservation =>
       this.getReservationStatus(reservation) === filter
     );
+  }
+  getCourtName(reservation: any): string {
+    const court = this.courts().find(court => court.id === reservation.courtId);
+    return reservation.courtName || court?.name || 'Terrain inconnu';
+  }
+
+  getSiteName(reservation: any): string {
+    if (reservation.siteName) {
+      return reservation.siteName;
+    }
+
+    const court = this.courts().find(court => court.id === reservation.courtId);
+    const site = this.sites().find(site => site.id === court?.siteId);
+
+    return site?.clubName || site?.name || 'Site inconnu';
+  }
+
+  getOrganizer(reservation: any): any | null {
+    return this.members().find(member => member.id === reservation.memberId) || null;
+  }
+
+  getOrganizerLabel(reservation: any): string {
+    const organizer = this.getOrganizer(reservation);
+
+    if (!organizer) {
+      return reservation.playerMatricule || 'Organisateur inconnu';
+    }
+
+    return `${organizer.firstName} ${organizer.lastName} (${organizer.matricule})`;
+  }
+
+  getParticipantsLabel(reservation: any): string {
+    if (reservation.members?.length > 0) {
+      return reservation.members
+        .map((member: any) => `${member.firstName} ${member.lastName} (${member.matricule})`)
+        .join(', ');
+    }
+
+    if (reservation.participantMatricules?.length > 0) {
+      return reservation.participantMatricules.join(', ');
+    }
+
+    return 'Participants non disponibles';
+  }
+
+  getMatchTypeLabel(reservation: any): string {
+    if (reservation.matchType === 'PUBLIC') {
+      return 'Match public';
+    }
+
+    if (reservation.matchType === 'PRIVATE') {
+      return 'Match privé';
+    }
+
+    return 'Type non défini';
   }
 }

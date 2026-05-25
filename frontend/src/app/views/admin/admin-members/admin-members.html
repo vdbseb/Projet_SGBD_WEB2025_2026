@@ -58,16 +58,29 @@
           </span>
         </div>
 
-        <div class="space-y-2 text-sm text-slate-500">
-          <p>
-            <span class="font-bold text-slate-700">Type :</span>
-            {{ member.type || member.typeMembre || 'Non défini' }}
-          </p>
+        <div class="space-y-3 text-sm text-slate-500">
+
+          <div>
+            @if ((member.type || member.typeMembre) === 'GLOBAL') {
+              <span class="px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-black uppercase">
+        Global • 21 jours
+      </span>
+            } @else if ((member.type || member.typeMembre) === 'SITE') {
+              <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase">
+        Site • 14 jours
+      </span>
+            } @else {
+              <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
+        Libre • 5 jours
+      </span>
+            }
+          </div>
 
           <p>
             <span class="font-bold text-slate-700">Email :</span>
             {{ member.email || 'Non renseigné' }}
           </p>
+
         </div>
 
         <div class="mt-6 flex gap-3">

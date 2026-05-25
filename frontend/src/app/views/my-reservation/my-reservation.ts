@@ -18,6 +18,7 @@ export class MyReservations implements OnInit {
   reservations = signal<any[]>([]);
   sites = signal<any[]>([]);
   selectedFilter = signal<'all' | 'upcoming' | 'past'>('all');
+  courts = signal<any[]>([]);
 
   ngOnInit() {
     const member = this.authService.currentMember();
@@ -29,6 +30,9 @@ export class MyReservations implements OnInit {
 
     this.padelService.getSites().subscribe(sites => {
       this.sites.set(sites);
+    });
+    this.padelService.getCourts().subscribe(courts => {
+      this.courts.set(courts);
     });
 
     this.padelService.getAllReservations().subscribe(reservations => {
@@ -45,11 +49,13 @@ export class MyReservations implements OnInit {
     });
   }
   getSiteName(reservation: any): string {
-    const site = this.sites().find(site =>
-      site.courts?.some((court: any) => court.id === reservation.courtId)
-    );
+    if (reservation.siteName) {
+      return reservation.siteName;
+    }
 
-    return site?.clubName || 'Club inconnu';
+    const court = this.courts().find(court => court.id === reservation.courtId);
+
+    return court?.siteName || court?.site?.name || court?.site?.clubName || 'Club inconnu';
   }
   getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
     const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
@@ -127,5 +133,23 @@ export class MyReservations implements OnInit {
     return this.reservations().filter(reservation =>
       this.getReservationStatus(reservation) === 'past'
     ).length;
+  }
+  getParticipantsLabel(reservation: any): string {
+    if (reservation.members?.length > 0) {
+      return reservation.members
+        .map((member: any) =>
+          `${member.firstName} ${member.lastName} (${member.matricule})`
+        )
+        .join(', ');
+    }
+
+    if (reservation.participantMatricules?.length > 0) {
+      return [
+        reservation.playerMatricule,
+        ...reservation.participantMatricules
+      ].filter(Boolean).join(', ');
+    }
+
+    return reservation.playerMatricule || 'Participants non disponibles';
   }
 }

@@ -104,7 +104,9 @@
 
         <div class="flex items-center gap-2 text-slate-400 text-sm mt-3">
           <mat-icon class="text-base">badge</mat-icon>
-          <span>{{ reservation.playerMatricule }}</span>
+          <span>
+  {{ getParticipantsLabel(reservation) }}
+</span>
         </div>
 
       </div>
