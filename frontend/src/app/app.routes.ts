@@ -17,5 +17,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./views/admin/admin-dashboard/admin-dashboard')
         .then(m => m.AdminDashboard)
+  },
+  {
+    path: 'admin/members',
+    loadComponent: () =>
+      import('./views/admin/admin-members/admin-members')
+        .then(m => m.AdminMembers)
   }
 ];
