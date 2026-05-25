@@ -75,19 +75,35 @@
       <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
 
         <div class="flex justify-between items-start mb-4">
-          <h2 class="font-black text-slate-900">
-            {{ reservation.courtName }}
-          </h2>
+          <div>
+            <h2 class="font-black text-slate-900">
+              {{ getCourtName(reservation) }}
+            </h2>
+
+            <p class="text-slate-400 text-sm mt-1">
+              {{ getSiteName(reservation) }}
+            </p>
+          </div>
 
           <span
             class="px-3 py-1 rounded-full text-xs font-black uppercase"
             [class]="getStatusClass(reservation)"
           >
-            {{ getStatusLabel(reservation) }}
-          </span>
+      {{ getStatusLabel(reservation) }}
+    </span>
         </div>
 
         <div class="space-y-3 text-sm text-slate-500">
+          <p>
+            <strong>Type :</strong>
+            {{ getMatchTypeLabel(reservation) }}
+          </p>
+
+          <p>
+            <strong>Organisateur :</strong>
+            {{ getOrganizerLabel(reservation) }}
+          </p>
+
           <p>
             <strong>Date :</strong>
             {{ reservation.date | date:'dd/MM/yyyy' }}
@@ -99,8 +115,8 @@
           </p>
 
           <p>
-            <strong>Matricule :</strong>
-            {{ reservation.playerMatricule }}
+            <strong>Participants :</strong>
+            {{ getParticipantsLabel(reservation) }}
           </p>
         </div>
 
