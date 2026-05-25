@@ -26,6 +26,7 @@ public class MatchMapper {
         return new MatchDTO(
                 match.getId(),
                 match.getTerrain().getId(),
+                match.getTerrain().getSite().getNom(),
                 match.getOrganisateur().getId(),
                 match.getDateMatch(),
                 match.getHeureDebut(),

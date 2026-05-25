@@ -11,6 +11,7 @@ import java.util.List;
 public record MatchDTO(
         Integer id,
         Integer terrainId,
+        String terrainName,
         Integer organisateurId,
         LocalDate dateMatch,
         LocalTime heureDebut,

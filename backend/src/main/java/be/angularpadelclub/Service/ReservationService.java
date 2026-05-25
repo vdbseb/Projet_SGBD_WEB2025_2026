@@ -52,12 +52,46 @@ public class ReservationService {
         this.participationRepository = participationRepository;
     }
 
-    public List<ReservationEntity> findAll() {
-        return reservationRepository.findAll();
+    public List<ReservationDTO> findAll() {
+        return matchRepository.findAll()
+                .stream()
+                .map(match -> new ReservationDTO(
+                        match.getId(),
+                        match.getDateMatch(),
+                        match.getHeureFin(),
+                        match.getHeureDebut(),
+                        match.getTerrain().getId(),
+                        match.getTerrain().getSite().getNom(),
+                        match.getOrganisateur().getId(),
+                        match.getTypeMatch(),
+                        match.getParticipations() == null
+                                ? List.of()
+                                : match.getParticipations()
+                                .stream()
+                                .map(p -> p.getMembre().getMatricule())
+                                .toList()
+                ))
+                .toList();
     }
 
-    public Optional<ReservationEntity> findById(int id) {
-        return reservationRepository.findById(id);
+    public Optional<ReservationDTO> findById(int id) {
+        return matchRepository.findById(id)
+                .map(match -> new ReservationDTO(
+                        match.getId(),
+                        match.getDateMatch(),
+                        match.getHeureFin(),
+                        match.getHeureDebut(),
+                        match.getTerrain().getId(),
+                        match.getTerrain().getSite().getNom(),
+                        match.getOrganisateur().getId(),
+                        match.getTypeMatch(),
+                        match.getParticipations() == null
+                                ? List.of()
+                                : match.getParticipations()
+                                .stream()
+                                .map(p -> p.getMembre().getMatricule())
+                                .toList()
+                ));
     }
 
     public List<ReservationEntity> findByCourtAndDate(int courtId, LocalDate date) {
@@ -71,11 +105,13 @@ public class ReservationService {
     @Transactional
     public void addReservation(ReservationDTO dto) {
 
+
         CourtEntity court = courtRepository.findById(dto.courtId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Terrain introuvable."
                 ));
+
 
         MembreEntity member = membreRepository.findById(dto.memberId())
                 .orElseThrow(() -> new ResponseStatusException(

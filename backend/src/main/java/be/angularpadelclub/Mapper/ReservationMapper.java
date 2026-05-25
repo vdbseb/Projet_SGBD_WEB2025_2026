@@ -18,6 +18,7 @@ public class ReservationMapper {
                 entity.getStartTime(),
                 entity.getEndTime(),
                 entity.getCourt().getId(),
+                entity.getCourt().getSite().getNom(),
                 entity.getMember().getId(),
                 null,
                 List.of()
