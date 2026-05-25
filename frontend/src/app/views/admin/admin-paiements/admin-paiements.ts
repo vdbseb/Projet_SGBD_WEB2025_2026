@@ -21,8 +21,11 @@ export class AdminPaiements implements OnInit {
   sites = signal<any[]>([]);
   members = signal<any[]>([]);
 
-  matchPrice = 60;
-  playerShare = 15;
+  search = signal('');
+  selectedFilter = signal<'all' | 'paid' | 'partial' | 'organizer'>('all');
+
+  readonly matchPrice = 60;
+  readonly playerShare = 15;
 
   ngOnInit() {
     this.padelService.getCourts().subscribe(courts => {
@@ -42,6 +45,49 @@ export class AdminPaiements implements OnInit {
     });
   }
 
+  getVisibleReservations() {
+    const admin = this.authService.currentAdmin();
+
+    let reservations = this.reservations();
+
+    if (admin?.typeAdmin === 'SITE') {
+      reservations = reservations.filter(reservation => {
+        const court = this.courts().find(c => c.id === reservation.courtId);
+        return court?.siteId === admin.siteId;
+      });
+    }
+
+    const query = this.search().toLowerCase().trim();
+
+    if (query) {
+      reservations = reservations.filter(reservation => {
+        const organizer = this.getOrganizerLabel(reservation).toLowerCase();
+        const site = this.getSiteName(reservation).toLowerCase();
+        const court = this.getCourtName(reservation).toLowerCase();
+
+        return organizer.includes(query) ||
+          site.includes(query) ||
+          court.includes(query);
+      });
+    }
+
+    const filter = this.selectedFilter();
+
+    if (filter === 'paid') {
+      return reservations.filter(r => this.getPaymentStatus(r) === 'PAYÉ');
+    }
+
+    if (filter === 'partial') {
+      return reservations.filter(r => this.getPaymentStatus(r) === 'PARTIEL');
+    }
+
+    if (filter === 'organizer') {
+      return reservations.filter(r => this.getPaymentStatus(r) === 'SOLDE ORGANISATEUR');
+    }
+
+    return reservations;
+  }
+
   getParticipantsCount(reservation: any): number {
     return 1 + (reservation.participantMatricules?.length || 0);
   }
@@ -55,13 +101,31 @@ export class AdminPaiements implements OnInit {
   }
 
   getPaymentStatus(reservation: any): string {
-    return this.getRemainingAmount(reservation) === 0 ? 'Payé' : 'En attente';
+    const count = this.getParticipantsCount(reservation);
+
+    if (count >= 4) {
+      return 'PAYÉ';
+    }
+
+    if (reservation.matchType === 'PUBLIC') {
+      return 'SOLDE ORGANISATEUR';
+    }
+
+    return 'PARTIEL';
   }
 
   getPaymentStatusClass(reservation: any): string {
-    return this.getRemainingAmount(reservation) === 0
-      ? 'bg-emerald-100 text-emerald-700'
-      : 'bg-orange-100 text-orange-700';
+    const status = this.getPaymentStatus(reservation);
+
+    if (status === 'PAYÉ') {
+      return 'bg-emerald-100 text-emerald-700';
+    }
+
+    if (status === 'SOLDE ORGANISATEUR') {
+      return 'bg-red-100 text-red-700';
+    }
+
+    return 'bg-orange-100 text-orange-700';
   }
 
   getCourtName(reservation: any): string {
@@ -80,22 +144,41 @@ export class AdminPaiements implements OnInit {
     const organizer = this.members().find(m => m.id === reservation.memberId);
 
     if (!organizer) {
-      return reservation.playerMatricule || 'Organisateur inconnu';
+      return 'Organisateur inconnu';
     }
 
     return `${organizer.firstName} ${organizer.lastName} (${organizer.matricule})`;
   }
 
-  getVisibleReservations() {
-    const admin = this.authService.currentAdmin();
+  getParticipantRows(reservation: any): string[] {
+    const rows = [];
 
-    if (admin?.typeAdmin !== 'SITE') {
-      return this.reservations();
+    rows.push(this.getOrganizerLabel(reservation));
+
+    if (reservation.participantMatricules?.length) {
+      rows.push(...reservation.participantMatricules);
     }
 
-    return this.reservations().filter(reservation => {
-      const court = this.courts().find(c => c.id === reservation.courtId);
-      return court?.siteId === admin.siteId;
-    });
+    while (rows.length < 4) {
+      rows.push('Place libre');
+    }
+
+    return rows;
+  }
+
+  getRevenue(): number {
+    return this.getVisibleReservations()
+      .reduce((sum, r) => sum + this.getPaidAmount(r), 0);
+  }
+
+  getRemainingRevenue(): number {
+    return this.getVisibleReservations()
+      .reduce((sum, r) => sum + this.getRemainingAmount(r), 0);
+  }
+
+  getIncompleteMatchesCount(): number {
+    return this.getVisibleReservations()
+      .filter(r => this.getParticipantsCount(r) < 4)
+      .length;
   }
 }

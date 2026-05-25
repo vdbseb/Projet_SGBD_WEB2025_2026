@@ -14,39 +14,97 @@
     </h1>
 
     <p class="text-slate-500 mt-2">
-      Suivi des paiements des matchs.
+      Suivi financier des matchs.
     </p>
   </header>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+  <!-- STATS -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
       <p class="text-slate-400 text-xs font-black uppercase tracking-widest">
-        Prix match
+        Chiffre d'affaires
       </p>
-      <p class="text-3xl font-black text-slate-900 mt-2">
-        {{ matchPrice }}€
+      <p class="text-3xl font-black text-emerald-600 mt-2">
+        {{ getRevenue() }}€
       </p>
     </div>
 
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
       <p class="text-slate-400 text-xs font-black uppercase tracking-widest">
-        Part joueur
+        Montant restant
       </p>
-      <p class="text-3xl font-black text-slate-900 mt-2">
-        {{ playerShare }}€
+      <p class="text-3xl font-black text-orange-600 mt-2">
+        {{ getRemainingRevenue() }}€
       </p>
     </div>
 
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
       <p class="text-slate-400 text-xs font-black uppercase tracking-widest">
-        Matchs suivis
+        Matchs incomplets
       </p>
       <p class="text-3xl font-black text-slate-900 mt-2">
-        {{ getVisibleReservations().length }}
+        {{ getIncompleteMatchesCount() }}
       </p>
+    </div>
+
+  </div>
+
+  <!-- SEARCH -->
+  <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
+    <input
+      type="text"
+      placeholder="Rechercher organisateur, site ou terrain..."
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4 mb-6"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+
+    <!-- FILTERS -->
+    <div class="flex gap-3 flex-wrap">
+      <button
+        (click)="selectedFilter.set('all')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'all'
+          ? 'bg-slate-900 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Tous
+      </button>
+
+      <button
+        (click)="selectedFilter.set('paid')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'paid'
+          ? 'bg-emerald-600 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Payés
+      </button>
+
+      <button
+        (click)="selectedFilter.set('partial')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'partial'
+          ? 'bg-orange-500 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Partiels
+      </button>
+
+      <button
+        (click)="selectedFilter.set('organizer')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'organizer'
+          ? 'bg-red-500 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Solde organisateur
+      </button>
     </div>
   </div>
 
+  <!-- CARDS -->
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (reservation of getVisibleReservations(); track reservation.id) {
       <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
@@ -70,7 +128,7 @@
           </span>
         </div>
 
-        <div class="space-y-3 text-sm text-slate-500">
+        <div class="space-y-3 text-sm text-slate-500 mb-6">
           <p>
             <strong>Organisateur :</strong>
             {{ getOrganizerLabel(reservation) }}
@@ -85,17 +143,14 @@
             <strong>Heure :</strong>
             {{ reservation.startTime }} - {{ reservation.endTime }}
           </p>
-
-          <p>
-            <strong>Participants :</strong>
-            {{ getParticipantsCount(reservation) }}/4
-          </p>
         </div>
 
-        <div class="mt-6 grid grid-cols-3 gap-3">
+        <!-- MONEY -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+
           <div class="bg-slate-50 rounded-2xl p-3 text-center">
             <p class="text-xl font-black text-slate-900">
-              {{ matchPrice }}€
+              60€
             </p>
             <p class="text-[10px] uppercase font-black text-slate-400">
               Total
@@ -119,9 +174,31 @@
               Restant
             </p>
           </div>
+
+        </div>
+
+        <!-- PARTICIPANTS -->
+        <div class="space-y-2">
+          @for (participant of getParticipantRows(reservation); track participant) {
+            <div class="flex justify-between items-center bg-slate-50 rounded-2xl px-4 py-3">
+              <span class="text-sm font-medium text-slate-700">
+                {{ participant }}
+              </span>
+
+              <span
+                class="text-[10px] font-black uppercase px-2 py-1 rounded-full"
+                [class]="participant === 'Place libre'
+                  ? 'bg-slate-200 text-slate-500'
+                  : 'bg-emerald-100 text-emerald-700'"
+              >
+                {{ participant === 'Place libre' ? 'Disponible' : 'Payé' }}
+              </span>
+            </div>
+          }
         </div>
 
       </div>
     }
   </div>
+
 </div>
