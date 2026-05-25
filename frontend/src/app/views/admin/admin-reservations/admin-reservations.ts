@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { PadelService } from '../../../services/padel.service';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 
 @Component({
