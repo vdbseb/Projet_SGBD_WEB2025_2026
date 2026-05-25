@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-my-reservation',
@@ -22,6 +23,8 @@ export class MyReservations implements OnInit {
   selectedFilter = signal<'all' | 'upcoming' | 'past'>('all');
   courts = signal<any[]>([]);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
+  paidReservationIds = signal<number[]>([]);
 
   ngOnInit() {
     const member = this.authService.currentMember();
@@ -179,6 +182,33 @@ export class MyReservations implements OnInit {
         error: () => {
           alert('Impossible d’annuler la réservation.');
         }
+      });
+    });
+  }
+
+  isPaid(reservationId: number): boolean {
+    return this.paidReservationIds().includes(reservationId);
+  }
+
+  payReservation(reservationId: number) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Paiement',
+        message: 'Simuler le paiement de votre part de 15€ ?',
+        confirmLabel: 'Payer 15€',
+        cancelLabel: 'Retour'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.paidReservationIds.update(ids => [...ids, reservationId]);
+
+      this.snackBar.open('Paiement confirmé !', 'OK', {
+        duration: 3000
       });
     });
   }

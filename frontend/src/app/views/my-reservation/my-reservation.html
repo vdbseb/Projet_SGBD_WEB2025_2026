@@ -112,6 +112,20 @@
         </div>
 
         @if (getReservationStatus(reservation) !== 'past') {
+          @if (getReservationStatus(reservation) !== 'past') {
+            @if (isPaid(reservation.id)) {
+              <span class="inline-block mt-5 px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
+      Payé
+    </span>
+            } @else {
+              <button
+                (click)="payReservation(reservation.id)"
+                class="mt-5 mr-3 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
+              >
+                Payer ma part — 15€
+              </button>
+            }
+          }
           <button
             (click)="cancelReservation(reservation.id)"
             class="mt-5 px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
