@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { PadelService } from '../../../services/padel.service';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-admin-reservations',
@@ -19,6 +21,7 @@ export class AdminReservations implements OnInit {
   courts = signal<any[]>([]);
   sites = signal<any[]>([]);
   members = signal<any[]>([]);
+  private dialog = inject(MatDialog);
 
   ngOnInit() {
     this.padelService.getAllReservations().subscribe(reservations => {
@@ -161,5 +164,32 @@ export class AdminReservations implements OnInit {
     }
 
     return 'Type non défini';
+  }
+  deleteReservation(reservationId: number) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Supprimer la réservation',
+        message: 'Voulez-vous vraiment supprimer cette réservation ?',
+        confirmLabel: 'Oui, supprimer',
+        cancelLabel: 'Retour'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.padelService.deleteReservation(reservationId).subscribe({
+        next: () => {
+          this.reservations.update(reservations =>
+            reservations.filter(r => r.id !== reservationId)
+          );
+        },
+        error: () => {
+          alert('Impossible de supprimer la réservation.');
+        }
+      });
+    });
   }
 }

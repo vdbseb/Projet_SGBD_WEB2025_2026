@@ -116,6 +116,11 @@ export class PadelService {
       `${this.apiBaseUrl}/reservations`
     );
   }
+  deleteReservation(id: number) {
+    return this.httpClient.delete(
+      `${this.apiBaseUrl}/reservations/${id}`
+    );
+  }
 }
 
 
