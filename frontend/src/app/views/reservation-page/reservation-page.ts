@@ -77,6 +77,14 @@ export class ReservationPage implements OnInit {
     this.loadReservedTimes();
   }
 
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
   loadReservedTimes() {
     const court = this.selectedCourt();
     const date = this.selectedDate();
@@ -86,7 +94,7 @@ export class ReservationPage implements OnInit {
       return;
     }
 
-    const formattedDate = date.toISOString().split('T')[0];
+    const formattedDate = this.formatLocalDate(date);
 
     this.padelService.getReservations(court.id, formattedDate).subscribe(reservations => {
       this.reservedTimes.set(reservations.map(r => r.startTime));
@@ -131,7 +139,7 @@ export class ReservationPage implements OnInit {
       courtName: null,
       memberId: currentMember.id,
       playerMatricule: null,
-      date: date.toISOString().split('T')[0],
+      date: this.formatLocalDate(date),
       startTime,
       endTime,
       matchType: this.selectedMatchType(),
