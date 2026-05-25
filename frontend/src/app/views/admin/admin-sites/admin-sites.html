@@ -1,0 +1,111 @@
+<div class="min-h-screen bg-slate-50 p-8 md:p-12">
+
+  <a
+    routerLink="/admin"
+    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    Retour admin
+  </a>
+
+  <header class="mb-10">
+    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
+      Sites
+    </h1>
+
+    <p class="text-slate-500 mt-2">
+      Gestion des centres Angular Padel Club.
+    </p>
+  </header>
+
+  <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
+    <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+      Recherche
+    </label>
+
+    <input
+      type="text"
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
+      placeholder="Rechercher un site ou une ville..."
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    @for (site of filteredSites(); track site.id) {
+      <div class="bg-white border border-slate-100 rounded-4xl overflow-hidden shadow-sm">
+
+        <div
+          class="h-36 bg-cover bg-center"
+          [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
+        ></div>
+
+        <div class="p-6">
+          <div class="flex justify-between items-start gap-4 mb-4">
+            <div>
+              <h2 class="font-black text-xl text-slate-900">
+                {{ site.clubName || site.name }}
+              </h2>
+
+              <p class="text-slate-500 flex items-center gap-1 mt-1">
+                <mat-icon class="text-base">location_on</mat-icon>
+                {{ site.city }}
+              </p>
+            </div>
+
+            <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
+              {{ site.initial || site.city?.charAt(0) }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-slate-50 rounded-2xl p-3 text-center">
+              <p class="text-xl font-black text-slate-900">
+                {{ getCourtCount(site) }}
+              </p>
+              <p class="text-[10px] uppercase font-black text-slate-400">
+                Terrains
+              </p>
+            </div>
+
+            <div class="bg-blue-50 rounded-2xl p-3 text-center">
+              <p class="text-xl font-black text-blue-700">
+                {{ getIndoorCount(site) }}
+              </p>
+              <p class="text-[10px] uppercase font-black text-blue-400">
+                Indoor
+              </p>
+            </div>
+
+            <div class="bg-emerald-50 rounded-2xl p-3 text-center">
+              <p class="text-xl font-black text-emerald-700">
+                {{ getOutdoorCount(site) }}
+              </p>
+              <p class="text-[10px] uppercase font-black text-emerald-400">
+                Outdoor
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button
+              class="flex-1 px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
+              disabled
+            >
+              Modifier
+            </button>
+
+            <button
+              class="flex-1 px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest"
+              disabled
+            >
+              Détails
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>

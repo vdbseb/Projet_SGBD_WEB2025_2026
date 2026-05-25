@@ -29,5 +29,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./views/admin/admin-reservations/admin-reservations')
         .then(m => m.AdminReservations)
+  },
+  {
+    path: 'admin/sites',
+    loadComponent: () =>
+      import('./views/admin/admin-sites/admin-sites')
+        .then(m => m.AdminSites)
   }
 ];
