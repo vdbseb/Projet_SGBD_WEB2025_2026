@@ -26,6 +26,14 @@
       >
         Mes Réservations
       </a>
+      @if (authService.isLoggedIn()) {
+        <a
+          routerLink="/matches-publics"
+          class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
+        >
+          Matches publics
+        </a>
+      }
     }
 
     @if (authService.isAdminLoggedIn()) {
