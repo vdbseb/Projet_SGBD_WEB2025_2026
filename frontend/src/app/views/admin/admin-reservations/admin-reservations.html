@@ -89,8 +89,8 @@
             class="px-3 py-1 rounded-full text-xs font-black uppercase"
             [class]="getStatusClass(reservation)"
           >
-      {{ getStatusLabel(reservation) }}
-    </span>
+            {{ getStatusLabel(reservation) }}
+          </span>
         </div>
 
         <div class="space-y-3 text-sm text-slate-500">
@@ -118,6 +118,15 @@
             <strong>Participants :</strong>
             {{ getParticipantsLabel(reservation) }}
           </p>
+        </div>
+
+        <div class="mt-5">
+          <button
+            (click)="deleteReservation(reservation.id)"
+            class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+          >
+            Supprimer
+          </button>
         </div>
 
       </div>

@@ -4,6 +4,8 @@ import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-my-reservation',
@@ -19,6 +21,7 @@ export class MyReservations implements OnInit {
   sites = signal<any[]>([]);
   selectedFilter = signal<'all' | 'upcoming' | 'past'>('all');
   courts = signal<any[]>([]);
+  private dialog = inject(MatDialog);
 
   ngOnInit() {
     const member = this.authService.currentMember();
@@ -151,5 +154,32 @@ export class MyReservations implements OnInit {
     }
 
     return reservation.playerMatricule || 'Participants non disponibles';
+  }
+  cancelReservation(reservationId: number) {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Annuler la réservation',
+        message: 'Voulez-vous vraiment annuler cette réservation ?',
+        confirmLabel: 'Oui, annuler',
+        cancelLabel: 'Retour'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.padelService.deleteReservation(reservationId).subscribe({
+        next: () => {
+          this.reservations.update(reservations =>
+            reservations.filter(r => r.id !== reservationId)
+          );
+        },
+        error: () => {
+          alert('Impossible d’annuler la réservation.');
+        }
+      });
+    });
   }
 }
