@@ -1,0 +1,111 @@
+<div class="min-h-screen bg-slate-50 p-8 md:p-12">
+
+  <a
+    routerLink="/admin"
+    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    Retour admin
+  </a>
+
+  <header class="mb-10">
+    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
+      Réservations
+    </h1>
+
+    <p class="text-slate-500 mt-2">
+      Vue globale des réservations.
+    </p>
+  </header>
+
+  <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
+    <input
+      type="text"
+      placeholder="Rechercher court ou matricule..."
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4 mb-6"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+
+    <div class="flex gap-3 flex-wrap">
+      <button
+        (click)="selectedFilter.set('all')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'all'
+          ? 'bg-slate-900 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Toutes
+      </button>
+
+      <button
+        (click)="selectedFilter.set('today')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'today'
+          ? 'bg-orange-500 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Aujourd’hui
+      </button>
+
+      <button
+        (click)="selectedFilter.set('upcoming')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'upcoming'
+          ? 'bg-blue-500 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        À venir
+      </button>
+
+      <button
+        (click)="selectedFilter.set('past')"
+        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+        [class]="selectedFilter() === 'past'
+          ? 'bg-slate-500 text-white'
+          : 'bg-slate-100 text-slate-500'"
+      >
+        Passées
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    @for (reservation of filteredReservations(); track reservation.id) {
+      <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
+
+        <div class="flex justify-between items-start mb-4">
+          <h2 class="font-black text-slate-900">
+            {{ reservation.courtName }}
+          </h2>
+
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="getStatusClass(reservation)"
+          >
+            {{ getStatusLabel(reservation) }}
+          </span>
+        </div>
+
+        <div class="space-y-3 text-sm text-slate-500">
+          <p>
+            <strong>Date :</strong>
+            {{ reservation.date | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p>
+            <strong>Heure :</strong>
+            {{ reservation.startTime }} - {{ reservation.endTime }}
+          </p>
+
+          <p>
+            <strong>Matricule :</strong>
+            {{ reservation.playerMatricule }}
+          </p>
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>
