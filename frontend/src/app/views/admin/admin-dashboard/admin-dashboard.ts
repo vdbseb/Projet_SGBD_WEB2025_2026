@@ -10,7 +10,7 @@ import { AuthService } from '../../../services/auth.service';
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [AdminCardComponent, RouterLink, MatIconModule, MatDialogModule],
+  imports: [AdminCardComponent, MatIconModule, MatDialogModule],
   templateUrl: './admin-dashboard.html'
 })
 export class AdminDashboard implements OnInit {
