@@ -50,6 +50,9 @@ export class PadelService {
       })
     );
   }
+  getCourts(): Observable<CourtDTO[]> {
+    return this.httpClient.get<CourtDTO[]>(this.courtsUrl);
+  }
 
   private toPadelCourt(court: CourtDTO): PadelCourt {
     const type = court.type ?? (court.indoor ? 'Indoor' : 'Outdoor');
