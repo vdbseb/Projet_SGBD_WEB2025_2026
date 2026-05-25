@@ -17,5 +17,23 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./views/admin/admin-dashboard/admin-dashboard')
         .then(m => m.AdminDashboard)
+  },
+  {
+    path: 'admin/members',
+    loadComponent: () =>
+      import('./views/admin/admin-members/admin-members')
+        .then(m => m.AdminMembers)
+  },
+  {
+    path: 'admin/reservations',
+    loadComponent: () =>
+      import('./views/admin/admin-reservations/admin-reservations')
+        .then(m => m.AdminReservations)
+  },
+  {
+    path: 'admin/sites',
+    loadComponent: () =>
+      import('./views/admin/admin-sites/admin-sites')
+        .then(m => m.AdminSites)
   }
 ];
