@@ -39,4 +39,14 @@ public class MatchController {
                 matchService.createMatch(dto)
         );
     }
+
+    @PatchMapping("/{matchId}/annuler")
+    public MatchDTO annulerMatch(
+            @PathVariable Integer matchId,
+            @RequestParam String matricule
+    ) {
+        return matchMapper.toDTO(
+                matchService.annulerMatch(matchId, matricule)
+        );
+    }
 }

@@ -38,8 +38,8 @@ public class ReservationService {
             JourFermetureRepository jourFermetureRepository,
             ReservationMapper reservationMapper,
             PenaliteRepository penaliteRepository,
-            MatchRepository matchRepository, ParticipationRepository participationRepository
-
+            MatchRepository matchRepository,
+            ParticipationRepository participationRepository
     ) {
         this.reservationRepository = reservationRepository;
         this.courtRepository = courtRepository;
@@ -53,49 +53,25 @@ public class ReservationService {
     }
 
     public List<ReservationDTO> findAll() {
-        return matchRepository.findAll()
+        return reservationRepository.findAll()
                 .stream()
-                .map(match -> new ReservationDTO(
-                        match.getId(),
-                        match.getDateMatch(),
-                        match.getHeureFin(),
-                        match.getHeureDebut(),
-                        match.getTerrain().getId(),
-                        match.getTerrain().getSite().getNom(),
-                        match.getOrganisateur().getId(),
-                        match.getTypeMatch(),
-                        match.getParticipations() == null
-                                ? List.of()
-                                : match.getParticipations()
-                                .stream()
-                                .map(p -> p.getMembre().getMatricule())
-                                .toList()
-                ))
+                .map(reservationMapper::toDTO)
                 .toList();
     }
 
     public Optional<ReservationDTO> findById(int id) {
-        return matchRepository.findById(id)
-                .map(match -> new ReservationDTO(
-                        match.getId(),
-                        match.getDateMatch(),
-                        match.getHeureFin(),
-                        match.getHeureDebut(),
-                        match.getTerrain().getId(),
-                        match.getTerrain().getSite().getNom(),
-                        match.getOrganisateur().getId(),
-                        match.getTypeMatch(),
-                        match.getParticipations() == null
-                                ? List.of()
-                                : match.getParticipations()
-                                .stream()
-                                .map(p -> p.getMembre().getMatricule())
-                                .toList()
-                ));
+        return reservationRepository.findById(id)
+                .map(reservationMapper::toDTO);
     }
 
-    public List<ReservationEntity> findByCourtAndDate(int courtId, LocalDate date) {
-        return reservationRepository.findByCourtIdAndDate(courtId, date);
+    public List<ReservationEntity> findByCourtAndDate(
+            int courtId,
+            LocalDate date
+    ) {
+        return reservationRepository.findByCourtIdAndDate(
+                courtId,
+                date
+        );
     }
 
     public void deleteReservation(int id) {
@@ -105,28 +81,25 @@ public class ReservationService {
     @Transactional
     public void addReservation(ReservationDTO dto) {
 
-
         CourtEntity court = courtRepository.findById(dto.courtId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Terrain introuvable."
+                        "Terrain introuvable avec l'id " + dto.courtId()
                 ));
-
 
         MembreEntity member = membreRepository.findById(dto.memberId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Membre introuvable."
+                        "Membre introuvable avec l'id " + dto.memberId()
                 ));
 
-        // AC : vérifier statut membre
         if (!member.isActif()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Réservation impossible : membre inactif."
             );
         }
-        // AC : vérifier que le membre n’a pas de dette / pénalité bloquante
+
         boolean hasBlockingDebt =
                 penaliteRepository.existsByMembre_IdAndActiveTrue(
                         member.getId()
@@ -139,7 +112,6 @@ public class ReservationService {
             );
         }
 
-        // AC : vérifier que le site est ouvert
         boolean fermetureSite =
                 jourFermetureRepository.existsBySiteIdAndDateFermeture(
                         court.getSite().getId(),
@@ -158,12 +130,10 @@ public class ReservationService {
             );
         }
 
-        int currentYear = dto.date().getYear();
-
         HoraireSiteEntity horaire = horaireSiteRepository
                 .findBySite_IdAndAnnee(
                         court.getSite().getId(),
-                        currentYear
+                        dto.date().getYear()
                 )
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.CONFLICT,
@@ -178,18 +148,14 @@ public class ReservationService {
                 horaire.getPause_minutes()
         );
 
-        LocalTime openingTime = horaire.getHeure_debut();
-        LocalTime closingTime = horaire.getHeure_fin();
-
-        // AC : vérifier que la réservation respecte les horaires du site
-        if (startTime.isBefore(openingTime) || endTime.isAfter(closingTime)) {
+        if (startTime.isBefore(horaire.getHeure_debut())
+                || endTime.isAfter(horaire.getHeure_fin())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Réservation impossible : en dehors des heures d'ouverture."
             );
         }
 
-        // AC : vérifier que le terrain est disponible
         List<ReservationEntity> existingReservations =
                 reservationRepository.findByCourtAndDate(
                         court,
@@ -198,17 +164,19 @@ public class ReservationService {
 
         for (ReservationEntity existing : existingReservations) {
 
+            if (existing.getMatch() != null
+                    && existing.getMatch().getStatut() == MatchStatus.ANNULE) {
+                continue;
+            }
+
             LocalTime existingBlockedEnd =
-                    existing.getEndTime()
-                            .plusMinutes(
-                                    horaire.getPause_minutes()
-                            );
+                    existing.getEndTime().plusMinutes(
+                            horaire.getPause_minutes()
+                    );
 
             boolean overlap =
                     startTime.isBefore(existingBlockedEnd)
-                            && blockedEndTime.isAfter(
-                            existing.getStartTime()
-                    );
+                            && blockedEndTime.isAfter(existing.getStartTime());
 
             if (overlap) {
                 throw new ResponseStatusException(
@@ -218,55 +186,86 @@ public class ReservationService {
             }
         }
 
-        ReservationEntity reservation = reservationMapper.toEntity(dto, court, member);
+        List<String> participants = dto.participantMatricules() == null
+                ? List.of()
+                : dto.participantMatricules();
+
+        int nombreJoueurs = 1 + participants.size();
+
+        if (nombreJoueurs > 4) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Un match ne peut pas avoir plus de 4 joueurs."
+            );
+        }
+
+        MatchType matchType = participants.isEmpty()
+                ? MatchType.PUBLIC
+                : MatchType.PRIVE;
+
+        if (matchType == MatchType.PRIVE && nombreJoueurs != 4) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Un match privé doit avoir exactement 4 joueurs."
+            );
+        }
+
+        ReservationEntity reservation = reservationMapper.toEntity(
+                dto,
+                court,
+                member
+        );
+
         reservation.setId(null);
         reservation.setEndTime(endTime);
 
-        reservationRepository.save(reservation);
+        ReservationEntity savedReservation =
+                reservationRepository.save(reservation);
 
         MatchEntity match = new MatchEntity();
+
         match.setTerrain(court);
         match.setOrganisateur(member);
         match.setDateMatch(dto.date());
-        match.setHeureDebut(dto.startTime());
+        match.setHeureDebut(startTime);
         match.setHeureFin(endTime);
         match.setPrixTotal(60);
-        match.setStatut(MatchStatus.OUVERT);
         match.setCreatedAt(LocalDateTime.now());
+        match.setTypeMatch(matchType);
+        match.setStatut(
+                matchType == MatchType.PRIVE
+                        ? MatchStatus.COMPLET
+                        : MatchStatus.OUVERT
+        );
 
-        if (dto.participantMatricules() == null || dto.participantMatricules().isEmpty()) {
-            match.setTypeMatch(MatchType.PUBLIC);
-        } else {
-            match.setTypeMatch(MatchType.PRIVE);
-            match.setStatut(MatchStatus.COMPLET);
+        match.setReservation(savedReservation);
+
+        MatchEntity savedMatch = matchRepository.save(match);
+
+        createParticipation(savedMatch, member);
+
+        for (String matricule : participants) {
+            MembreEntity joueur = membreRepository.findByMatricule(matricule)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Joueur introuvable : " + matricule
+                    ));
+
+            createParticipation(savedMatch, joueur);
         }
-        MatchEntity savedMatch =
-                matchRepository.save(match);
+    }
 
-        // participation organisateur
+    private void createParticipation(
+            MatchEntity match,
+            MembreEntity membre
+    ) {
         ParticipationEntity participation = new ParticipationEntity();
-        participation.setMatch(savedMatch);
+
+        participation.setMatch(match);
+        participation.setMembre(membre);
         participation.setDateInscription(LocalDateTime.now());
-        participation.setMembre(member);
+        participation.setPaiement(null);
 
         participationRepository.save(participation);
-
-        // participations autres joueurs si match privé
-        if (dto.participantMatricules() != null) {
-            for (String matricule : dto.participantMatricules()) {
-                MembreEntity joueur = membreRepository.findByMatricule(matricule)
-                        .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Joueur introuvable : " + matricule
-                        ));
-
-                ParticipationEntity p = new ParticipationEntity();
-                p.setMatch(savedMatch);
-                p.setMembre(joueur);
-                p.setDateInscription(LocalDateTime.now());
-
-                participationRepository.save(p);
-            }
-        }
     }
 }

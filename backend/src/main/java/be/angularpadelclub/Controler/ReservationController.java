@@ -1,10 +1,10 @@
 package be.angularpadelclub.Controler;
 
+import be.angularpadelclub.DTO.MatchDTO;
 import be.angularpadelclub.DTO.ReservationDTO;
-import be.angularpadelclub.DTO.ReservationDetailDTO;
-import be.angularpadelclub.Mapper.ReservationDetailMapper;
+import be.angularpadelclub.Mapper.MatchMapper;
 import be.angularpadelclub.Mapper.ReservationMapper;
-import be.angularpadelclub.Service.ReservationDetailService;
+import be.angularpadelclub.Service.MatchService;
 import be.angularpadelclub.Service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,8 @@ public class ReservationController {
 
     private final ReservationService reservationService;
     private final ReservationMapper reservationMapper;
-
+    private final MatchService matchService;
+    private final MatchMapper matchMapper;
 
     @GetMapping(produces = "application/json")
     public List<ReservationDTO> findAll() {
@@ -41,10 +42,6 @@ public class ReservationController {
         reservationService.addReservation(reservationDTO);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteReservation(@PathVariable int id) {
-        reservationService.deleteReservation(id);
-    }
 
     @GetMapping(params = {"courtId", "date"}, produces = "application/json")
     public List<ReservationDTO> reservationsByCourtAndDate(

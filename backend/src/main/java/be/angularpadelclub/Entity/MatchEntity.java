@@ -55,4 +55,8 @@ public class MatchEntity {
 
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL)
     private List<ParticipationEntity> participations;
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "reservation_id", nullable = false, unique = true)
+    private ReservationEntity reservation;
 }

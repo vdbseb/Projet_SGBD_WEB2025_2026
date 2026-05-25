@@ -162,11 +162,18 @@ CREATE TABLE public.match_padel (
                                     organisateur_id integer NOT NULL,
                                     prix_total integer NOT NULL,
                                     terrain_id integer NOT NULL,
+                                    reservation_id integer NOT NULL,
                                     created_at timestamp(6) without time zone,
                                     statut character varying(255) NOT NULL,
                                     type_match character varying(255) NOT NULL,
-                                    CONSTRAINT match_padel_statut_check CHECK (((statut)::text = ANY ((ARRAY['PLANIFIE'::character varying, 'OUVERT'::character varying, 'COMPLET'::character varying, 'ANNULE'::character varying, 'TERMINE'::character varying])::text[]))),
-    CONSTRAINT match_padel_type_match_check CHECK (((type_match)::text = ANY ((ARRAY['PUBLIC'::character varying, 'PRIVE'::character varying])::text[])))
+
+                                    CONSTRAINT match_padel_statut_check CHECK (
+                                        statut IN ('PLANIFIE', 'OUVERT', 'COMPLET', 'ANNULE', 'TERMINE')
+                                        ),
+
+                                    CONSTRAINT match_padel_type_match_check CHECK (
+                                        type_match IN ('PUBLIC', 'PRIVE')
+                                        )
 );
 
 
@@ -517,17 +524,14 @@ INSERT INTO public.jour_fermeture VALUES (6, NULL, '2026-05-25', 'TEST', true);
 -- Data for Name: match_padel; Type: TABLE DATA; Schema: public; Owner: padel_app
 --
 
-INSERT INTO public.match_padel VALUES ('2026-06-10', '10:00:00', '11:30:00', 1, 1, 60, 1, '2026-05-24 12:42:00.411166', 'PLANIFIE', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-06-12', '14:00:00', '15:30:00', 2, 3, 60, 2, '2026-05-24 12:42:00.411166', 'COMPLET', 'PRIVE');
-INSERT INTO public.match_padel VALUES ('2026-06-15', '18:00:00', '19:30:00', 3, 5, 60, 3, '2026-05-24 12:42:00.411166', 'PLANIFIE', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-06-18', '09:00:00', '10:30:00', 4, 2, 60, 5, '2026-05-24 12:42:00.411166', 'PLANIFIE', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-05-30', '12:30:00', '14:00:00', 6, 1, 60, 1, NULL, 'COMPLET', 'PRIVE');
-INSERT INTO public.match_padel VALUES ('2026-05-30', '15:00:00', '16:30:00', 7, 1, 60, 1, '2026-05-24 17:05:50.553595', 'OUVERT', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-05-26', '14:00:00', '15:30:00', 8, 1, 60, 4, '2026-05-24 17:41:39.839719', 'OUVERT', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-06-08', '11:00:00', '12:30:00', 41, 2, 60, 3, '2026-05-25 10:56:53.598841', 'OUVERT', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-06-02', '12:30:00', '14:00:00', 42, 1, 60, 4, '2026-05-25 11:11:21.567071', 'OUVERT', 'PUBLIC');
-INSERT INTO public.match_padel VALUES ('2026-06-15', '10:00:00', '11:30:00', 43, 1, 60, 6, '2026-05-25 11:22:37.190441', 'OUVERT', 'PUBLIC');
 
+INSERT INTO public.match_padel VALUES ('2026-05-30', '12:30:00', '14:00:00', 6, 1, 60, 1, 10, NULL, 'COMPLET', 'PRIVE');
+INSERT INTO public.match_padel VALUES ('2026-05-30', '15:00:00', '16:30:00', 7, 1, 60, 1, 11, '2026-05-24 17:05:50.553595', 'OUVERT', 'PUBLIC');
+INSERT INTO public.match_padel VALUES ('2026-05-26', '14:00:00', '15:30:00', 8, 1, 60, 4, 12, '2026-05-24 17:41:39.839719', 'OUVERT', 'PUBLIC');
+
+INSERT INTO public.match_padel VALUES ('2026-06-08', '11:00:00', '12:30:00', 41, 2, 60, 3, 45, '2026-05-25 10:56:53.598841', 'OUVERT', 'PUBLIC');
+INSERT INTO public.match_padel VALUES ('2026-06-02', '12:30:00', '14:00:00', 42, 1, 60, 4, 46, '2026-05-25 11:11:21.567071', 'OUVERT', 'PUBLIC');
+INSERT INTO public.match_padel VALUES ('2026-06-15', '10:00:00', '11:30:00', 43, 1, 60, 6, 47, '2026-05-25 11:22:37.190441', 'OUVERT', 'PUBLIC');
 
 --
 -- TOC entry 3530 (class 0 OID 24786)
@@ -553,14 +557,6 @@ INSERT INTO public.membre VALUES (false, 10, NULL, 1, 'merlinestungroschnok@pige
 -- Data for Name: paiement; Type: TABLE DATA; Schema: public; Owner: padel_app
 --
 
-INSERT INTO public.paiement VALUES (1, 15, 1, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (2, 15, 2, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (3, 15, 4, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (4, 15, 5, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (5, 15, 6, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (6, 15, 7, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (7, 15, 8, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
-INSERT INTO public.paiement VALUES (8, 15, 10, '2026-05-24 12:42:00.411166', 'CARTE', 'VALIDE');
 
 
 --
@@ -569,16 +565,6 @@ INSERT INTO public.paiement VALUES (8, 15, 10, '2026-05-24 12:42:00.411166', 'CA
 -- Data for Name: participation; Type: TABLE DATA; Schema: public; Owner: padel_app
 --
 
-INSERT INTO public.participation VALUES (1, 1, 1, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (2, 1, 7, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (3, 1, 8, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (4, 2, 3, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (5, 2, 4, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (6, 2, 1, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (7, 2, 9, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (8, 3, 5, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (9, 3, 8, NULL, '2026-05-24 12:42:00.411166');
-INSERT INTO public.participation VALUES (10, 4, 2, NULL, '2026-05-24 12:42:00.411166');
 INSERT INTO public.participation VALUES (11, 6, 1, NULL, NULL);
 INSERT INTO public.participation VALUES (12, 6, 8, NULL, NULL);
 INSERT INTO public.participation VALUES (13, 6, 2, NULL, NULL);
@@ -596,7 +582,6 @@ INSERT INTO public.participation VALUES (51, 43, 1, NULL, '2026-05-25 11:22:37.1
 -- Data for Name: penalite; Type: TABLE DATA; Schema: public; Owner: padel_app
 --
 
-INSERT INTO public.penalite VALUES (1, 5, 3, '2026-06-16', '2026-06-23', 'Solde dû après match public incomplet', true);
 
 
 --
@@ -605,7 +590,7 @@ INSERT INTO public.penalite VALUES (1, 5, 3, '2026-06-16', '2026-06-23', 'Solde 
 -- Data for Name: reservation; Type: TABLE DATA; Schema: public; Owner: padel_app
 --
 
-INSERT INTO public.reservation VALUES (1, '2026-05-30', '11:30:00', 7, 1, '10:00:00');
+
 INSERT INTO public.reservation VALUES (1, '2026-05-30', '14:00:00', 10, 1, '12:30:00');
 INSERT INTO public.reservation VALUES (1, '2026-05-30', '16:30:00', 11, 1, '15:00:00');
 INSERT INTO public.reservation VALUES (4, '2026-05-26', '15:30:00', 12, 1, '14:00:00');

@@ -2,6 +2,7 @@ package be.angularpadelclub.Mapper;
 
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
 import org.springframework.stereotype.Component;
@@ -12,20 +13,30 @@ import java.util.List;
 public class ReservationMapper {
 
     public ReservationDTO toDTO(ReservationEntity entity) {
+
+        MatchEntity match = entity.getMatch();
+
+        List<String> participantMatricules =
+                match != null && match.getParticipations() != null
+                        ? match.getParticipations()
+                        .stream()
+                        .map(p -> p.getMembre().getMatricule())
+                        .toList()
+                        : List.of();
+
         return new ReservationDTO(
                 entity.getId(),
                 entity.getDate(),
-                entity.getStartTime(),
                 entity.getEndTime(),
+                entity.getStartTime(),
                 entity.getCourt().getId(),
                 entity.getCourt().getSite().getNom(),
                 entity.getMember().getId(),
-                null,
-                List.of()
+                match != null ? match.getTypeMatch() : null,
+                match != null ? match.getStatut() : null,
+                participantMatricules
         );
     }
-
-
 
     public ReservationEntity toEntity(
             ReservationDTO dto,

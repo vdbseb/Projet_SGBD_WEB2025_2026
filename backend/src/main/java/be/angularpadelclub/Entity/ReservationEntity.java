@@ -1,5 +1,6 @@
 package be.angularpadelclub.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,4 +35,8 @@ public class ReservationEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
     private MembreEntity member;
+
+    @JsonIgnore
+    @OneToOne(mappedBy = "reservation")
+    private MatchEntity match;
 }
