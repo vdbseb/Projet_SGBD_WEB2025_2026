@@ -1,7 +1,10 @@
 package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.ReservationDTO;
+import be.angularpadelclub.DTO.ReservationDetailDTO;
+import be.angularpadelclub.Mapper.ReservationDetailMapper;
 import be.angularpadelclub.Mapper.ReservationMapper;
+import be.angularpadelclub.Service.ReservationDetailService;
 import be.angularpadelclub.Service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,16 +21,18 @@ public class ReservationController {
     private final ReservationService reservationService;
     private final ReservationMapper reservationMapper;
 
+
     @GetMapping(produces = "application/json")
-    public List<ReservationDTO> reservations() {
-        return reservationMapper.toDTOList(reservationService.findAll());
+    public List<ReservationDTO> findAll() {
+        return reservationService.findAll();
     }
 
     @GetMapping(path = "/{id}", produces = "application/json")
-    public ResponseEntity<ReservationDTO> reservation(@PathVariable int id) {
+    public ResponseEntity<ReservationDTO> reservation(
+            @PathVariable int id
+    ) {
         return ResponseEntity.of(
                 reservationService.findById(id)
-                        .map(reservationMapper::toDTO)
         );
     }
 

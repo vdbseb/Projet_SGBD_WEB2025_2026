@@ -13,6 +13,7 @@ public record ReservationDTO(
         LocalTime endTime,
         LocalTime startTime,
         Integer courtId,
+        String siteName,
         Integer memberId,
         MatchType matchType,
         List<String> participantMatricules
