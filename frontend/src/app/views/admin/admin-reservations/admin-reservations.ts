@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { PadelService } from '../../../services/padel.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-admin-reservations',
@@ -22,10 +23,22 @@ export class AdminReservations implements OnInit {
   sites = signal<any[]>([]);
   members = signal<any[]>([]);
   private dialog = inject(MatDialog);
+  authService = inject(AuthService);
 
   ngOnInit() {
     this.padelService.getAllReservations().subscribe(reservations => {
-      const sorted = reservations.sort((a, b) => {
+      const admin = this.authService.currentAdmin();
+
+      let filteredReservations = reservations;
+
+      if (admin?.typeAdmin === 'SITE') {
+        filteredReservations = reservations.filter(reservation => {
+          const court = this.courts().find(c => c.id === reservation.courtId);
+          return court?.siteId === admin.siteId;
+        });
+      }
+
+      const sorted = filteredReservations.sort((a, b) => {
         const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
         const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
         return dateA - dateB;
