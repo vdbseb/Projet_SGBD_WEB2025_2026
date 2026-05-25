@@ -121,6 +121,11 @@ export class PadelService {
       `${this.apiBaseUrl}/reservations/${id}`
     );
   }
+  getAdministrators() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/administrateurs`
+    );
+  }
 }
 
 
