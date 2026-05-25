@@ -205,4 +205,30 @@ export class AdminReservations implements OnInit {
       });
     });
   }
+  getParticipantsCount(reservation: any): number {
+    const organizerCount = reservation.memberId ? 1 : 0;
+    const extraCount = reservation.participantMatricules?.length || 0;
+
+    return organizerCount + extraCount;
+  }
+
+  getMatchCapacityLabel(reservation: any): string {
+    return `${this.getParticipantsCount(reservation)}/4 joueurs`;
+  }
+
+  getMatchStatusLabel(reservation: any): string {
+    return this.getParticipantsCount(reservation) >= 4 ? 'Complet' : 'Ouvert';
+  }
+
+  getMatchStatusClass(reservation: any): string {
+    return this.getParticipantsCount(reservation) >= 4
+      ? 'bg-emerald-100 text-emerald-700'
+      : 'bg-orange-100 text-orange-700';
+  }
+
+  getMatchTypeClass(reservation: any): string {
+    return reservation.matchType === 'PRIVATE'
+      ? 'bg-violet-100 text-violet-700'
+      : 'bg-blue-100 text-blue-700';
+  }
 }

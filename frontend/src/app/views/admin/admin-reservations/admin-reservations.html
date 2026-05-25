@@ -94,10 +94,25 @@
         </div>
 
         <div class="space-y-3 text-sm text-slate-500">
-          <p>
-            <strong>Type :</strong>
-            {{ getMatchTypeLabel(reservation) }}
-          </p>
+          <div class="flex gap-2 flex-wrap">
+  <span
+    class="px-3 py-1 rounded-full text-xs font-black uppercase"
+    [class]="getMatchTypeClass(reservation)"
+  >
+    {{ getMatchTypeLabel(reservation) }}
+  </span>
+
+            <span
+              class="px-3 py-1 rounded-full text-xs font-black uppercase"
+              [class]="getMatchStatusClass(reservation)"
+            >
+    {{ getMatchStatusLabel(reservation) }}
+  </span>
+
+            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
+    {{ getMatchCapacityLabel(reservation) }}
+  </span>
+          </div>
 
           <p>
             <strong>Organisateur :</strong>
