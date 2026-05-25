@@ -13,7 +13,6 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
   selector: 'app-public-matches',
   standalone: true,
   imports: [
-    RouterLink,
     DatePipe,
     MatIconModule,
     MatDialogModule,
