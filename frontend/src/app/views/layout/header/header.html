@@ -10,10 +10,12 @@
   </a>
 
   <nav class="hidden md:flex gap-8 items-center font-bold uppercase text-[11px] tracking-widest text-slate-500">
-    <a routerLink="/"
-       routerLinkActive="text-slate-900"
-       [routerLinkActiveOptions]="{exact: true}"
-       class="hover:text-slate-900 transition-colors cursor-pointer no-underline">
+    <a
+      routerLink="/"
+      routerLinkActive="text-slate-900"
+      [routerLinkActiveOptions]="{exact: true}"
+      class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
+    >
       Nos Centres
     </a>
 
@@ -26,12 +28,21 @@
       </a>
     }
 
+    @if (authService.isAdminLoggedIn()) {
+      <a
+        routerLink="/admin"
+        class="hover:text-violet-700 transition-colors cursor-pointer no-underline"
+      >
+        Administration
+      </a>
+    }
+
     <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
       <mat-icon
-        (click)="authService.isLoggedIn() ? logout() : openLogin()"
+        (click)="authService.isAdminLoggedIn() ? logoutAdmin() : authService.isLoggedIn() ? logout() : openLogin()"
         class="cursor-pointer"
       >
-        {{ authService.isLoggedIn() ? 'logout' : 'account_circle' }}
+        {{ authService.isAdminLoggedIn() || authService.isLoggedIn() ? 'logout' : 'account_circle' }}
       </mat-icon>
     </div>
   </nav>
