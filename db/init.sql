@@ -49,6 +49,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.administrateur (
                                        id integer NOT NULL,
+                                       matricule character varying(10) NOT NULL,
                                        site_id integer,
                                        type_admin character varying(20) NOT NULL,
                                        nom character varying(100) NOT NULL,
@@ -476,10 +477,13 @@ ALTER TABLE ONLY public.penalite ALTER COLUMN id SET DEFAULT nextval('public.pen
 -- Data for Name: administrateur; Type: TABLE DATA; Schema: public; Owner: padel_app
 --
 
-INSERT INTO public.administrateur VALUES (1, NULL, 'GLOBAL', 'Admin', 'Global', 'admin.global@padel.be');
-INSERT INTO public.administrateur VALUES (2, 1, 'SITE', 'Admin', 'Bruxelles', 'admin.bruxelles@padel.be');
-INSERT INTO public.administrateur VALUES (3, 2, 'SITE', 'Admin', 'Liege', 'admin.liege@padel.be');
-INSERT INTO public.administrateur VALUES (4, 3, 'SITE', 'Admin', 'Arlon', 'admin.arlon@padel.be');
+INSERT INTO public.administrateur
+(id, matricule, site_id, type_admin, nom, prenom, email)
+VALUES
+    (1, 'AG01', NULL, 'GLOBAL', 'Admin', 'Global', 'admin.global@padel.be'),
+    (2, 'AS02', 1, 'SITE', 'Admin', 'Bruxelles', 'admin.bruxelles@padel.be'),
+    (3, 'AS03', 2, 'SITE', 'Admin', 'Liege', 'admin.liege@padel.be'),
+    (4, 'AS04', 3, 'SITE', 'Admin', 'Arlon', 'admin.arlon@padel.be');
 
 
 --
