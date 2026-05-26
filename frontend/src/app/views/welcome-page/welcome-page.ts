@@ -8,6 +8,7 @@ import {AsyncPipe} from '@angular/common';
 import {MatDialog} from '@angular/material/dialog';
 import {AuthService} from '../../services/auth.service';
 import {LoginDialogComponent} from '../login-dialog/login-dialog';
+import {MatIcon} from '@angular/material/icon';
 
 
 @Component({
@@ -17,7 +18,8 @@ import {LoginDialogComponent} from '../login-dialog/login-dialog';
     MatCardModule,
     MatButtonModule,
     PadelCardComponent,
-    AsyncPipe
+    AsyncPipe,
+    MatIcon
   ],
   templateUrl: './welcome-page.html',
   styleUrl: './welcome-page.css',

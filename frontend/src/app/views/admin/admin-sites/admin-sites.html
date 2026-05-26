@@ -37,12 +37,24 @@
       <div class="bg-white border border-slate-100 rounded-4xl overflow-hidden shadow-sm">
 
         <div
-          class="h-36 bg-cover bg-center"
+          class="h-36 bg-cover bg-center relative"
           [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
-        ></div>
+        >
+          <div class="absolute top-4 right-4">
+            @if (site.active !== false) {
+              <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase">
+                Actif
+              </span>
+            } @else {
+              <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase">
+                Fermé
+              </span>
+            }
+          </div>
+        </div>
 
         <div class="p-6">
-          <div class="flex justify-between items-start gap-4 mb-4">
+          <div class="flex justify-between items-start gap-4 mb-5">
             <div>
               <h2 class="font-black text-xl text-slate-900">
                 {{ site.clubName || site.name }}
@@ -57,6 +69,21 @@
             <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
               {{ site.initial || site.city?.charAt(0) }}
             </span>
+          </div>
+
+          <div class="bg-slate-50 rounded-2xl p-4 mb-5">
+            <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
+              Horaires
+            </p>
+
+            <div class="flex items-center gap-2 text-slate-700 font-bold">
+              <mat-icon class="text-base">schedule</mat-icon>
+              <span>
+                {{ site.openingTime || site.heureOuverture || '—' }}
+                →
+                {{ site.closingTime || site.heureFermeture || '—' }}
+              </span>
+            </div>
           </div>
 
           <div class="grid grid-cols-3 gap-3 mb-6">
@@ -88,19 +115,42 @@
             </div>
           </div>
 
+          <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-violet-50 rounded-2xl p-3 text-center">
+              <p class="text-xl font-black text-violet-700">
+                {{ getSiteReservationCount(site) }}
+              </p>
+              <p class="text-[10px] uppercase font-black text-violet-400">
+                Réservations
+              </p>
+            </div>
+
+            <div class="bg-orange-50 rounded-2xl p-3 text-center">
+              <p class="text-xl font-black text-orange-700">
+                {{ getSiteRevenue(site) }}€
+              </p>
+              <p class="text-[10px] uppercase font-black text-orange-400">
+                CA estimé
+              </p>
+            </div>
+          </div>
+
           <div class="flex gap-3">
             <button
               class="flex-1 px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
               disabled
             >
-              Modifier
+              Modifier horaires
             </button>
 
             <button
-              class="flex-1 px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest"
+              class="flex-1 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest"
+              [class]="site.active !== false
+                ? 'bg-red-50 text-red-600'
+                : 'bg-emerald-50 text-emerald-700'"
               disabled
             >
-              Détails
+              {{ site.active !== false ? 'Fermer' : 'Réouvrir' }}
             </button>
           </div>
         </div>

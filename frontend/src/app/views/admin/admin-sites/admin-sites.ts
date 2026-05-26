@@ -13,11 +13,16 @@ export class AdminSites implements OnInit {
   private padelService = inject(PadelService);
 
   sites = signal<any[]>([]);
+  reservations = signal<any[]>([]);
   search = signal('');
 
   ngOnInit() {
     this.padelService.getSites().subscribe(sites => {
       this.sites.set(sites);
+    });
+
+    this.padelService.getAllReservations().subscribe(reservations => {
+      this.reservations.set(reservations);
     });
   }
 
@@ -49,5 +54,17 @@ export class AdminSites implements OnInit {
     return site.courts?.filter((court: any) =>
       court.type?.toLowerCase() === 'outdoor'
     ).length || 0;
+  }
+
+  getSiteReservationCount(site: any): number {
+    const courtIds = site.courts?.map((court: any) => court.id) || [];
+
+    return this.reservations().filter(reservation =>
+      courtIds.includes(reservation.courtId)
+    ).length;
+  }
+
+  getSiteRevenue(site: any): number {
+    return this.getSiteReservationCount(site) * 60;
   }
 }

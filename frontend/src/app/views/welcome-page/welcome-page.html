@@ -22,7 +22,23 @@
         <p class="text-slate-500 leading-relaxed text-sm">
           {{ site.description }}
         </p>
+        <div class="mt-4 space-y-2 text-sm text-slate-500">
 
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-base">schedule</mat-icon>
+            <span>
+      Ouvert de {{ site.openingTime }} à {{ site.closingTime }}
+    </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-base">event_busy</mat-icon>
+            <span>
+      Fermé le dimanche
+    </span>
+          </div>
+
+        </div>
       </app-padel-card>
     }
     }

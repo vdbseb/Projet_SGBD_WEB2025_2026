@@ -10,6 +10,10 @@ interface SiteDTO {
   openingTime: string;
   closingTime: string;
   active: boolean;
+  adresse: string;
+  description: string;
+  imageURL: string;
+  courts: CourtDTO[];
 }
 
 interface CourtDTO {
@@ -37,17 +41,8 @@ export class PadelService {
   }
 
   getSiteById(id: number): Observable<PadelSite> {
-    return forkJoin({
-      site: this.httpClient.get<SiteDTO>(`${this.sitesUrl}/${id}`),
-      courts: this.httpClient.get<CourtDTO[]>(this.courtsUrl)
-    }).pipe(
-      map(({ site, courts }) => {
-        const siteCourts = courts
-          .filter(court => court.siteId === site.id)
-          .map(court => this.toPadelCourt(court));
-
-        return this.toPadelSite(site, siteCourts);
-      })
+    return this.httpClient.get<SiteDTO>(`${this.sitesUrl}/${id}`).pipe(
+      map(site => this.toPadelSite(site, []))
     );
   }
   getCourts(): Observable<CourtDTO[]> {
@@ -68,11 +63,16 @@ export class PadelService {
       id: site.id,
       city: site.city,
       clubName: site.name,
-      image: this.getImageForCity(site.city),
+      image: site.imageURL || this.getImageForCity(site.city),
       initial: site.city.charAt(0).toUpperCase(),
-      description: `Ouvert de ${site.openingTime} à ${site.closingTime}`,
-      courts
-    };
+      description: site.description,
+      courts: site.courts?.map(court => this.toPadelCourt(court)) || courts,
+
+      openingTime: site.openingTime,
+      closingTime: site.closingTime,
+      active: site.active,
+      adresse: site.adresse
+    } as any;
   }
 
   private getImageForCity(city: string): string {
