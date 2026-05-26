@@ -1,7 +1,7 @@
 import {inject, Injectable} from '@angular/core';
 import {PadelCourt, PadelSite} from '../shared/site.model';
 import {HttpClient} from '@angular/common/http';
-import {forkJoin, map, Observable} from 'rxjs';
+import {map, Observable} from 'rxjs';
 
 interface SiteDTO {
   id: number;
