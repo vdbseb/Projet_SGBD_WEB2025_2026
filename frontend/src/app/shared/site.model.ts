@@ -8,8 +8,13 @@ export interface PadelSite {
   id: number;
   city: string;
   clubName: string;
-  description: string;
   image: string;
   initial: string;
+  description: string;
   courts: PadelCourt[];
+
+  openingTime: string;
+  closingTime: string;
+  active: boolean;
+  adresse?: string;
 }

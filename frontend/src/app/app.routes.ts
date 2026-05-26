@@ -47,5 +47,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./views/public-matches/public-matches')
         .then(m => m.PublicMatches)
+  },
+  {
+    path: 'admin/courts',
+    loadComponent: () =>
+      import('./views/admin/admin-courts/admin-courts')
+        .then(m => m.AdminCourts)
   }
 ];
