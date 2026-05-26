@@ -20,8 +20,7 @@ public class ReservationController {
 
     private final ReservationService reservationService;
     private final ReservationMapper reservationMapper;
-    private final MatchService matchService;
-    private final MatchMapper matchMapper;
+
 
     @GetMapping(produces = "application/json")
     public List<ReservationDTO> findAll() {
