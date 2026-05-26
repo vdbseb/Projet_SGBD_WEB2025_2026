@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { PadelService } from '../../../services/padel.service';
+import {AuthService} from '../../../services/auth.service';
 
 @Component({
   selector: 'app-admin-sites',
@@ -15,6 +16,7 @@ export class AdminSites implements OnInit {
   sites = signal<any[]>([]);
   reservations = signal<any[]>([]);
   search = signal('');
+  authService = inject(AuthService);
 
   ngOnInit() {
     this.padelService.getSites().subscribe(sites => {
@@ -27,13 +29,21 @@ export class AdminSites implements OnInit {
   }
 
   filteredSites() {
+    const admin = this.authService.currentAdmin();
+
+    let visibleSites = this.sites();
+
+    if (admin?.typeAdmin === 'SITE') {
+      visibleSites = visibleSites.filter(site => site.id === admin.siteId);
+    }
+
     const query = this.search().toLowerCase().trim();
 
     if (!query) {
-      return this.sites();
+      return visibleSites;
     }
 
-    return this.sites().filter(site =>
+    return visibleSites.filter(site =>
       site.clubName?.toLowerCase().includes(query) ||
       site.name?.toLowerCase().includes(query) ||
       site.city?.toLowerCase().includes(query)
