@@ -3,8 +3,8 @@
   <header
     class="rounded-4xl p-10 text-white mb-16"
     [class]="isGlobalAdmin()
-      ? 'bg-linear-to-r from-violet-700 to-indigo-800'
-      : 'bg-linear-to-r from-emerald-500 to-teal-600'"
+  ? 'bg-gradient-to-r from-violet-700 to-indigo-800'
+  : 'bg-gradient-to-r from-emerald-500 to-teal-600'"
   >
     <div class="flex items-center gap-4 mb-4">
       <div class="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center">
@@ -71,7 +71,7 @@
         title="Mon site"
         subtitle="Informations du club"
         icon="location_city"
-        route="/admin/site">
+        route="/admin/sites">
       </app-admin-card>
 
       <app-admin-card
@@ -86,13 +86,6 @@
         subtitle="Réservations du site"
         icon="calendar_month"
         route="/admin/reservations">
-      </app-admin-card>
-
-      <app-admin-card
-        title="Matchs"
-        subtitle="Gestion des matchs"
-        icon="emoji_events"
-        route="/admin/matches">
       </app-admin-card>
 
       <app-admin-card
