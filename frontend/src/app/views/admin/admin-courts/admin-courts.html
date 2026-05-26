@@ -1,0 +1,104 @@
+<div class="min-h-screen bg-slate-50 p-8 md:p-12">
+
+  <a
+    routerLink="/admin"
+    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    Retour admin
+  </a>
+
+  <header class="mb-10">
+    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
+      Terrains
+    </h1>
+
+    <p class="text-slate-500 mt-2">
+      Liste des terrains disponibles et taux d’occupation estimé.
+    </p>
+  </header>
+
+  <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
+    <input
+      type="text"
+      placeholder="Rechercher terrain, type ou site..."
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    @for (court of filteredCourts(); track court.id) {
+      <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
+
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="font-black text-xl text-slate-900">
+              {{ court.name }}
+            </h2>
+
+            <p class="text-slate-400 text-sm mt-1">
+              {{ getSiteName(court) }}
+            </p>
+          </div>
+
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="getCourtTypeClass(court)"
+          >
+            {{ court.type }}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 text-slate-500 text-sm mb-6">
+          <mat-icon class="text-base">sports_tennis</mat-icon>
+          <span>Terrain de padel</span>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+            <span>Taux d’occupation</span>
+            <span>{{ getOccupationRate(court) }}%</span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full"
+              [class]="getOccupationClass(court)"
+              [style.width.%]="getOccupationRate(court)">
+            </div>
+          </div>
+
+          <p class="text-slate-400 text-xs mt-3">
+            {{ getCourtReservationCount(court) }} réservation(s) enregistrée(s)
+          </p>
+        </div>
+
+        <div class="mt-6">
+          @if (isInMaintenance(court)) {
+            <div class="mb-4">
+              <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase">
+                Maintenance
+              </span>
+            </div>
+          }
+
+          <button
+            (click)="toggleMaintenance(court)"
+            class="w-full py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+            [class]="isInMaintenance(court)
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+              : 'bg-red-600 text-white hover:bg-red-700'"
+          >
+            {{ isInMaintenance(court)
+            ? 'Remettre en service'
+            : 'Mettre en maintenance' }}
+          </button>
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>
