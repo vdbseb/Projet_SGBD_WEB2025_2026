@@ -17,9 +17,9 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
     MatDialogModule,
     MatSnackBarModule
   ],
-  templateUrl: './public-matches.html'
+  templateUrl: './public-matchs.html'
 })
-export class PublicMatches implements OnInit {
+export class PublicMatchs implements OnInit {
   private padelService = inject(PadelService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -86,6 +86,20 @@ export class PublicMatches implements OnInit {
     const member = this.authService.currentMember();
 
     if (!member) {
+      return;
+    }
+
+    if (reservation.memberId === member.id) {
+      this.snackBar.open('Vous êtes déjà organisateur de ce match.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    if (this.getParticipantsCount(reservation) >= 4) {
+      this.snackBar.open('Ce match est déjà complet.', 'OK', {
+        duration: 3000
+      });
       return;
     }
 
