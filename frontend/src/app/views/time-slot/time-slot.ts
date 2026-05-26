@@ -1,50 +1,80 @@
-import {Component, output, model, input} from '@angular/core';
-import { MatTimepickerModule } from '@angular/material/timepicker';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule } from '@angular/forms';
-import { provideNativeDateAdapter } from '@angular/material/core';
+import { Component, input, output, signal, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-time-slots',
   standalone: true,
-  providers: [provideNativeDateAdapter()],
-  imports: [
-    MatFormFieldModule,
-    MatInputModule,
-    MatTimepickerModule,
-    FormsModule
-  ],
   templateUrl: './time-slot.html'
 })
-export class TimeSlotsComponent {
+export class TimeSlotsComponent implements OnInit {
   slotSelected = output<string>();
+
   reservedTimes = input<string[]>([]);
-  errorMessage = '';
+  openingTime = input<string>('08:00:00');
+  closingTime = input<string>('22:00:00');
 
+  availableSlots = signal<string[]>([]);
+  selectedSlot = signal<string | null>(null);
 
-  selectedTime = model<Date | null>(null);
+  private readonly matchDurationMinutes = 90;
+  private readonly pauseMinutes = 15;
 
+  ngOnInit() {
+    this.generateSlots();
+  }
 
-  onTimeChange(event: any) {
-    const date = event?.value !== undefined ? event.value : event;
+  generateSlots() {
+    const slots: string[] = [];
 
-    if (date instanceof Date) {
-      const formattedTime = date.toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+    const [openHour, openMinute] = this.openingTime().split(':').map(Number);
+    const [closeHour, closeMinute] = this.closingTime().split(':').map(Number);
 
-      const formattedWithSeconds = `${formattedTime}:00`;
+    const current = new Date();
+    current.setHours(openHour, openMinute, 0, 0);
 
-      if (this.reservedTimes().includes(formattedWithSeconds)) {
-        this.errorMessage = 'Ce créneau est déjà réservé.';
-        this.selectedTime.set(null);
-        return;
+    const closing = new Date();
+    closing.setHours(closeHour, closeMinute, 0, 0);
+
+    while (true) {
+      const end = new Date(current);
+      end.setMinutes(end.getMinutes() + this.matchDurationMinutes);
+
+      if (end > closing) {
+        break;
       }
 
-      this.errorMessage = '';
-      this.slotSelected.emit(formattedTime);
+      slots.push(this.formatTime(current));
+
+      current.setMinutes(
+        current.getMinutes() +
+        this.matchDurationMinutes +
+        this.pauseMinutes
+      );
     }
+
+    this.availableSlots.set(slots);
+  }
+
+  selectSlot(slot: string) {
+    if (this.isReserved(slot)) {
+      return;
+    }
+
+    this.selectedSlot.set(slot);
+    this.slotSelected.emit(slot);
+  }
+
+  isReserved(slot: string): boolean {
+    return this.reservedTimes().includes(`${slot}:00`);
+  }
+
+  isSelected(slot: string): boolean {
+    return this.selectedSlot() === slot;
+  }
+
+  private formatTime(date: Date): string {
+    return date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 }

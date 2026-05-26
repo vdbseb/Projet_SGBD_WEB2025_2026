@@ -34,9 +34,11 @@
           (dateChange)="onDateSelected($event)">
         </app-date-selector>
         <app-time-slots
-          [reservedTimes]="reservedTimes()"
-          (slotSelected)="onTimeSelected($event)">
-        </app-time-slots>
+        [reservedTimes]="reservedTimes()"
+        [openingTime]="currentSite.openingTime"
+        [closingTime]="currentSite.closingTime"
+        (slotSelected)="onTimeSelected($event)">
+      </app-time-slots>
         <app-match-selector
           [(matchType)]="selectedMatchType"
           [currentMember]="authService.currentMember()"

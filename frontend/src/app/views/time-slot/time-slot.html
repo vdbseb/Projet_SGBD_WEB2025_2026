@@ -1,25 +1,28 @@
 <div class="bg-white rounded-4xl p-8 shadow-sm border border-slate-100 mb-10">
+
   <h2 class="font-black uppercase tracking-widest text-sm mb-6 text-slate-900">
-    2. Choisit l'heure du match
+    2. Choisis ton créneau
   </h2>
 
-  <mat-form-field class="w-full" appearance="outline">
-    <mat-label>Heure de début</mat-label>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    @for (slot of availableSlots(); track slot) {
+      <button
+        (click)="selectSlot(slot)"
+        [disabled]="isReserved(slot)"
+        [class]="isReserved(slot)
+          ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+          : isSelected(slot)
+            ? 'bg-emerald-500 text-white shadow-lg scale-105'
+            : 'bg-white border border-slate-200 text-slate-900 hover:border-slate-900'"
+        class="h-20 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
+      >
+        {{ slot }}
+      </button>
+    }
+  </div>
 
-    <input
-      matInput
-      [matTimepicker]="picker"
-      [(ngModel)]="selectedTime"
-      (ngModelChange)="onTimeChange($event)"
-    >
+  <p class="text-slate-400 text-xs mt-6 uppercase font-bold tracking-widest">
+    Durée match : 1h30 • Pause : 15 min
+  </p>
 
-    <mat-timepicker-toggle matIconSuffix [for]="picker"></mat-timepicker-toggle>
-    <mat-timepicker #picker></mat-timepicker>
-  </mat-form-field>
-
-  @if (errorMessage) {
-    <p class="text-red-500 text-sm font-semibold mt-2">
-      {{ errorMessage }}
-    </p>
-  }
 </div>
