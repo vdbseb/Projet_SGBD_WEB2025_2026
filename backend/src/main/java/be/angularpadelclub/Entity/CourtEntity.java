@@ -29,4 +29,5 @@ public class CourtEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "site_id", nullable = false)
     private SiteEntity site;
+
 }

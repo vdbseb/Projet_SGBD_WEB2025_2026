@@ -1,9 +1,9 @@
 package be.angularpadelclub.Mapper;
 
+import be.angularpadelclub.DTO.CourtDTO;
 import be.angularpadelclub.DTO.SiteDTO;
 import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.SiteEntity;
-import be.angularpadelclub.Service.SiteService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,6 +12,19 @@ import java.util.List;
 public class SiteMapper {
 
     public SiteDTO toDTO(SiteEntity entity, HoraireSiteEntity horaire) {
+
+        List<CourtDTO> courts = entity.getCourts() == null
+                ? List.of()
+                : entity.getCourts().stream()
+                .map(court -> new CourtDTO(
+                        court.getId(),
+                        court.getNom(),
+                        entity.getId(),
+                        court.isCouvert(),
+                        court.isActif()
+                ))
+                .toList();
+
         return new SiteDTO(
                 entity.getId(),
                 entity.getNom(),
@@ -21,9 +34,11 @@ public class SiteMapper {
                 horaire.getHeure_debut(),
                 horaire.getHeure_fin(),
                 entity.isActif(),
-                entity.getImage_url()
+                entity.getImage_url(),
+                courts
         );
     }
+
     public SiteEntity toEntity(SiteDTO dto) {
         SiteEntity entity = new SiteEntity();
 
@@ -37,5 +52,4 @@ public class SiteMapper {
 
         return entity;
     }
-
 }

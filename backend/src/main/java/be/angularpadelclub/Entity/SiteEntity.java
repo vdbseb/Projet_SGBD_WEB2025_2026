@@ -42,4 +42,7 @@ public class SiteEntity {
 
     @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<HoraireSiteEntity> horaire;
+
+    @OneToMany(mappedBy = "site", fetch = FetchType.LAZY)
+    private List<CourtEntity> courts;
 }
