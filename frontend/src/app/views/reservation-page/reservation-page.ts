@@ -129,7 +129,15 @@ export class ReservationPage implements OnInit {
     const startTime = `${time}:00`;
 
     const [hour, minute] = time.split(':').map(Number);
-    const endTime = `${(hour + 1).toString().padStart(2, '0')}:${minute
+
+    const startDateTime = new Date();
+    startDateTime.setHours(hour, minute, 0, 0);
+
+    const endDateTime = new Date(startDateTime);
+    endDateTime.setMinutes(endDateTime.getMinutes() + 90);
+
+    const endTime = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime
+      .getMinutes()
       .toString()
       .padStart(2, '0')}:00`;
 
