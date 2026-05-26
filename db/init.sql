@@ -634,115 +634,81 @@ INSERT INTO public.type_membre VALUES (21, 1, 'GLOBAL');
 INSERT INTO public.type_membre VALUES (14, 2, 'SITE');
 INSERT INTO public.type_membre VALUES (5, 3, 'LIBRE');
 
-
 --
--- TOC entry 3552 (class 0 OID 0)
--- Dependencies: 219
--- Name: administrateur_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
+-- SEQUENCE SET
 --
 
-SELECT pg_catalog.setval('public.administrateur_id_seq', 1, false);
+SELECT setval(
+               pg_get_serial_sequence('public.administrateur', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.administrateur),
+               true
+       );
 
+SELECT setval(
+               pg_get_serial_sequence('public.horaire_site', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.horaire_site),
+               true
+       );
 
---
--- TOC entry 3553 (class 0 OID 0)
--- Dependencies: 221
--- Name: horaire_site_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
+SELECT setval(
+               pg_get_serial_sequence('public.jour_fermeture', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.jour_fermeture),
+               true
+       );
 
-SELECT pg_catalog.setval('public.horaire_site_id_seq', 1, false);
+SELECT setval(
+               pg_get_serial_sequence('public.match_padel', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.match_padel),
+               true
+       );
 
+SELECT setval(
+               pg_get_serial_sequence('public.membre', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.membre),
+               true
+       );
 
---
--- TOC entry 3554 (class 0 OID 0)
--- Dependencies: 216
--- Name: jour_fermeture_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
+SELECT setval(
+               pg_get_serial_sequence('public.paiement', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.paiement),
+               true
+       );
 
-SELECT pg_catalog.setval('public.jour_fermeture_id_seq', 1, true);
+SELECT setval(
+               pg_get_serial_sequence('public.participation', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.participation),
+               true
+       );
 
+SELECT setval(
+               pg_get_serial_sequence('public.penalite', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.penalite),
+               true
+       );
 
---
--- TOC entry 3555 (class 0 OID 0)
--- Dependencies: 223
--- Name: match_padel_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
+SELECT setval(
+               pg_get_serial_sequence('public.reservation', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.reservation),
+               true
+       );
 
-SELECT pg_catalog.setval('public.match_padel_id_seq', 43, true);
+SELECT setval(
+               pg_get_serial_sequence('public.site', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.site),
+               true
+       );
 
+SELECT setval(
+               pg_get_serial_sequence('public.terrain', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.terrain),
+               true
+       );
 
---
--- TOC entry 3556 (class 0 OID 0)
--- Dependencies: 225
--- Name: membre_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.membre_id_seq', 2, true);
-
-
---
--- TOC entry 3557 (class 0 OID 0)
--- Dependencies: 227
--- Name: paiement_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.paiement_id_seq', 1, false);
-
-
---
--- TOC entry 3558 (class 0 OID 0)
--- Dependencies: 229
--- Name: participation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.participation_id_seq', 51, true);
-
-
---
--- TOC entry 3559 (class 0 OID 0)
--- Dependencies: 218
--- Name: penalite_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.penalite_id_seq', 1, false);
-
-
---
--- TOC entry 3560 (class 0 OID 0)
--- Dependencies: 231
--- Name: reservation_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.reservation_id_seq', 47, true);
-
-
---
--- TOC entry 3561 (class 0 OID 0)
--- Dependencies: 233
--- Name: site_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.site_id_seq', 1, false);
-
-
---
--- TOC entry 3562 (class 0 OID 0)
--- Dependencies: 235
--- Name: terrain_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.terrain_id_seq', 1, false);
-
-
---
--- TOC entry 3563 (class 0 OID 0)
--- Dependencies: 237
--- Name: type_membre_id_seq; Type: SEQUENCE SET; Schema: public; Owner: padel_app
---
-
-SELECT pg_catalog.setval('public.type_membre_id_seq', 1, false);
-
-
+SELECT setval(
+               pg_get_serial_sequence('public.type_membre', 'id'),
+               (SELECT COALESCE(MAX(id), 1) FROM public.type_membre),
+               true
+       );
 --
 -- TOC entry 3335 (class 2606 OID 24768)
 -- Name: administrateur administrateur_email_key; Type: CONSTRAINT; Schema: public; Owner: padel_app
