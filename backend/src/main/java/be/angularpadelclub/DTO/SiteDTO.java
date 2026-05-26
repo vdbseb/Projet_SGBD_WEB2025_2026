@@ -1,6 +1,7 @@
 package be.angularpadelclub.DTO;
 
 import java.time.LocalTime;
+import java.util.List;
 
 
 public record SiteDTO(
@@ -12,6 +13,7 @@ public record SiteDTO(
         LocalTime openingTime,
         LocalTime closingTime,
         boolean active,
-        String imageURL
+        String imageURL,
+        List<CourtDTO> courts
 ) {
 }
