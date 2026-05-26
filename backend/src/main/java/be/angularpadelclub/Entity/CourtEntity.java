@@ -24,7 +24,7 @@ public class CourtEntity {
     private boolean couvert;
 
     @Column(nullable = false)
-    private boolean actif;
+    private boolean actif = true;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "site_id", nullable = false)

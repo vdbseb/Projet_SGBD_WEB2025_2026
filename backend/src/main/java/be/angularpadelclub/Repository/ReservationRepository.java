@@ -19,4 +19,5 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
     );
     List<ReservationEntity> findByCourtIdAndDate(int courtId, LocalDate date);
     List<ReservationEntity> findByCourtAndDate(CourtEntity court, LocalDate date);
+    boolean existsByCourtIdAndDateAfter(Integer courtId, LocalDate date);
 }
