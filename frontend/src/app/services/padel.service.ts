@@ -130,6 +130,18 @@ export class PadelService {
       `${this.apiBaseUrl}/administrateurs`
     );
   }
+  getMatches() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/matches`
+    );
+  }
+
+  joinPublicMatch(matchId: number, memberId: number) {
+    return this.httpClient.post<void>(
+      `${this.apiBaseUrl}/matches/${matchId}/join/${memberId}`,
+      null
+    );
+  }
 }
 
 

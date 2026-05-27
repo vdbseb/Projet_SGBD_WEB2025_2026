@@ -124,10 +124,22 @@ export class PublicMatchs implements OnInit {
         return;
       }
 
-      reservation.participantMatricules = [
-        ...(reservation.participantMatricules || []),
-        member.matricule
-      ];
+      this.padelService.joinPublicMatch(reservation.id, member.id).subscribe({
+        next: () => {
+          this.snackBar.open('Vous avez rejoint le match !', 'OK', {
+            duration: 3000
+          });
+
+          this.padelService.getAllReservations().subscribe(reservations => {
+            this.reservations.set(reservations);
+          });
+        },
+        error: () => {
+          this.snackBar.open('Impossible de rejoindre ce match.', 'OK', {
+            duration: 4000
+          });
+        }
+      });
 
       this.reservations.update(list => [...list]);
 
