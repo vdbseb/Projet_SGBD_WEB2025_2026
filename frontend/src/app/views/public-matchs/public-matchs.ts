@@ -90,11 +90,17 @@ export class PublicMatchs implements OnInit {
 
   joinMatch(reservation: any) {
     const member = this.authService.currentMember();
+    const matchId = reservation.matchId;
 
+    if (!matchId) {
+      this.snackBar.open('Match introuvable pour cette réservation.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
     if (!member) {
       return;
     }
-
     if (reservation.memberId === member.id) {
       this.snackBar.open('Vous êtes déjà organisateur de ce match.', 'OK', {
         duration: 3000
@@ -115,8 +121,6 @@ export class PublicMatchs implements OnInit {
       });
       return;
     }
-
-    const matchId = reservation.matchId;
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {

@@ -135,13 +135,18 @@ export class PadelService {
       `${this.apiBaseUrl}/matches`
     );
   }
-
   joinPublicMatch(matchId: number, memberId: number) {
     return this.httpClient.post<void>(
       `${this.apiBaseUrl}/matches/${matchId}/join/${memberId}`,
       null
     );
   }
+  leavePublicMatch(matchId: number, memberId: number) {
+    return this.httpClient.delete<void>(
+      `${this.apiBaseUrl}/matches/${matchId}/leave/${memberId}`
+    );
+  }
+
 }
 
 
