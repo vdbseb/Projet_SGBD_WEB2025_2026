@@ -44,6 +44,10 @@ export class PublicMatchs implements OnInit {
       this.members.set(members);
     });
 
+    this.loadReservations();
+  }
+
+  loadReservations() {
     this.padelService.getAllReservations().subscribe(reservations => {
       this.reservations.set(reservations);
     });
@@ -57,6 +61,8 @@ export class PublicMatchs implements OnInit {
       const participants = 1 + (reservation.participantMatricules?.length || 0);
 
       return reservation.matchType === 'PUBLIC'
+        && reservation.reservationStatus !== 'ANNULEE'
+        && reservation.matchStatus !== 'ANNULE'
         && reservationDate > now
         && participants < 4;
     });
@@ -79,7 +85,7 @@ export class PublicMatchs implements OnInit {
     const court = this.courts().find(c => c.id === reservation.courtId);
     const site = this.sites().find(s => s.id === court?.siteId);
 
-    return site?.clubName || 'Site inconnu';
+    return reservation.siteName || site?.clubName || 'Site inconnu';
   }
 
   joinMatch(reservation: any) {
@@ -110,6 +116,8 @@ export class PublicMatchs implements OnInit {
       return;
     }
 
+    const matchId = reservation.matchId;
+
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Rejoindre le match',
@@ -124,27 +132,19 @@ export class PublicMatchs implements OnInit {
         return;
       }
 
-      this.padelService.joinPublicMatch(reservation.id, member.id).subscribe({
+      this.padelService.joinPublicMatch(matchId, member.id).subscribe({
         next: () => {
           this.snackBar.open('Vous avez rejoint le match !', 'OK', {
             duration: 3000
           });
 
-          this.padelService.getAllReservations().subscribe(reservations => {
-            this.reservations.set(reservations);
-          });
+          this.loadReservations();
         },
         error: () => {
           this.snackBar.open('Impossible de rejoindre ce match.', 'OK', {
             duration: 4000
           });
         }
-      });
-
-      this.reservations.update(list => [...list]);
-
-      this.snackBar.open('Vous avez rejoint le match !', 'OK', {
-        duration: 3000
       });
     });
   }
