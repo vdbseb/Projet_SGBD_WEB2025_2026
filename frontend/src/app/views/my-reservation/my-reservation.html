@@ -21,8 +21,8 @@
       (click)="selectedFilter.set('all')"
       class="px-5 py-2 rounded-full font-bold text-sm transition-all"
       [class]="selectedFilter() === 'all'
-      ? 'bg-slate-900 text-white'
-      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        ? 'bg-slate-900 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
     >
       Toutes ({{ countAllReservations() }})
     </button>
@@ -31,8 +31,8 @@
       (click)="selectedFilter.set('upcoming')"
       class="px-5 py-2 rounded-full font-bold text-sm transition-all"
       [class]="selectedFilter() === 'upcoming'
-      ? 'bg-blue-600 text-white'
-      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        ? 'bg-blue-600 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
     >
       À venir ({{ countUpcomingReservations() }})
     </button>
@@ -41,8 +41,8 @@
       (click)="selectedFilter.set('past')"
       class="px-5 py-2 rounded-full font-bold text-sm transition-all"
       [class]="selectedFilter() === 'past'
-      ? 'bg-slate-500 text-white'
-      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+        ? 'bg-slate-500 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
     >
       Passées ({{ countPastReservations() }})
     </button>
@@ -112,26 +112,29 @@
         </div>
 
         @if (getReservationStatus(reservation) !== 'past') {
-          @if (getReservationStatus(reservation) !== 'past') {
+          <div class="flex gap-3 mt-5 flex-wrap">
+
             @if (isPaid(reservation.id)) {
-              <span class="inline-block mt-5 px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
-      Payé
-    </span>
+              <span class="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
+                Payé
+              </span>
             } @else {
               <button
                 (click)="payReservation(reservation.id)"
-                class="mt-5 mr-3 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
               >
                 Payer ma part — 15€
               </button>
             }
-          }
-          <button
-            (click)="cancelReservation(reservation.id)"
-            class="mt-5 px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
-          >
-            Annuler
-          </button>
+
+            <button
+              (click)="cancelReservation(reservation.id)"
+              class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+            >
+              Annuler
+            </button>
+
+          </div>
         }
 
       </div>

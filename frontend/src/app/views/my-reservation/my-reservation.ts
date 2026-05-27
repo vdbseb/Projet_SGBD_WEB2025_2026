@@ -43,7 +43,14 @@ export class MyReservations implements OnInit {
 
     this.padelService.getAllReservations().subscribe(reservations => {
       const filteredReservations = reservations
-        .filter(reservation => reservation.memberId === member.id)
+        .filter(reservation =>
+          reservation.reservationStatus !== 'ANNULEE' &&
+          reservation.matchStatus !== 'ANNULE'
+        )
+        .filter(reservation =>
+          reservation.memberId === member.id ||
+          reservation.participantMatricules?.includes(member.matricule)
+        )
         .sort((a, b) => {
           const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
           const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
