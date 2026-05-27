@@ -50,7 +50,7 @@ public class SiteMapper {
         entity.setCode_postal(dto.codePostal());
         entity.setDescription(dto.description());
         entity.setActif(dto.active());
-        entity.setImage_url(dto.imageURL());
+        entity.setImage_url(dto.imageUrl());
 
         return entity;
     }

@@ -13,8 +13,8 @@ public record SiteDTO(
         String description,
         LocalTime openingTime,
         LocalTime closingTime,
-        boolean active,
-        String imageURL,
+        Boolean active,
+        String imageUrl,
         List<CourtDTO> courts
 ) {
 }
