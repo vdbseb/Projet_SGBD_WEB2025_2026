@@ -1,5 +1,6 @@
 package be.angularpadelclub.Entity;
 
+import be.angularpadelclub.Enum.ReservationStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,4 +40,8 @@ public class ReservationEntity {
     @JsonIgnore
     @OneToOne(mappedBy = "reservation")
     private MatchEntity match;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ReservationStatus statut=ReservationStatus.EN_ATTENTE_PAIEMENT;
 }

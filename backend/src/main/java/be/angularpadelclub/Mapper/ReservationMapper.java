@@ -5,6 +5,7 @@ import be.angularpadelclub.Entity.CourtEntity;
 import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
+import be.angularpadelclub.Enum.ReservationStatus;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class ReservationMapper {
                 entity.getCourt().getId(),
                 entity.getCourt().getSite().getNom(),
                 entity.getMember().getId(),
+                entity.getStatut(),
                 match != null ? match.getTypeMatch() : null,
                 match != null ? match.getStatut() : null,
                 participantMatricules
@@ -51,6 +53,11 @@ public class ReservationMapper {
         entity.setEndTime(dto.endTime());
         entity.setCourt(court);
         entity.setMember(member);
+        entity.setStatut(
+                dto.reservationStatus() != null
+                        ? dto.reservationStatus()
+                        : ReservationStatus.EN_ATTENTE_PAIEMENT
+        );
 
         return entity;
     }
