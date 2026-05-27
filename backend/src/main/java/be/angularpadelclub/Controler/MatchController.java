@@ -69,7 +69,7 @@ public class MatchController {
             @PathVariable Integer matchId,
             @PathVariable Integer memberId
     ) {
-        matchService.leavePublicMatch(
+        matchService.leaveMatch(
                 matchId,
                 memberId
         );
