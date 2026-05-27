@@ -97,7 +97,12 @@ export class ReservationPage implements OnInit {
     const formattedDate = this.formatLocalDate(date);
 
     this.padelService.getReservations(court.id, formattedDate).subscribe(reservations => {
-      this.reservedTimes.set(reservations.map(r => r.startTime));
+      this.reservedTimes.set(
+        reservations
+          .filter(reservation => reservation.reservationStatus !== 'ANNULEE')
+          .filter(reservation => reservation.matchStatus !== 'ANNULE')
+          .map(reservation => reservation.startTime)
+      );
     });
   }
 
