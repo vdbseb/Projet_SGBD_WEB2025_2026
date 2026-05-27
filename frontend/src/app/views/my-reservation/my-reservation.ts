@@ -6,7 +6,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
-import {MatSnackBar} from '@angular/material/snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-my-reservation',
@@ -20,7 +20,7 @@ export class MyReservations implements OnInit {
 
   reservations = signal<any[]>([]);
   sites = signal<any[]>([]);
-  selectedFilter = signal<'all' | 'upcoming' | 'past' | 'cancelled' >('all');
+  selectedFilter = signal<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
   courts = signal<any[]>([]);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -42,32 +42,23 @@ export class MyReservations implements OnInit {
       this.courts.set(courts);
     });
 
-    this.padelService
-      .getAllReservations()
-      .subscribe(reservations => {
+    this.padelService.getAllReservations().subscribe(reservations => {
+      const filteredReservations = reservations
+        .filter(reservation =>
+          reservation.memberId === member.id ||
+          reservation.participantMatricules?.includes(member.matricule)
+        )
+        .sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
+          const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
 
-        const filteredReservations = reservations
-          .filter(reservation =>
-            reservation.memberId === member.id
-          )
-          .sort((a, b) => {
+          return dateA - dateB;
+        });
 
-            const dateA = new Date(
-              `${a.date}T${a.startTime}`
-            ).getTime();
-
-            const dateB = new Date(
-              `${b.date}T${b.startTime}`
-            ).getTime();
-
-            return dateA - dateB;
-          });
-
-        this.reservations.set(
-          filteredReservations
-        );
-      });
+      this.reservations.set(filteredReservations);
+    });
   }
+
   getSiteName(reservation: any): string {
     if (reservation.siteName) {
       return reservation.siteName;
@@ -77,6 +68,7 @@ export class MyReservations implements OnInit {
 
     return court?.siteName || court?.site?.name || court?.site?.clubName || 'Club inconnu';
   }
+
   getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
     const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
     const now = new Date();
@@ -118,6 +110,7 @@ export class MyReservations implements OnInit {
         return 'bg-slate-100 text-slate-500';
     }
   }
+
   getFilteredReservations() {
     const filter = this.selectedFilter();
 
@@ -128,6 +121,7 @@ export class MyReservations implements OnInit {
     if (filter === 'upcoming') {
       return this.reservations().filter(reservation =>
         reservation.reservationStatus !== 'ANNULEE'
+        && reservation.matchStatus !== 'ANNULE'
         && (
           this.getReservationStatus(reservation) === 'today'
           || this.getReservationStatus(reservation) === 'upcoming'
@@ -136,13 +130,15 @@ export class MyReservations implements OnInit {
     }
 
     if (filter === 'cancelled') {
-      return this.reservations().filter(
-        reservation => reservation.reservationStatus === 'ANNULEE'
+      return this.reservations().filter(reservation =>
+        reservation.reservationStatus === 'ANNULEE'
+        || reservation.matchStatus === 'ANNULE'
       );
     }
 
     return this.reservations().filter(reservation =>
       reservation.reservationStatus !== 'ANNULEE'
+      && reservation.matchStatus !== 'ANNULE'
       && this.getReservationStatus(reservation) === 'past'
     );
   }
@@ -154,6 +150,7 @@ export class MyReservations implements OnInit {
   countUpcomingReservations(): number {
     return this.reservations().filter(reservation =>
       reservation.reservationStatus !== 'ANNULEE'
+      && reservation.matchStatus !== 'ANNULE'
       && (
         this.getReservationStatus(reservation) === 'today'
         || this.getReservationStatus(reservation) === 'upcoming'
@@ -164,13 +161,15 @@ export class MyReservations implements OnInit {
   countPastReservations(): number {
     return this.reservations().filter(reservation =>
       reservation.reservationStatus !== 'ANNULEE'
+      && reservation.matchStatus !== 'ANNULE'
       && this.getReservationStatus(reservation) === 'past'
     ).length;
   }
 
   countCancelledReservations(): number {
-    return this.reservations().filter(
-      reservation => reservation.reservationStatus === 'ANNULEE'
+    return this.reservations().filter(reservation =>
+      reservation.reservationStatus === 'ANNULEE'
+      || reservation.matchStatus === 'ANNULE'
     ).length;
   }
 
@@ -184,14 +183,14 @@ export class MyReservations implements OnInit {
     }
 
     if (reservation.participantMatricules?.length > 0) {
-      return [
-        reservation.playerMatricule,
-        ...reservation.participantMatricules
-      ].filter(Boolean).join(', ');
+      return reservation.participantMatricules
+        .filter(Boolean)
+        .join(', ');
     }
 
     return reservation.playerMatricule || 'Participants non disponibles';
   }
+
   cancelReservation(reservationId: number) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -210,7 +209,15 @@ export class MyReservations implements OnInit {
       this.padelService.deleteReservation(reservationId).subscribe({
         next: () => {
           this.reservations.update(reservations =>
-            reservations.filter(r => r.id !== reservationId)
+            reservations.map(reservation =>
+              reservation.id === reservationId
+                ? {
+                  ...reservation,
+                  reservationStatus: 'ANNULEE',
+                  matchStatus: 'ANNULE'
+                }
+                : reservation
+            )
           );
         },
         error: () => {

@@ -27,6 +27,7 @@ public class ReservationMapper {
 
         return new ReservationDTO(
                 entity.getId(),
+                match != null ? match.getId() : null,
                 entity.getDate(),
                 entity.getEndTime(),
                 entity.getStartTime(),

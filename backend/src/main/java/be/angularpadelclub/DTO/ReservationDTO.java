@@ -10,6 +10,7 @@ import java.util.List;
 
 public record ReservationDTO(
         Integer id,
+        Integer matchId,
         LocalDate date,
         LocalTime endTime,
         LocalTime startTime,
