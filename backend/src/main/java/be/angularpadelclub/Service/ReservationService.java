@@ -4,6 +4,7 @@ import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.*;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
+import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Repository.*;
 import jakarta.transaction.Transactional;
@@ -164,8 +165,9 @@ public class ReservationService {
 
         for (ReservationEntity existing : existingReservations) {
 
-            if (existing.getMatch() != null
-                    && existing.getMatch().getStatut() == MatchStatus.ANNULE) {
+            if (existing.getStatut() == ReservationStatus.ANNULEE
+                    || (existing.getMatch() != null
+                    && existing.getMatch().getStatut() == MatchStatus.ANNULE)) {
                 continue;
             }
 
@@ -267,5 +269,37 @@ public class ReservationService {
         participation.setPaiement(null);
 
         participationRepository.save(participation);
+    }
+
+    @Transactional
+    public void cancelReservation(int id) {
+
+        ReservationEntity reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Réservation introuvable avec l'id " + id
+                ));
+
+        if (reservation.getStatut() == ReservationStatus.ANNULEE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Réservation déjà annulée."
+            );
+        }
+
+        if (reservation.getStatut() == ReservationStatus.TERMINEE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible d'annuler une réservation terminée."
+            );
+        }
+
+        reservation.setStatut(ReservationStatus.ANNULEE);
+
+        if (reservation.getMatch() != null) {
+            reservation.getMatch().setStatut(MatchStatus.ANNULE);
+        }
+
+        reservationRepository.save(reservation);
     }
 }

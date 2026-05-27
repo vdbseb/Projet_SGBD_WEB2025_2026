@@ -52,4 +52,10 @@ public class ReservationController {
                 reservationService.findByCourtAndDate(courtId, date)
         );
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelReservation(@PathVariable int id) {
+        reservationService.cancelReservation(id);
+        return ResponseEntity.noContent().build();
+    }
 }

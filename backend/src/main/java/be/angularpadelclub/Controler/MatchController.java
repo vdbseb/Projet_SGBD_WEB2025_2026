@@ -5,6 +5,7 @@ import be.angularpadelclub.DTO.MatchDTO;
 import be.angularpadelclub.Mapper.MatchMapper;
 
 import be.angularpadelclub.Service.MatchService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,5 +49,18 @@ public class MatchController {
         return matchMapper.toDTO(
                 matchService.annulerMatch(matchId, matricule)
         );
+    }
+
+    @PostMapping("/{matchId}/join/{memberId}")
+    public ResponseEntity<Void> joinMatch(
+            @PathVariable Integer matchId,
+            @PathVariable Integer memberId
+    ) {
+        matchService.joinPublicMatch(
+                matchId,
+                memberId
+        );
+
+        return ResponseEntity.ok().build();
     }
 }

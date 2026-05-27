@@ -2,6 +2,7 @@ package be.angularpadelclub.DTO;
 
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
+import be.angularpadelclub.Enum.ReservationStatus;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -15,6 +16,7 @@ public record ReservationDTO(
         Integer courtId,
         String siteName,
         Integer memberId,
+        ReservationStatus reservationStatus,
         MatchType matchType,
         MatchStatus matchStatus,
         List<String> participantMatricules
