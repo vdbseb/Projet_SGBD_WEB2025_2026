@@ -30,6 +30,7 @@ public class SiteMapper {
                 entity.getNom(),
                 entity.getVille(),
                 entity.getAdresse(),
+                entity.getCode_postal(),
                 entity.getDescription(),
                 horaire.getHeure_debut(),
                 horaire.getHeure_fin(),
@@ -46,6 +47,7 @@ public class SiteMapper {
         entity.setNom(dto.name());
         entity.setVille(dto.city());
         entity.setAdresse(dto.adresse());
+        entity.setCode_postal(dto.codePostal());
         entity.setDescription(dto.description());
         entity.setActif(dto.active());
         entity.setImage_url(dto.imageURL());

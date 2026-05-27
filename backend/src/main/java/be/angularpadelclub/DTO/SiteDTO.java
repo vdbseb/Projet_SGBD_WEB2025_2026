@@ -9,6 +9,7 @@ public record SiteDTO(
         String name,
         String city,
         String adresse,
+        String codePostal,
         String description,
         LocalTime openingTime,
         LocalTime closingTime,
