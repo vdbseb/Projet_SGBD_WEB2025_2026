@@ -347,7 +347,8 @@ CREATE TABLE public.reservation (
                                     end_time time(0) without time zone NOT NULL,
                                     id integer NOT NULL,
                                     membre_id integer NOT NULL,
-                                    start_time time(0) without time zone NOT NULL
+                                    start_time time(0) without time zone NOT NULL,
+                                    statut character varying(50) NOT NULL DEFAULT 'VALIDEE'
 );
 
 
