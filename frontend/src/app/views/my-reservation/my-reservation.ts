@@ -20,7 +20,7 @@ export class MyReservations implements OnInit {
 
   reservations = signal<any[]>([]);
   sites = signal<any[]>([]);
-  selectedFilter = signal<'all' | 'upcoming' | 'past'>('all');
+  selectedFilter = signal<'all' | 'upcoming' | 'past' | 'cancelled' >('all');
   courts = signal<any[]>([]);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -37,22 +37,36 @@ export class MyReservations implements OnInit {
     this.padelService.getSites().subscribe(sites => {
       this.sites.set(sites);
     });
+
     this.padelService.getCourts().subscribe(courts => {
       this.courts.set(courts);
     });
 
-    this.padelService.getAllReservations().subscribe(reservations => {
-      const filteredReservations = reservations
-        .filter(reservation => reservation.memberId === member.id)
-        .sort((a, b) => {
-          const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
-          const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
+    this.padelService
+      .getAllReservations()
+      .subscribe(reservations => {
 
-          return dateA - dateB;
-        });
+        const filteredReservations = reservations
+          .filter(reservation =>
+            reservation.memberId === member.id
+          )
+          .sort((a, b) => {
 
-      this.reservations.set(filteredReservations);
-    });
+            const dateA = new Date(
+              `${a.date}T${a.startTime}`
+            ).getTime();
+
+            const dateB = new Date(
+              `${b.date}T${b.startTime}`
+            ).getTime();
+
+            return dateA - dateB;
+          });
+
+        this.reservations.set(
+          filteredReservations
+        );
+      });
   }
   getSiteName(reservation: any): string {
     if (reservation.siteName) {
@@ -112,16 +126,25 @@ export class MyReservations implements OnInit {
     }
 
     if (filter === 'upcoming') {
-      return this.reservations().filter(reservation => {
-        const status = this.getReservationStatus(reservation);
-        return status === 'today' || status === 'upcoming';
-      });
+      return this.reservations().filter(reservation =>
+        reservation.reservationStatus !== 'ANNULEE'
+        && (
+          this.getReservationStatus(reservation) === 'today'
+          || this.getReservationStatus(reservation) === 'upcoming'
+        )
+      );
+    }
+
+    if (filter === 'cancelled') {
+      return this.reservations().filter(
+        reservation => reservation.reservationStatus === 'ANNULEE'
+      );
     }
 
     return this.reservations().filter(reservation =>
-      this.getReservationStatus(reservation) === 'past'
+      reservation.reservationStatus !== 'ANNULEE'
+      && this.getReservationStatus(reservation) === 'past'
     );
-
   }
 
   countAllReservations(): number {
@@ -129,17 +152,28 @@ export class MyReservations implements OnInit {
   }
 
   countUpcomingReservations(): number {
-    return this.reservations().filter(reservation => {
-      const status = this.getReservationStatus(reservation);
-      return status === 'today' || status === 'upcoming';
-    }).length;
+    return this.reservations().filter(reservation =>
+      reservation.reservationStatus !== 'ANNULEE'
+      && (
+        this.getReservationStatus(reservation) === 'today'
+        || this.getReservationStatus(reservation) === 'upcoming'
+      )
+    ).length;
   }
 
   countPastReservations(): number {
     return this.reservations().filter(reservation =>
-      this.getReservationStatus(reservation) === 'past'
+      reservation.reservationStatus !== 'ANNULEE'
+      && this.getReservationStatus(reservation) === 'past'
     ).length;
   }
+
+  countCancelledReservations(): number {
+    return this.reservations().filter(
+      reservation => reservation.reservationStatus === 'ANNULEE'
+    ).length;
+  }
+
   getParticipantsLabel(reservation: any): string {
     if (reservation.members?.length > 0) {
       return reservation.members
