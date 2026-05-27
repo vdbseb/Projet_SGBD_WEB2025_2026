@@ -31,7 +31,7 @@ export class AdminReservations implements OnInit {
 
       let filteredReservations = reservations;
 
-      if (admin?.typeAdmin === 'SITE') {
+      if (this.authService.isSiteAdmin()) {
         filteredReservations = reservations.filter(reservation => {
           const court = this.courts().find(c => c.id === reservation.courtId);
           return court?.siteId === admin.siteId;

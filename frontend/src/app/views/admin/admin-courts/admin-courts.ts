@@ -33,7 +33,7 @@ export class AdminCourts implements OnInit {
     this.padelService.getCourts().subscribe(courts => {
       const admin = this.authService.currentAdmin();
 
-      const visibleCourts = admin?.typeAdmin === 'SITE'
+      const visibleCourts = this.authService.isSiteAdmin()
         ? courts.filter(court => court.siteId === admin.siteId)
         : courts;
 
