@@ -63,4 +63,17 @@ public class MatchController {
 
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{matchId}/leave/{memberId}")
+    public ResponseEntity<Void> leaveMatch(
+            @PathVariable Integer matchId,
+            @PathVariable Integer memberId
+    ) {
+        matchService.leavePublicMatch(
+                matchId,
+                memberId
+        );
+
+        return ResponseEntity.noContent().build();
+    }
 }
