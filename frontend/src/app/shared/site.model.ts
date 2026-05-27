@@ -2,6 +2,8 @@ export interface PadelCourt {
   id: number;
   name: string;
   type: 'Indoor' | 'Outdoor';
+  active: boolean;
+  siteId?: number;
 }
 
 export interface PadelSite {

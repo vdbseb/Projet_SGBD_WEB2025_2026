@@ -22,6 +22,7 @@ interface CourtDTO {
   type?: 'Indoor' | 'Outdoor';
   indoor?: boolean;
   siteId: number;
+  active: boolean;
 }
 
 @Injectable({
@@ -51,10 +52,13 @@ export class PadelService {
 
   private toPadelCourt(court: CourtDTO): PadelCourt {
     const type = court.type ?? (court.indoor ? 'Indoor' : 'Outdoor');
+
     return {
       id: court.id,
       name: court.name,
-      type
+      type,
+      active: court.active ?? true,
+      siteId: court.siteId
     };
   }
 
