@@ -296,4 +296,68 @@ public class MatchService {
             matchRepository.save(match);
         }
     }
+
+    @Transactional
+    public void leavePublicMatch(
+            Integer matchId,
+            Integer memberId
+    ) {
+
+        MatchEntity match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Match introuvable avec l'id " + matchId
+                ));
+
+        if (match.getTypeMatch() != MatchType.PUBLIC) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de quitter un match privé."
+            );
+        }
+
+        if (match.getStatut() == MatchStatus.ANNULE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de quitter un match annulé."
+            );
+        }
+
+        ParticipationEntity participation =
+                participationRepository
+                        .findByMatch_IdAndMembre_Id(
+                                matchId,
+                                memberId
+                        )
+                        .orElseThrow(() ->
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Participation introuvable."
+                                ));
+
+        boolean estOrganisateur =
+                match.getOrganisateur() != null
+                        && match.getOrganisateur()
+                        .getId()
+                        .equals(memberId);
+
+        if (estOrganisateur) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "L'organisateur ne peut pas quitter son propre match. Il doit l'annuler."
+            );
+        }
+
+        participationRepository.delete(participation);
+
+        int nombreParticipants =
+                participationRepository.countByMatch_Id(matchId);
+
+        if (nombreParticipants < 4
+                && match.getStatut() == MatchStatus.COMPLET) {
+
+            match.setStatut(MatchStatus.OUVERT);
+            matchRepository.save(match);
+        }
+    }
 }
