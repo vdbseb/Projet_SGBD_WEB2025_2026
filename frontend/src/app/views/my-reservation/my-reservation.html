@@ -46,6 +46,16 @@
     >
       Passées ({{ countPastReservations() }})
     </button>
+
+    <button
+      (click)="selectedFilter.set('cancelled')"
+      class="px-5 py-2 rounded-full font-bold text-sm transition-all"
+      [class]="selectedFilter() === 'cancelled'
+        ? 'bg-red-600 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    >
+      Annulées ({{ countCancelledReservations() }})
+    </button>
   </div>
 
   @if (reservations().length === 0) {
@@ -73,9 +83,15 @@
 
         <span
           class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest"
-          [class]="getStatusClass(reservation)"
+          [class]="reservation.reservationStatus === 'ANNULEE'
+            ? 'bg-red-100 text-red-700'
+            : getStatusClass(reservation)"
         >
-          {{ getStatusLabel(reservation) }}
+          {{
+            reservation.reservationStatus === 'ANNULEE'
+              ? 'Annulée'
+              : getStatusLabel(reservation)
+          }}
         </span>
 
         <div class="flex items-center gap-2 mb-1">
@@ -111,9 +127,11 @@
           </span>
         </div>
 
-        @if (getReservationStatus(reservation) !== 'past') {
+        @if (
+          getReservationStatus(reservation) !== 'past'
+          && reservation.reservationStatus !== 'ANNULEE'
+        ) {
           <div class="flex gap-3 mt-5 flex-wrap">
-
             @if (isPaid(reservation.id)) {
               <span class="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
                 Payé
@@ -133,10 +151,8 @@
             >
               Annuler
             </button>
-
           </div>
         }
-
       </div>
     }
   </div>

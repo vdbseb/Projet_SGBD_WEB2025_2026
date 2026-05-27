@@ -6,7 +6,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
-import {MatSnackBar} from '@angular/material/snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-my-reservation',
@@ -20,7 +20,7 @@ export class MyReservations implements OnInit {
 
   reservations = signal<any[]>([]);
   sites = signal<any[]>([]);
-  selectedFilter = signal<'all' | 'upcoming' | 'past'>('all');
+  selectedFilter = signal<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
   courts = signal<any[]>([]);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
@@ -37,16 +37,13 @@ export class MyReservations implements OnInit {
     this.padelService.getSites().subscribe(sites => {
       this.sites.set(sites);
     });
+
     this.padelService.getCourts().subscribe(courts => {
       this.courts.set(courts);
     });
 
     this.padelService.getAllReservations().subscribe(reservations => {
       const filteredReservations = reservations
-        .filter(reservation =>
-          reservation.reservationStatus !== 'ANNULEE' &&
-          reservation.matchStatus !== 'ANNULE'
-        )
         .filter(reservation =>
           reservation.memberId === member.id ||
           reservation.participantMatricules?.includes(member.matricule)
@@ -61,6 +58,7 @@ export class MyReservations implements OnInit {
       this.reservations.set(filteredReservations);
     });
   }
+
   getSiteName(reservation: any): string {
     if (reservation.siteName) {
       return reservation.siteName;
@@ -70,6 +68,7 @@ export class MyReservations implements OnInit {
 
     return court?.siteName || court?.site?.name || court?.site?.clubName || 'Club inconnu';
   }
+
   getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
     const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
     const now = new Date();
@@ -111,6 +110,7 @@ export class MyReservations implements OnInit {
         return 'bg-slate-100 text-slate-500';
     }
   }
+
   getFilteredReservations() {
     const filter = this.selectedFilter();
 
@@ -119,16 +119,28 @@ export class MyReservations implements OnInit {
     }
 
     if (filter === 'upcoming') {
-      return this.reservations().filter(reservation => {
-        const status = this.getReservationStatus(reservation);
-        return status === 'today' || status === 'upcoming';
-      });
+      return this.reservations().filter(reservation =>
+        reservation.reservationStatus !== 'ANNULEE'
+        && reservation.matchStatus !== 'ANNULE'
+        && (
+          this.getReservationStatus(reservation) === 'today'
+          || this.getReservationStatus(reservation) === 'upcoming'
+        )
+      );
+    }
+
+    if (filter === 'cancelled') {
+      return this.reservations().filter(reservation =>
+        reservation.reservationStatus === 'ANNULEE'
+        || reservation.matchStatus === 'ANNULE'
+      );
     }
 
     return this.reservations().filter(reservation =>
-      this.getReservationStatus(reservation) === 'past'
+      reservation.reservationStatus !== 'ANNULEE'
+      && reservation.matchStatus !== 'ANNULE'
+      && this.getReservationStatus(reservation) === 'past'
     );
-
   }
 
   countAllReservations(): number {
@@ -136,17 +148,31 @@ export class MyReservations implements OnInit {
   }
 
   countUpcomingReservations(): number {
-    return this.reservations().filter(reservation => {
-      const status = this.getReservationStatus(reservation);
-      return status === 'today' || status === 'upcoming';
-    }).length;
+    return this.reservations().filter(reservation =>
+      reservation.reservationStatus !== 'ANNULEE'
+      && reservation.matchStatus !== 'ANNULE'
+      && (
+        this.getReservationStatus(reservation) === 'today'
+        || this.getReservationStatus(reservation) === 'upcoming'
+      )
+    ).length;
   }
 
   countPastReservations(): number {
     return this.reservations().filter(reservation =>
-      this.getReservationStatus(reservation) === 'past'
+      reservation.reservationStatus !== 'ANNULEE'
+      && reservation.matchStatus !== 'ANNULE'
+      && this.getReservationStatus(reservation) === 'past'
     ).length;
   }
+
+  countCancelledReservations(): number {
+    return this.reservations().filter(reservation =>
+      reservation.reservationStatus === 'ANNULEE'
+      || reservation.matchStatus === 'ANNULE'
+    ).length;
+  }
+
   getParticipantsLabel(reservation: any): string {
     if (reservation.members?.length > 0) {
       return reservation.members
@@ -157,14 +183,14 @@ export class MyReservations implements OnInit {
     }
 
     if (reservation.participantMatricules?.length > 0) {
-      return [
-        reservation.playerMatricule,
-        ...reservation.participantMatricules
-      ].filter(Boolean).join(', ');
+      return reservation.participantMatricules
+        .filter(Boolean)
+        .join(', ');
     }
 
     return reservation.playerMatricule || 'Participants non disponibles';
   }
+
   cancelReservation(reservationId: number) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -183,7 +209,15 @@ export class MyReservations implements OnInit {
       this.padelService.deleteReservation(reservationId).subscribe({
         next: () => {
           this.reservations.update(reservations =>
-            reservations.filter(r => r.id !== reservationId)
+            reservations.map(reservation =>
+              reservation.id === reservationId
+                ? {
+                  ...reservation,
+                  reservationStatus: 'ANNULEE',
+                  matchStatus: 'ANNULE'
+                }
+                : reservation
+            )
           );
         },
         error: () => {
