@@ -33,7 +33,7 @@ export class AdminSites implements OnInit {
 
     let visibleSites = this.sites();
 
-    if (admin?.typeAdmin === 'SITE') {
+    if (this.authService.isSiteAdmin()) {
       visibleSites = visibleSites.filter(site => site.id === admin.siteId);
     }
 

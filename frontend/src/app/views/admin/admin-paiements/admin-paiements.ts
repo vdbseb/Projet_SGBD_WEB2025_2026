@@ -50,7 +50,7 @@ export class AdminPaiements implements OnInit {
 
     let reservations = this.reservations();
 
-    if (admin?.typeAdmin === 'SITE') {
+    if (this.authService.isSiteAdmin()) {
       reservations = reservations.filter(reservation => {
         const court = this.courts().find(c => c.id === reservation.courtId);
         return court?.siteId === admin.siteId;
