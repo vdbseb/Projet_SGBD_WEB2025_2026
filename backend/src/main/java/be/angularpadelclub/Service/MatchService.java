@@ -298,7 +298,7 @@ public class MatchService {
     }
 
     @Transactional
-    public void leavePublicMatch(
+    public void leaveMatch(
             Integer matchId,
             Integer memberId
     ) {
@@ -309,12 +309,12 @@ public class MatchService {
                         "Match introuvable avec l'id " + matchId
                 ));
 
-        if (match.getTypeMatch() != MatchType.PUBLIC) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Impossible de quitter un match privé."
-            );
-        }
+//        if (match.getTypeMatch() != MatchType.PUBLIC) {
+//            throw new ResponseStatusException(
+//                    HttpStatus.CONFLICT,
+//                    "Impossible de quitter un match privé."
+//            );
+//        }
 
         if (match.getStatut() == MatchStatus.ANNULE) {
             throw new ResponseStatusException(
@@ -322,6 +322,13 @@ public class MatchService {
                     "Impossible de quitter un match annulé."
             );
         }
+        if (match.getStatut() == MatchStatus.TERMINE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de quitter un match terminé."
+            );
+        }
+
 
         ParticipationEntity participation =
                 participationRepository
@@ -356,7 +363,12 @@ public class MatchService {
         if (nombreParticipants < 4
                 && match.getStatut() == MatchStatus.COMPLET) {
 
-            match.setStatut(MatchStatus.OUVERT);
+            if (match.getTypeMatch() == MatchType.PUBLIC) {
+                match.setStatut(MatchStatus.OUVERT);
+            } else {
+                match.setStatut(MatchStatus.PLANIFIE);
+            }
+
             matchRepository.save(match);
         }
     }
