@@ -216,4 +216,84 @@ public class MatchService {
 
         return matchRepository.save(match);
     }
+
+    @Transactional
+    public void joinPublicMatch(Integer matchId, Integer memberId) {
+
+        MatchEntity match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Match introuvable avec l'id " + matchId
+                ));
+
+        if (match.getTypeMatch() != MatchType.PUBLIC) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de rejoindre un match privé."
+            );
+        }
+
+        if (match.getStatut() == MatchStatus.ANNULE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de rejoindre un match annulé."
+            );
+        }
+
+        if (match.getStatut() == MatchStatus.COMPLET) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de rejoindre un match complet."
+            );
+        }
+
+        MembreEntity membre = membreRepository.findById(memberId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Membre introuvable avec l'id " + memberId
+                ));
+
+        if (!membre.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Inscription impossible : membre inactif."
+            );
+        }
+
+        boolean alreadyRegistered =
+                participationRepository.existsByMatch_IdAndMembre_Id(
+                        matchId,
+                        memberId
+                );
+
+        if (alreadyRegistered) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ce membre est déjà inscrit à ce match."
+            );
+        }
+
+        int nombreParticipants =
+                participationRepository.countByMatch_Id(matchId);
+
+        if (nombreParticipants >= 4) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de rejoindre ce match : il est déjà complet."
+            );
+        }
+
+        ParticipationEntity participation = new ParticipationEntity();
+        participation.setMatch(match);
+        participation.setMembre(membre);
+        participation.setDateInscription(LocalDateTime.now());
+        participation.setPaiement(null);
+
+        participationRepository.save(participation);
+
+        if (nombreParticipants + 1 == 4) {
+            match.setStatut(MatchStatus.COMPLET);
+            matchRepository.save(match);
+        }
+    }
 }

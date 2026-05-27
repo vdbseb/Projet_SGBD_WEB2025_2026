@@ -8,4 +8,6 @@ import java.util.List;
 public interface ParticipationRepository extends JpaRepository<ParticipationEntity, Integer> {
 
     List<ParticipationEntity> findByMatchId(Integer matchId);
+    boolean existsByMatch_IdAndMembre_Id(Integer matchId, Integer membreId);
+    int countByMatch_Id(Integer matchId);
 }
