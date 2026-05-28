@@ -8,14 +8,25 @@
     Retour admin
   </a>
 
-  <header class="mb-10">
-    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-      Membres
-    </h1>
+  <header class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
-    <p class="text-slate-500 mt-2">
-      Gestion et consultation des membres du club.
-    </p>
+    <div>
+      <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
+        Membres
+      </h1>
+
+      <p class="text-slate-500 mt-2">
+        Gestion et consultation des membres du club.
+      </p>
+    </div>
+
+    <button
+      (click)="openCreateMemberDialog()"
+      class="px-5 py-4 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest hover:opacity-90 transition-all"
+    >
+      Ajouter un membre
+    </button>
+
   </header>
 
   <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">

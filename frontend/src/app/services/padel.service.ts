@@ -146,6 +146,12 @@ export class PadelService {
       `${this.apiBaseUrl}/matches/${matchId}/leave/${memberId}`
     );
   }
+  createMember(member: any) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/members`,
+      member
+    );
+  }
 
 }
 

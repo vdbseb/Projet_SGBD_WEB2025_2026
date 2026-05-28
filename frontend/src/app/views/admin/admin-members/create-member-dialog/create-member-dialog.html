@@ -1,0 +1,59 @@
+<div class="p-6 min-w-90">
+  <h2 class="text-xl font-black mb-6 uppercase">
+    Ajouter un membre
+  </h2>
+
+  <input
+    class="w-full border rounded-xl px-4 py-3 mb-3 uppercase"
+    placeholder="Matricule"
+    [ngModel]="matricule()"
+    (ngModelChange)="matricule.set($event)"
+  />
+
+  <input
+    class="w-full border rounded-xl px-4 py-3 mb-3"
+    placeholder="Prénom"
+    [ngModel]="firstName()"
+    (ngModelChange)="firstName.set($event)"
+  />
+
+  <input
+    class="w-full border rounded-xl px-4 py-3 mb-3"
+    placeholder="Nom"
+    [ngModel]="lastName()"
+    (ngModelChange)="lastName.set($event)"
+  />
+
+  <input
+    class="w-full border rounded-xl px-4 py-3 mb-3"
+    placeholder="Email"
+    [ngModel]="email()"
+    (ngModelChange)="email.set($event)"
+  />
+
+  <select
+    class="w-full border rounded-xl px-4 py-3 mb-6"
+    [ngModel]="typeId()"
+    (ngModelChange)="typeId.set(+$event)"
+  >
+    <option [value]="1">GLOBAL — 21 jours</option>
+    <option [value]="2">SITE — 14 jours</option>
+    <option [value]="3">LIBRE — 5 jours</option>
+  </select>
+
+  <div class="flex gap-3">
+    <button
+      (click)="close()"
+      class="flex-1 px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold uppercase text-xs"
+    >
+      Annuler
+    </button>
+
+    <button
+      (click)="save()"
+      class="flex-1 px-4 py-3 rounded-xl bg-slate-900 text-white font-bold uppercase text-xs"
+    >
+      Créer
+    </button>
+  </div>
+</div>
