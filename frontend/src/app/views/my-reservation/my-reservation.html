@@ -14,9 +14,31 @@
         {{ member.matricule }}
       </span>
     </p>
+
+    <div class="mb-8 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+      <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-3">
+        Compte joueur
+      </p>
+
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-3xl font-black text-slate-900">
+            {{ getPlayerBalance() }}€
+          </h2>
+
+          <p class="text-slate-400 text-sm mt-1">
+            Solde disponible après paiements et remboursements.
+          </p>
+        </div>
+
+        <div class="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
+          <mat-icon class="text-emerald-700">account_balance_wallet</mat-icon>
+        </div>
+      </div>
+    </div>
   }
 
-  <div class="flex gap-3 mb-8">
+  <div class="flex gap-3 mb-8 flex-wrap">
     <button
       (click)="selectedFilter.set('all')"
       class="px-5 py-2 rounded-full font-bold text-sm transition-all"
@@ -94,7 +116,7 @@
           }}
         </span>
 
-        <div class="flex items-center gap-2 mb-1">
+        <div class="flex items-center gap-2 mb-1 pr-24">
           <mat-icon class="text-slate-700">sports_tennis</mat-icon>
           <p class="font-bold text-lg m-0">
             {{ reservation.courtName }}
@@ -108,29 +130,23 @@
 
         <div class="flex items-center gap-2 text-slate-500 mb-2">
           <mat-icon class="text-base">calendar_month</mat-icon>
-          <span>
-            {{ reservation.date | date:'dd/MM/yyyy' }}
-          </span>
+          <span>{{ reservation.date | date:'dd/MM/yyyy' }}</span>
         </div>
 
         <div class="flex items-center gap-2 text-slate-500 mb-2">
           <mat-icon class="text-base">schedule</mat-icon>
-          <span>
-            {{ reservation.startTime }} - {{ reservation.endTime }}
-          </span>
+          <span>{{ reservation.startTime }} - {{ reservation.endTime }}</span>
         </div>
 
         <div class="flex items-center gap-2 text-slate-400 text-sm mt-3">
           <mat-icon class="text-base">badge</mat-icon>
-          <span>
-            {{ getParticipantsLabel(reservation) }}
-          </span>
+          <span>{{ getParticipantsLabel(reservation) }}</span>
         </div>
 
         @if (
           getReservationStatus(reservation) !== 'past'
           && reservation.reservationStatus !== 'ANNULEE'
-        ) {
+          ) {
           <div class="flex gap-3 mt-5 flex-wrap">
             @if (isPaid(reservation.id)) {
               <span class="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
@@ -153,6 +169,7 @@
             </button>
           </div>
         }
+
       </div>
     }
   </div>

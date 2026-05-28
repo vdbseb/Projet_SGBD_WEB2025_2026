@@ -253,4 +253,10 @@ export class MyReservations implements OnInit {
       });
     });
   }
+
+  getPlayerBalance(): number {
+    return this.reservations()
+      .filter(reservation => reservation.reservationStatus === 'ANNULEE')
+      .length * 15;
+  }
 }
