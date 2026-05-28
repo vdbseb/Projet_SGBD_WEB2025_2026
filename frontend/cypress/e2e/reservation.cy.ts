@@ -5,7 +5,7 @@ describe('Reservation happy flow', () => {
     cy.visit('http://localhost:4200');
 
     // Choix du centre
-    cy.contains(/réserve à bruxelles/i)
+    cy.contains(/réserve à liège/i)
       .click();
 
     // Login membre
@@ -16,7 +16,7 @@ describe('Reservation happy flow', () => {
       .click();
 
     // Vérification page centre
-    cy.contains(/the atomium padel club/i)
+    cy.contains(/the carré club/i)
       .should('be.visible');
 
     // Choix terrain
