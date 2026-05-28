@@ -12,7 +12,9 @@
 
   @if (getPublicMatches().length === 0) {
     <div class="bg-white border border-slate-100 rounded-4xl p-10 shadow-sm text-center">
-      <mat-icon class="text-slate-300 text-5xl mb-4">sports_tennis</mat-icon>
+      <mat-icon class="text-slate-300 text-5xl mb-4">
+        sports_tennis
+      </mat-icon>
 
       <h2 class="text-2xl font-black text-slate-900 mb-3">
         Aucun match public
@@ -25,14 +27,28 @@
   }
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
     @for (reservation of getPublicMatches(); track reservation.id) {
+
       <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
 
         <div class="flex justify-between items-start mb-5">
+
           <div>
-            <span class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase mb-3">
-              Match public
-            </span>
+
+            <div class="flex items-center gap-2 mb-3">
+
+              <span class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest">
+                Match public
+              </span>
+
+              @if (getParticipantsCount(reservation) >= 4) {
+                <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase tracking-widest">
+                  Complet
+                </span>
+              }
+
+            </div>
 
             <h2 class="font-black text-slate-900 text-lg">
               {{ getCourtName(reservation) }}
@@ -41,51 +57,83 @@
             <p class="text-slate-400 text-sm mt-1">
               {{ getSiteName(reservation) }}
             </p>
+
           </div>
 
           <div class="bg-emerald-50 px-3 py-2 rounded-2xl text-center">
+
             <p class="text-lg font-black text-emerald-700">
               {{ getParticipantsCount(reservation) }}/4
             </p>
+
             <p class="text-[10px] uppercase font-black text-emerald-400">
               joueurs
             </p>
+
           </div>
+
         </div>
 
         <div class="space-y-3 text-sm text-slate-500 mb-6">
 
           <div class="flex items-center gap-2">
             <mat-icon class="text-base">calendar_month</mat-icon>
-            <span>{{ reservation.date | date:'dd/MM/yyyy' }}</span>
+
+            <span>
+              {{ reservation.date | date:'dd/MM/yyyy' }}
+            </span>
           </div>
 
           <div class="flex items-center gap-2">
             <mat-icon class="text-base">schedule</mat-icon>
-            <span>{{ reservation.startTime }} - {{ reservation.endTime }}</span>
+
+            <span>
+              {{ reservation.startTime }} - {{ reservation.endTime }}
+            </span>
           </div>
 
           <div class="flex items-center gap-2">
             <mat-icon class="text-base">payments</mat-icon>
-            <span>15€ pour rejoindre ce match</span>
+
+            <span>
+              15€ pour rejoindre ce match
+            </span>
           </div>
 
           <div class="flex items-center gap-2">
             <mat-icon class="text-base">group</mat-icon>
-            <span>{{ getRemainingSpots(reservation) }} place(s) restante(s)</span>
+
+            <span>
+              {{ getRemainingSpots(reservation) }} place(s) restante(s)
+            </span>
           </div>
 
         </div>
 
-        <button
-          (click)="joinMatch(reservation)"
-          class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
-        >
-          Rejoindre ce match
-        </button>
+        @if (isParticipant(reservation)) {
+
+          <button
+            (click)="leaveMatch(reservation)"
+            class="w-full py-4 rounded-2xl bg-red-50 text-red-600 font-black text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+          >
+            Quitter le match
+          </button>
+
+        } @else {
+
+          <button
+            (click)="joinMatch(reservation)"
+            class="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest transition-all"
+          >
+            Rejoindre ce match
+          </button>
+
+        }
 
       </div>
+
     }
+
   </div>
 
 </div>

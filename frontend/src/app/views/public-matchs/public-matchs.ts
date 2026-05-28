@@ -58,13 +58,12 @@ export class PublicMatchs implements OnInit {
 
     return this.reservations().filter(reservation => {
       const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
-      const participants = 1 + (reservation.participantMatricules?.length || 0);
 
       return reservation.matchType === 'PUBLIC'
         && reservation.reservationStatus !== 'ANNULEE'
         && reservation.matchStatus !== 'ANNULE'
-        && reservationDate > now
-        && participants < 4;
+        && reservationDate > now;
+
     });
   }
 
@@ -150,6 +149,46 @@ export class PublicMatchs implements OnInit {
           });
         }
       });
+    });
+  }
+  isParticipant(reservation: any): boolean {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return false;
+    }
+
+    return reservation.participantMatricules?.includes(member.matricule);
+  }
+  leaveMatch(reservation: any) {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return;
+    }
+
+    const matchId = reservation.matchId;
+
+    if (!matchId) {
+      this.snackBar.open('Match introuvable.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    this.padelService.leavePublicMatch(matchId, member.id).subscribe({
+      next: () => {
+        this.snackBar.open('Vous avez quitté le match.', 'OK', {
+          duration: 3000
+        });
+
+        this.loadReservations();
+      },
+      error: () => {
+        this.snackBar.open('Impossible de quitter le match.', 'OK', {
+          duration: 4000
+        });
+      }
     });
   }
 }
