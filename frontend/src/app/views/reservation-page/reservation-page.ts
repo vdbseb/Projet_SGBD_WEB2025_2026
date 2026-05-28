@@ -72,6 +72,19 @@ export class ReservationPage implements OnInit {
   }
 
   selectCourt(court: PadelCourt) {
+
+    if (!court.active) {
+      this.snackBar.open(
+        'Ce terrain est actuellement en maintenance.',
+        'OK',
+        {
+          duration: 4000
+        }
+      );
+
+      return;
+    }
+
     this.selectedCourt.set(court);
     this.selectedTime.set(null);
     this.loadReservedTimes();

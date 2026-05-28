@@ -2,10 +2,14 @@
   <div class="min-h-screen bg-slate-50 p-6 md:p-12 font-sans">
 
     <header class="text-center mb-16">
-      <h1 class="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter">{{ currentSite.clubName }}</h1>
+      <h1 class="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter">
+        {{ currentSite.clubName }}
+      </h1>
+
       <p class="text-slate-500 mt-4">
         {{ currentSite.city }} — Choisit ton terrain pour accéder au calendrier.
       </p>
+
       <div class="w-16 h-1 bg-slate-900 mx-auto mt-4 rounded-full"></div>
     </header>
 
@@ -13,18 +17,31 @@
       @for (court of currentSite.courts; track court.id) {
         <app-padel-card
           [title]="court.name"
-          [subtitle]="'Padel ' + court.type"
+          [subtitle]="court.active ? ('Padel ' + court.type) : 'Maintenance'"
           [initial]="currentSite.initial"
           [image]="court.type.toLowerCase() === 'indoor' ? 'images/indoor_padel.jpg' : 'images/outdoor_padel.jpg'"
           [isSelected]="selectedCourt()?.id === court.id"
-          [buttonLabel]="selectedCourt()?.id === court.id ? 'Terrain Sélectionné' : 'Choisir ce terrain'"
+          [buttonLabel]="court.active
+            ? (selectedCourt()?.id === court.id ? 'Terrain Sélectionné' : 'Choisir ce terrain')
+            : 'Indisponible'"
           (cardClick)="selectCourt(court)">
 
-          Profite d'une session de jeu exceptionnelle sur notre terrain {{ court.name }}.
+          @if (court.active) {
+            Profite d'une session de jeu exceptionnelle sur notre terrain {{ court.name }}.
+          } @else {
+            <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase tracking-widest mb-3">
+              Maintenance
+            </span>
+
+            <p class="text-slate-500">
+              Ce terrain est actuellement indisponible à la réservation.
+            </p>
+          }
 
         </app-padel-card>
       }
     </div>
+
     @if (selectedCourt(); as court) {
       <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -33,19 +50,20 @@
           [initialDate]="selectedDate()"
           (dateChange)="onDateSelected($event)">
         </app-date-selector>
+
         <app-time-slots
-        [reservedTimes]="reservedTimes()"
-        [openingTime]="currentSite.openingTime"
-        [closingTime]="currentSite.closingTime"
-        (slotSelected)="onTimeSelected($event)">
-      </app-time-slots>
+          [reservedTimes]="reservedTimes()"
+          [openingTime]="currentSite.openingTime"
+          [closingTime]="currentSite.closingTime"
+          (slotSelected)="onTimeSelected($event)">
+        </app-time-slots>
+
         <app-match-selector
           [(matchType)]="selectedMatchType"
           [currentMember]="authService.currentMember()"
           (participantsChanged)="onParticipantsChanged($event)"
           (validityChanged)="onMatchValidityChanged($event)">
         </app-match-selector>
-
 
         @if (selectedTime()) {
           <div class="mt-10 p-8 rounded-4xl shadow-xl bg-slate-900 text-white border border-slate-800 animate-in">
@@ -54,8 +72,10 @@
                 <p class="text-slate-400 uppercase tracking-widest text-[10px] font-black mb-2">
                   Ta réservation
                 </p>
+
                 <h3 class="text-white text-xl md:text-2xl font-black">
-                  {{ court.name }} <span class="text-emerald-400 mx-1">•</span>
+                  {{ court.name }}
+                  <span class="text-emerald-400 mx-1">•</span>
                   {{ selectedDate() | date:'dd MMMM' }} à {{ selectedTime() }}
                 </h3>
               </div>
@@ -73,8 +93,10 @@
             </div>
           </div>
         }
+
       </div>
     }
+
   </div>
 } @else {
   <div class="min-h-screen flex items-center justify-center bg-slate-50">
