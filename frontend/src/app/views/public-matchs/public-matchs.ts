@@ -58,7 +58,6 @@ export class PublicMatchs implements OnInit {
 
     return this.reservations().filter(reservation => {
       const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
-      const participants = 1 + (reservation.participantMatricules?.length || 0);
 
       return reservation.matchType === 'PUBLIC'
         && reservation.reservationStatus !== 'ANNULEE'
