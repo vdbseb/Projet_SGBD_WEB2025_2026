@@ -52,28 +52,31 @@
               </p>
             </div>
           </div>
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="member.active
+                 ? 'bg-emerald-100 text-emerald-700'
+                 : 'bg-red-100 text-red-700'" >
+  {{ member.active ? 'Actif' : 'Suspendu' }}
+</span>
 
-          <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase">
-            Actif
-          </span>
         </div>
 
         <div class="space-y-3 text-sm text-slate-500">
 
           <div>
-            @if ((member.type || member.typeMembre) === 'GLOBAL') {
-              <span class="px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-black uppercase">
-        Global • 21 jours
-      </span>
-            } @else if ((member.type || member.typeMembre) === 'SITE') {
-              <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase">
-        Site • 14 jours
-      </span>
-            } @else {
-              <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
-        Libre • 5 jours
-      </span>
-            }
+  <span
+    class="px-3 py-1 rounded-full text-xs font-black uppercase"
+    [class]="member.type?.code === 'GLOBAL'
+      ? 'bg-violet-100 text-violet-700'
+      : member.type?.code === 'SITE'
+        ? 'bg-emerald-100 text-emerald-700'
+        : 'bg-slate-100 text-slate-600'"
+  >
+    {{ member.type?.code || 'Libre' }}
+    •
+    {{ member.type?.delai_reservation_jours || 5 }} jours
+  </span>
           </div>
 
           <p>
@@ -82,6 +85,10 @@
           </p>
 
         </div>
+        <p>
+          <span class="font-bold text-slate-700">Club :</span>
+          {{ member.siteName || 'Global' }}
+        </p>
 
         <div class="mt-6 flex gap-3">
           <button
