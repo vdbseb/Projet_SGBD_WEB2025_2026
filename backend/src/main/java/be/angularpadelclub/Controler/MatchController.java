@@ -34,12 +34,12 @@ public class MatchController {
                 .toList();
     }
 
-    @PostMapping
-    public MatchDTO createMatch(@RequestBody MatchDTO dto) {
-        return matchMapper.toDTO(
-                matchService.createMatch(dto)
-        );
-    }
+//    @PostMapping
+//    public MatchDTO createMatch(@RequestBody MatchDTO dto) {
+//        return matchMapper.toDTO(
+//                matchService.createMatch(dto)
+//        );
+//    }
 
     @PatchMapping("/{matchId}/annuler")
     public MatchDTO annulerMatch(
