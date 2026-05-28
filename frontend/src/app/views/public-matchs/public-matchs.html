@@ -77,12 +77,25 @@
 
         </div>
 
-        <button
-          (click)="joinMatch(reservation)"
-          class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
-        >
-          Rejoindre ce match
-        </button>
+        @if (isParticipant(reservation)) {
+
+          <button
+            (click)="leaveMatch(reservation)"
+            class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+          >
+            Quitter le match
+          </button>
+
+        } @else {
+
+          <button
+            (click)="joinMatch(reservation)"
+            class="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-all"
+          >
+            Rejoindre
+          </button>
+
+        }
 
       </div>
     }
