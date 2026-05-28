@@ -217,13 +217,38 @@ export class AdminReservations implements OnInit {
   }
 
   getMatchStatusLabel(reservation: any): string {
-    return this.getParticipantsCount(reservation) >= 4 ? 'Complet' : 'Ouvert';
+
+    if (reservation.matchStatus === 'ANNULE') {
+      return 'Annulé';
+    }
+
+    if (reservation.matchStatus === 'COMPLET') {
+      return 'Complet';
+    }
+
+    if (reservation.matchStatus === 'OUVERT') {
+      return 'Ouvert';
+    }
+
+    return reservation.matchStatus || 'Inconnu';
   }
 
   getMatchStatusClass(reservation: any): string {
-    return this.getParticipantsCount(reservation) >= 4
-      ? 'bg-emerald-100 text-emerald-700'
-      : 'bg-orange-100 text-orange-700';
+
+    switch (reservation.matchStatus) {
+
+      case 'COMPLET':
+        return 'bg-emerald-100 text-emerald-700';
+
+      case 'OUVERT':
+        return 'bg-orange-100 text-orange-700';
+
+      case 'ANNULE':
+        return 'bg-red-100 text-red-700';
+
+      default:
+        return 'bg-slate-100 text-slate-600';
+    }
   }
 
   getMatchTypeClass(reservation: any): string {
