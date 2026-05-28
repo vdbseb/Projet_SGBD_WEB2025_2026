@@ -1,0 +1,27 @@
+<div class="mb-8 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+
+  <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-3">
+    Compte joueur
+  </p>
+
+  <div class="flex items-center justify-between">
+
+    <div>
+      <h2 class="text-3xl font-black text-slate-900">
+        {{ balance() }}€
+      </h2>
+
+      <p class="text-slate-400 text-sm mt-1">
+        Solde disponible après remboursements.
+      </p>
+    </div>
+
+    <div class="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center">
+      <mat-icon class="text-emerald-700">
+        account_balance_wallet
+      </mat-icon>
+    </div>
+
+  </div>
+
+</div>
