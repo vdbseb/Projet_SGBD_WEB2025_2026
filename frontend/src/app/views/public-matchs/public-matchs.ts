@@ -63,8 +63,8 @@ export class PublicMatchs implements OnInit {
       return reservation.matchType === 'PUBLIC'
         && reservation.reservationStatus !== 'ANNULEE'
         && reservation.matchStatus !== 'ANNULE'
-        && reservationDate > now
-        && participants < 4;
+        && reservationDate > now;
+
     });
   }
 
