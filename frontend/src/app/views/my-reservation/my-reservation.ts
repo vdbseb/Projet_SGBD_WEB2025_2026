@@ -7,11 +7,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PlayerWalletCard } from './player-wallet-card/player-wallet-card';
 
 @Component({
   selector: 'app-my-reservation',
   standalone: true,
-  imports: [DatePipe, RouterLink, MatIconModule],
+  imports: [DatePipe, RouterLink, MatIconModule, PlayerWalletCard],
   templateUrl: './my-reservation.html'
 })
 export class MyReservations implements OnInit {
@@ -252,5 +253,11 @@ export class MyReservations implements OnInit {
         duration: 3000
       });
     });
+  }
+
+  getPlayerBalance(): number {
+    return this.reservations()
+      .filter(reservation => reservation.reservationStatus === 'ANNULEE')
+      .length * 15;
   }
 }
