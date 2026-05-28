@@ -1,4 +1,4 @@
-<mat-card class="rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all duration-500 border-none overflow-hidden bg-white flex flex-col min-h-[500px] cursor-pointer group" [ngClass]="isSelected() ? 'ring-4 ring-slate-900 ring-offset-4 scale-[1.02]' : ''">
+<mat-card class="rounded-[2.5rem] shadow-xl hover:shadow-2xl transition-all duration-500 border-none overflow-hidden bg-white flex flex-col min-h-125 cursor-pointer group" [ngClass]="isSelected() ? 'ring-4 ring-slate-900 ring-offset-4 scale-[1.02]' : ''">
 
   <mat-card-header class="p-8">
     <div mat-card-avatar class="bg-slate-800 text-white rounded-2xl flex items-center justify-center font-black shadow-sm">
@@ -19,14 +19,19 @@
          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
   </div>
 
-  <mat-card-content class="p-8 flex-grow">
+  <mat-card-content class="p-8 grow">
     <div class="text-slate-500 leading-relaxed text-sm">
       <ng-content></ng-content>
     </div>
   </mat-card-content>
 
   <mat-card-actions class="p-8 pt-0">
-    <button mat-flat-button class="w-full py-8 rounded-2xl font-black text-base uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all" (click)="onButtonClick()">
+    <button
+      mat-flat-button
+      data-cy="select-court-button"
+      class="w-full py-8 rounded-2xl font-black text-base uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all"
+      (click)="onButtonClick()"
+    >
       {{ buttonLabel() }}
     </button>
   </mat-card-actions>

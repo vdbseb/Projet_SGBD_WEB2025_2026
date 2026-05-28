@@ -5,6 +5,7 @@
 
   <input
     type="text"
+    data-cy="login-input"
     [placeholder]="isAdminMode() ? 'Ex: AG01' : 'Ex: G1234'"
     class="w-full border rounded-lg px-4 py-3 mb-4 uppercase"
     [ngModel]="matricule()"
@@ -12,6 +13,7 @@
   />
 
   <button
+    data-cy="login-button"
     class="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
     (click)="login()"
   >
