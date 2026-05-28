@@ -24,33 +24,27 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final CourtRepository courtRepository;
     private final MembreRepository membreRepository;
-    private final HoraireSiteRepository horaireSiteRepository;
-    private final JourFermetureRepository jourFermetureRepository;
     private final ReservationMapper reservationMapper;
-    private final PenaliteRepository penaliteRepository;
     private final MatchRepository matchRepository;
     private final ParticipationRepository participationRepository;
+    private final ReservationValidationService reservationValidationService;
 
     public ReservationService(
             ReservationRepository reservationRepository,
             CourtRepository courtRepository,
             MembreRepository membreRepository,
-            HoraireSiteRepository horaireSiteRepository,
-            JourFermetureRepository jourFermetureRepository,
             ReservationMapper reservationMapper,
-            PenaliteRepository penaliteRepository,
             MatchRepository matchRepository,
-            ParticipationRepository participationRepository
+            ParticipationRepository participationRepository,
+            ReservationValidationService reservationValidationService
     ) {
         this.reservationRepository = reservationRepository;
         this.courtRepository = courtRepository;
         this.membreRepository = membreRepository;
-        this.horaireSiteRepository = horaireSiteRepository;
-        this.jourFermetureRepository = jourFermetureRepository;
         this.reservationMapper = reservationMapper;
-        this.penaliteRepository = penaliteRepository;
         this.matchRepository = matchRepository;
         this.participationRepository = participationRepository;
+        this.reservationValidationService = reservationValidationService;
     }
 
     public List<ReservationDTO> findAll() {
@@ -94,123 +88,29 @@ public class ReservationService {
                         "Membre introuvable avec l'id " + dto.memberId()
                 ));
 
-        if (!member.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Réservation impossible : membre inactif."
-            );
-        }
-
-        boolean hasBlockingDebt =
-                penaliteRepository.existsByMembre_IdAndActiveTrue(
-                        member.getId()
-                );
-
-        if (hasBlockingDebt) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Réservation impossible : le membre a une pénalité active."
-            );
-        }
-
-        boolean fermetureSite =
-                jourFermetureRepository.existsBySiteIdAndDateFermeture(
-                        court.getSite().getId(),
-                        dto.date()
-                );
-
-        boolean fermetureGlobale =
-                jourFermetureRepository.existsByGlobalTrueAndDateFermeture(
-                        dto.date()
-                );
-
-        if (fermetureSite || fermetureGlobale) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : le site est fermé à cette date."
-            );
-        }
-
-        HoraireSiteEntity horaire = horaireSiteRepository
-                .findBySite_IdAndAnnee(
-                        court.getSite().getId(),
-                        dto.date().getYear()
-                )
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Aucun horaire défini pour ce site et cette année."
-                ));
-
-        LocalTime startTime = dto.startTime();
-        LocalTime endTime = startTime.plusMinutes(
-                horaire.getDuree_match_minutes()
-        );
-        LocalTime blockedEndTime = endTime.plusMinutes(
-                horaire.getPause_minutes()
-        );
-
-        if (startTime.isBefore(horaire.getHeure_debut())
-                || endTime.isAfter(horaire.getHeure_fin())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : en dehors des heures d'ouverture."
-            );
-        }
-
-        List<ReservationEntity> existingReservations =
-                reservationRepository.findByCourtAndDate(
-                        court,
-                        dto.date()
-                );
-
-        for (ReservationEntity existing : existingReservations) {
-
-            if (existing.getStatut() == ReservationStatus.ANNULEE
-                    || (existing.getMatch() != null
-                    && existing.getMatch().getStatut() == MatchStatus.ANNULE)) {
-                continue;
-            }
-
-            LocalTime existingBlockedEnd =
-                    existing.getEndTime().plusMinutes(
-                            horaire.getPause_minutes()
-                    );
-
-            boolean overlap =
-                    startTime.isBefore(existingBlockedEnd)
-                            && blockedEndTime.isAfter(existing.getStartTime());
-
-            if (overlap) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Réservation impossible : ce terrain est déjà réservé sur ce créneau."
-                );
-            }
-        }
-
         List<String> participants = dto.participantMatricules() == null
                 ? List.of()
                 : dto.participantMatricules();
 
-        int nombreJoueurs = 1 + participants.size();
+        HoraireSiteEntity horaire =
+                reservationValidationService.validateReservationPossible(
+                        court,
+                        member,
+                        dto.date(),
+                        dto.startTime()
+                );
 
-        if (nombreJoueurs > 4) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Un match ne peut pas avoir plus de 4 joueurs."
-            );
-        }
+        reservationValidationService.validateParticipants(participants);
+
+        LocalTime startTime = dto.startTime();
+
+        LocalTime endTime = startTime.plusMinutes(
+                horaire.getDuree_match_minutes()
+        );
 
         MatchType matchType = participants.isEmpty()
                 ? MatchType.PUBLIC
                 : MatchType.PRIVE;
-
-        if (matchType == MatchType.PRIVE && nombreJoueurs != 4) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Un match privé doit avoir exactement 4 joueurs."
-            );
-        }
 
         ReservationEntity reservation = reservationMapper.toEntity(
                 dto,

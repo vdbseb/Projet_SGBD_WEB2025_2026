@@ -44,103 +44,103 @@ public class MatchService {
         this.reservationRepository = reservationRepository;
     }
 
-    public MatchEntity createMatch(MatchDTO dto) {
-
-        CourtEntity court = courtRepository.findById(dto.terrainId())
-                .orElseThrow(() -> new RuntimeException(
-                        "Terrain introuvable"
-                ));
-
-        MembreEntity organisateur =
-                membreRepository.findById(dto.organisateurId())
-                        .orElseThrow(() -> new RuntimeException(
-                                "Organisateur introuvable"
-                        ));
-
-        int nombreJoueurs = 1;
-
-        if (dto.playerMatricules() != null) {
-            nombreJoueurs += dto.playerMatricules().size();
-        }
-
-        if (dto.matchType() == MatchType.PRIVE
-                && nombreJoueurs != 4) {
-
-            throw new RuntimeException(
-                    "Un match privé doit avoir exactement 4 joueurs"
-            );
-        }
-
-        if (nombreJoueurs > 4) {
-            throw new RuntimeException(
-                    "Un match ne peut pas avoir plus de 4 joueurs"
-            );
-        }
-
-        // Création réservation
-        ReservationEntity reservation =
-                new ReservationEntity();
-
-        reservation.setCourt(court);
-        reservation.setMember(organisateur);
-        reservation.setDate(dto.dateMatch());
-        reservation.setStartTime(dto.heureDebut());
-        reservation.setEndTime(
-                dto.heureDebut().plusMinutes(90)
-        );
-
-        ReservationEntity savedReservation =
-                reservationRepository.save(reservation);
-
-        // Création match
-        MatchEntity match = new MatchEntity();
-
-        match.setTerrain(court);
-        match.setOrganisateur(organisateur);
-        match.setDateMatch(dto.dateMatch());
-        match.setHeureDebut(dto.heureDebut());
-        match.setHeureFin(
-                dto.heureDebut().plusMinutes(90)
-        );
-        match.setTypeMatch(dto.matchType());
-        match.setStatut(MatchStatus.OUVERT);
-        match.setPrixTotal(60);
-        match.setCreatedAt(LocalDateTime.now());
-
-        // Lien réservation ↔ match
-        match.setReservation(savedReservation);
-
-        MatchEntity savedMatch =
-                matchRepository.save(match);
-
-        createParticipation(
-                savedMatch,
-                organisateur
-        );
-
-        if (dto.playerMatricules() != null) {
-
-            for (String matricule :
-                    dto.playerMatricules()) {
-
-                MembreEntity player =
-                        membreRepository
-                                .findByMatricule(matricule)
-                                .orElseThrow(() ->
-                                        new RuntimeException(
-                                                "Joueur introuvable : "
-                                                        + matricule
-                                        ));
-
-                createParticipation(
-                        savedMatch,
-                        player
-                );
-            }
-        }
-
-        return savedMatch;
-    }
+//    public MatchEntity createMatch(MatchDTO dto) {
+//
+//        CourtEntity court = courtRepository.findById(dto.terrainId())
+//                .orElseThrow(() -> new RuntimeException(
+//                        "Terrain introuvable"
+//                ));
+//
+//        MembreEntity organisateur =
+//                membreRepository.findById(dto.organisateurId())
+//                        .orElseThrow(() -> new RuntimeException(
+//                                "Organisateur introuvable"
+//                        ));
+//
+//        int nombreJoueurs = 1;
+//
+//        if (dto.playerMatricules() != null) {
+//            nombreJoueurs += dto.playerMatricules().size();
+//        }
+//
+//        if (dto.matchType() == MatchType.PRIVE
+//                && nombreJoueurs != 4) {
+//
+//            throw new RuntimeException(
+//                    "Un match privé doit avoir exactement 4 joueurs"
+//            );
+//        }
+//
+//        if (nombreJoueurs > 4) {
+//            throw new RuntimeException(
+//                    "Un match ne peut pas avoir plus de 4 joueurs"
+//            );
+//        }
+//
+//        // Création réservation
+//        ReservationEntity reservation =
+//                new ReservationEntity();
+//
+//        reservation.setCourt(court);
+//        reservation.setMember(organisateur);
+//        reservation.setDate(dto.dateMatch());
+//        reservation.setStartTime(dto.heureDebut());
+//        reservation.setEndTime(
+//                dto.heureDebut().plusMinutes(90)
+//        );
+//
+//        ReservationEntity savedReservation =
+//                reservationRepository.save(reservation);
+//
+//        // Création match
+//        MatchEntity match = new MatchEntity();
+//
+//        match.setTerrain(court);
+//        match.setOrganisateur(organisateur);
+//        match.setDateMatch(dto.dateMatch());
+//        match.setHeureDebut(dto.heureDebut());
+//        match.setHeureFin(
+//                dto.heureDebut().plusMinutes(90)
+//        );
+//        match.setTypeMatch(dto.matchType());
+//        match.setStatut(MatchStatus.OUVERT);
+//        match.setPrixTotal(60);
+//        match.setCreatedAt(LocalDateTime.now());
+//
+//        // Lien réservation ↔ match
+//        match.setReservation(savedReservation);
+//
+//        MatchEntity savedMatch =
+//                matchRepository.save(match);
+//
+//        createParticipation(
+//                savedMatch,
+//                organisateur
+//        );
+//
+//        if (dto.playerMatricules() != null) {
+//
+//            for (String matricule :
+//                    dto.playerMatricules()) {
+//
+//                MembreEntity player =
+//                        membreRepository
+//                                .findByMatricule(matricule)
+//                                .orElseThrow(() ->
+//                                        new RuntimeException(
+//                                                "Joueur introuvable : "
+//                                                        + matricule
+//                                        ));
+//
+//                createParticipation(
+//                        savedMatch,
+//                        player
+//                );
+//            }
+//        }
+//
+//        return savedMatch;
+//    }
 
     public List<MatchEntity> findAll() {
         return matchRepository.findAll();

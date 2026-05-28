@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -193,5 +194,20 @@ public class JourFermetureService {
                     "La raison de fermeture est obligatoire"
             );
         }
+    }
+
+    public boolean existsBySiteAndDate(
+            Integer siteId,
+            LocalDate date
+    ) {
+        return jourFermetureRepository
+                .existsBySiteIdAndDateFermeture(siteId, date);
+    }
+
+    public boolean existsGlobalByDate(
+            LocalDate date
+    ) {
+        return jourFermetureRepository
+                .existsByGlobalTrueAndDateFermeture(date);
     }
 }
