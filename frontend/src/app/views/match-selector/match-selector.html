@@ -17,10 +17,11 @@
 
     <button
       type="button"
+      data-cy="public-open-match"
       class="px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-widest transition-all"
       [class]="matchType() === 'PUBLIC'
-        ? 'bg-blue-600 text-white'
-        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+    ? 'bg-blue-600 text-white'
+    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
       (click)="selectMatchType('PUBLIC')"
     >
       Public ouvert

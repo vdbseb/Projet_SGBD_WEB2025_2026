@@ -26,7 +26,12 @@
   </mat-card-content>
 
   <mat-card-actions class="p-8 pt-0">
-    <button mat-flat-button class="w-full py-8 rounded-2xl font-black text-base uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all" (click)="onButtonClick()">
+    <button
+      mat-flat-button
+      data-cy="select-court-button"
+      class="w-full py-8 rounded-2xl font-black text-base uppercase tracking-widest bg-slate-900 text-white hover:bg-slate-800 transition-all"
+      (click)="onButtonClick()"
+    >
       {{ buttonLabel() }}
     </button>
   </mat-card-actions>
