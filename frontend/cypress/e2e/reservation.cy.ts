@@ -26,7 +26,7 @@ describe('Reservation happy flow', () => {
 
 
     cy.get('[data-cy="time-slot"]')
-      .contains('08:00')
+      .contains('09:00')
       .click();
 
 
