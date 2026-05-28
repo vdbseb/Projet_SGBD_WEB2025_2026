@@ -4,7 +4,6 @@ import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.*;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
-import be.angularpadelclub.Enum.ParticipationStatut;
 import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Repository.*;
@@ -22,8 +21,6 @@ import java.util.Optional;
 @Service
 public class ReservationService {
 
-    private static final int PLAYER_SHARE_CENTS = 1500;
-
     private final ReservationRepository reservationRepository;
     private final CourtRepository courtRepository;
     private final MembreRepository membreRepository;
@@ -31,7 +28,6 @@ public class ReservationService {
     private final MatchRepository matchRepository;
     private final ParticipationRepository participationRepository;
     private final ReservationValidationService reservationValidationService;
-    private final PaiementService paiementService;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -40,8 +36,7 @@ public class ReservationService {
             ReservationMapper reservationMapper,
             MatchRepository matchRepository,
             ParticipationRepository participationRepository,
-            ReservationValidationService reservationValidationService,
-            PaiementService paiementService
+            ReservationValidationService reservationValidationService
     ) {
         this.reservationRepository = reservationRepository;
         this.courtRepository = courtRepository;
@@ -50,7 +45,6 @@ public class ReservationService {
         this.matchRepository = matchRepository;
         this.participationRepository = participationRepository;
         this.reservationValidationService = reservationValidationService;
-        this.paiementService = paiementService;
     }
 
     public List<ReservationDTO> findAll() {
@@ -172,14 +166,7 @@ public class ReservationService {
         participation.setMatch(match);
         participation.setMembre(membre);
         participation.setDateInscription(LocalDateTime.now());
-        participation.setStatut(ParticipationStatut.EN_ATTENTE_PAIEMENT);
-        participation.setMontantDuCentimes(PLAYER_SHARE_CENTS);
-        participation.setDateLimitePaiement(
-                LocalDateTime.of(
-                        match.getDateMatch().minusDays(1),
-                        match.getHeureDebut()
-                )
-        );
+        participation.setPaiement(null);
 
         participationRepository.save(participation);
     }
@@ -213,7 +200,6 @@ public class ReservationService {
             reservation.getMatch().setStatut(MatchStatus.ANNULE);
         }
 
-        paiementService.rembourserPaiementsReservation(reservation);
         reservationRepository.save(reservation);
     }
 }

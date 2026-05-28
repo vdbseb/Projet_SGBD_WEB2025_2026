@@ -1,7 +1,6 @@
 package be.angularpadelclub.Entity;
 
 
-import be.angularpadelclub.Enum.ParticipationStatut;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,13 +30,7 @@ public class ParticipationEntity {
     @Column(name = "date_inscription")
     private LocalDateTime dateInscription;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ParticipationStatut statut = ParticipationStatut.EN_ATTENTE_PAIEMENT;
-
-    @Column(name = "montant_du_centimes", nullable = false)
-    private Integer montantDuCentimes = 1500;
-
-    @Column(name = "date_limite_paiement")
-    private LocalDateTime dateLimitePaiement;
+    @OneToOne
+    @JoinColumn(name = "paiement_id")
+    private PaiementEntity paiement;
 }
