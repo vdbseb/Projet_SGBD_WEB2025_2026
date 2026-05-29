@@ -18,7 +18,7 @@
     </p>
   </header>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
       <p class="text-xs uppercase font-black text-slate-400 mb-2">
         Total encaissé
@@ -41,6 +41,16 @@
 
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
       <p class="text-xs uppercase font-black text-slate-400 mb-2">
+        Net
+      </p>
+
+      <p class="text-3xl font-black text-slate-900">
+        {{ getNetAmount() }}€
+      </p>
+    </div>
+
+    <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
+      <p class="text-xs uppercase font-black text-slate-400 mb-2">
         En attente
       </p>
 
@@ -48,99 +58,341 @@
         {{ getPendingCount() }}
       </p>
     </div>
+
+    <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
+      <p class="text-xs uppercase font-black text-slate-400 mb-2">
+        Refusés
+      </p>
+
+      <p class="text-3xl font-black text-red-700">
+        {{ getRefusedCount() }}
+      </p>
+    </div>
   </div>
 
   <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
+    <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+      Recherche
+    </label>
+
     <input
       type="text"
-      placeholder="Rechercher matricule, membre, statut..."
-      class="w-full border border-slate-200 rounded-2xl px-5 py-4"
+      placeholder="Rechercher matricule, membre, statut, méthode ou réservation..."
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
       [value]="search()"
       (input)="search.set($any($event.target).value)"
     />
-  </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-    @for (payment of filteredPayments(); track payment.id) {
-      <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
+    <div class="mt-5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
 
-        <div class="flex justify-between items-start gap-4 mb-4">
-          <div>
-            <h2 class="font-black text-slate-900">
-              {{ getMemberName(payment) }}
-            </h2>
+      <div class="flex flex-wrap gap-3">
 
-            <p class="text-slate-400 text-sm font-mono">
-              {{ getMemberMatricule(payment) }}
-            </p>
-          </div>
+        <button
+          (click)="selectedStatus.set('ALL')"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="selectedStatus() === 'ALL'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Tous
+        </button>
 
-          <span
-            class="px-3 py-1 rounded-full text-xs font-black uppercase"
-            [class]="getStatusClass(payment)"
-          >
-            {{ payment.statut || 'EN_ATTENTE' }}
-          </span>
-        </div>
+        <button
+          (click)="selectedStatus.set('EN_ATTENTE')"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="selectedStatus() === 'EN_ATTENTE'
+            ? 'bg-orange-500 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          En attente
+        </button>
 
-        <div class="space-y-2 text-sm text-slate-500">
-          <p>
-            <strong>Montant :</strong>
-            {{ getAmount(payment) }}€
-          </p>
+        <button
+          (click)="selectedStatus.set('VALIDE')"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="selectedStatus() === 'VALIDE'
+            ? 'bg-emerald-600 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Validés
+        </button>
 
-          <p>
-            <strong>Méthode :</strong>
-            {{ payment.methode || 'Non renseignée' }}
-          </p>
+        <button
+          (click)="selectedStatus.set('REFUSE')"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="selectedStatus() === 'REFUSE'
+            ? 'bg-red-600 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Refusés
+        </button>
 
-          <p>
-            <strong>Date :</strong>
-            {{ (payment.datePaiement || payment.dateCreation) | date:'dd/MM/yyyy HH:mm' }}
-          </p>
+        <button
+          (click)="selectedStatus.set('REMBOURSE')"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="selectedStatus() === 'REMBOURSE'
+            ? 'bg-violet-600 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Remboursés
+        </button>
 
-          <p>
-            <strong>Réservation :</strong>
-            {{ payment.reservationId || '—' }}
-          </p>
+        <select
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedMethod()"
+          (ngModelChange)="selectedMethod.set($event)"
+        >
+          <option value="ALL">Toutes les méthodes</option>
 
-          <p>
-            <strong>Type :</strong>
-            {{ payment.participationId ? 'Participation' : 'Réservation' }}
-          </p>
-        </div>
-
-        <div class="flex gap-3 mt-5 flex-wrap">
-
-          @if (payment.statut === 'EN_ATTENTE') {
-            <button
-              (click)="confirmPayment(payment)"
-              class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
-            >
-              Confirmer
-            </button>
-
-            <button
-              (click)="refusePayment(payment)"
-              class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
-            >
-              Refuser
-            </button>
+          @for (method of availableMethods(); track method) {
+          <option [value]="method">
+            {{ method }}
+          </option>
           }
+        </select>
 
-          @if (payment.statut === 'VALIDE') {
-            <button
-              (click)="refundPayment(payment)"
-              class="px-4 py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-xs uppercase tracking-widest hover:bg-violet-100 transition-all"
-            >
-              Rembourser
-            </button>
-          }
-
-        </div>
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+        >
+          Réinitialiser
+        </button>
 
       </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button
+          (click)="showCardsView()"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="viewMode() === 'cards'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Vue cartes
+        </button>
+
+        <button
+          (click)="showTableView()"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="viewMode() === 'table'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Vue tableau
+        </button>
+      </div>
+
+    </div>
+
+    <p class="mt-4 text-sm text-slate-400">
+      {{ filteredPayments().length }} paiement(s) affiché(s)
+    </p>
+  </div>
+
+  @if (viewMode() === 'cards') {
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    @for (payment of filteredPayments(); track payment.id) {
+    <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
+
+      <div class="flex justify-between items-start gap-4 mb-4">
+        <div>
+          <h2 class="font-black text-slate-900">
+            {{ getMemberName(payment) }}
+          </h2>
+
+          <p class="text-slate-400 text-sm font-mono">
+            {{ getMemberMatricule(payment) }}
+          </p>
+        </div>
+
+        <span
+          class="px-3 py-1 rounded-full text-xs font-black uppercase"
+          [class]="getStatusClass(payment)"
+        >
+              {{ getStatusLabel(payment) }}
+            </span>
+      </div>
+
+      <div class="space-y-2 text-sm text-slate-500">
+        <p>
+          <strong>Montant :</strong>
+          {{ getAmount(payment) }}€
+        </p>
+
+        <p>
+          <strong>Méthode :</strong>
+          {{ getMethodLabel(payment) }}
+        </p>
+
+        <p>
+          <strong>Date :</strong>
+          {{ getPaymentDate(payment) | date:'dd/MM/yyyy HH:mm' }}
+        </p>
+
+        <p>
+          <strong>Réservation :</strong>
+          {{ payment.reservationId || '—' }}
+        </p>
+
+        <p>
+          <strong>Type :</strong>
+          {{ getPaymentTypeLabel(payment) }}
+        </p>
+      </div>
+
+      <div class="flex gap-3 mt-5 flex-wrap">
+
+        @if (canConfirm(payment)) {
+        <button
+          (click)="confirmPayment(payment)"
+          class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
+        >
+          Confirmer
+        </button>
+        }
+
+        @if (canRefuse(payment)) {
+        <button
+          (click)="refusePayment(payment)"
+          class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+        >
+          Refuser
+        </button>
+        }
+
+        @if (canRefund(payment)) {
+        <button
+          (click)="refundPayment(payment)"
+          class="px-4 py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-xs uppercase tracking-widest hover:bg-violet-100 transition-all"
+        >
+          Rembourser
+        </button>
+        }
+
+      </div>
+
+    </div>
     }
   </div>
+  }
+
+  @if (viewMode() === 'table') {
+  <div class="bg-white border border-slate-100 rounded-4xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-400">
+        <tr class="text-left text-[10px] uppercase tracking-widest font-black">
+          <th class="px-5 py-4">Date</th>
+          <th class="px-5 py-4">Membre</th>
+          <th class="px-5 py-4">Matricule</th>
+          <th class="px-5 py-4">Montant</th>
+          <th class="px-5 py-4">Méthode</th>
+          <th class="px-5 py-4">Statut</th>
+          <th class="px-5 py-4">Réservation</th>
+          <th class="px-5 py-4">Type</th>
+          <th class="px-5 py-4 text-right">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @for (payment of filteredPayments(); track payment.id) {
+        <tr class="border-t border-slate-100 hover:bg-slate-50">
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ getPaymentDate(payment) | date:'dd/MM/yyyy HH:mm' }}
+          </td>
+
+          <td class="px-5 py-4 font-black text-slate-900 whitespace-nowrap">
+            {{ getMemberName(payment) }}
+          </td>
+
+          <td class="px-5 py-4 font-mono text-slate-500 whitespace-nowrap">
+            {{ getMemberMatricule(payment) }}
+          </td>
+
+          <td class="px-5 py-4 font-black text-slate-900 whitespace-nowrap">
+            {{ getAmount(payment) }}€
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ getMethodLabel(payment) }}
+          </td>
+
+          <td class="px-5 py-4 whitespace-nowrap">
+                  <span
+                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                    [class]="getStatusClass(payment)"
+                  >
+                    {{ getStatusLabel(payment) }}
+                  </span>
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ payment.reservationId || '—' }}
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ getPaymentTypeLabel(payment) }}
+          </td>
+
+          <td class="px-5 py-4 text-right whitespace-nowrap">
+            <div class="flex justify-end gap-2">
+
+              @if (canConfirm(payment)) {
+              <button
+                (click)="confirmPayment(payment)"
+                class="px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-100"
+              >
+                Confirmer
+              </button>
+              }
+
+              @if (canRefuse(payment)) {
+              <button
+                (click)="refusePayment(payment)"
+                class="px-3 py-2 rounded-xl bg-red-50 text-red-600 font-black uppercase text-[10px] tracking-widest hover:bg-red-100"
+              >
+                Refuser
+              </button>
+              }
+
+              @if (canRefund(payment)) {
+              <button
+                (click)="refundPayment(payment)"
+                class="px-3 py-2 rounded-xl bg-violet-50 text-violet-700 font-black uppercase text-[10px] tracking-widest hover:bg-violet-100"
+              >
+                Rembourser
+              </button>
+              }
+
+            </div>
+          </td>
+        </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  @if (filteredPayments().length === 0) {
+  <div class="bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
+    <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+    <h2 class="text-xl font-black text-slate-900 uppercase">
+      Aucun paiement trouvé
+    </h2>
+
+    <p class="text-slate-400 mt-2">
+      Modifie ta recherche ou change les filtres.
+    </p>
+
+    <button
+      (click)="resetFilters()"
+      class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
+    >
+      Réinitialiser
+    </button>
+  </div>
+  }
 
 </div>
