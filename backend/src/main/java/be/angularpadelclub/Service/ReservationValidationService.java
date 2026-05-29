@@ -1,9 +1,6 @@
 package be.angularpadelclub.Service;
 
-import be.angularpadelclub.Entity.CourtEntity;
-import be.angularpadelclub.Entity.HoraireSiteEntity;
-import be.angularpadelclub.Entity.MembreEntity;
-import be.angularpadelclub.Entity.ReservationEntity;
+import be.angularpadelclub.Entity.*;
 import be.angularpadelclub.Enum.DetteStatut;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.ReservationStatus;
@@ -50,6 +47,7 @@ public class ReservationValidationService {
         validateMemberCanReserve(member);
         validateReservationDelay(member, court, date);
         validateSiteIsOpen(court.getSite().getId(), date);
+        validateSiteIsActive(court.getSite());
 
         HoraireSiteEntity horaire = horaireSiteService.findBySiteIdAndAnnee(
                 court.getSite().getId(),
@@ -60,6 +58,22 @@ public class ReservationValidationService {
         validateCourtAvailable(court, date, startTime, horaire);
 
         return horaire;
+    }
+
+    private void validateSiteIsActive(SiteEntity site) {
+        if (site == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Reservation impossible : le site est introuvable."
+            );
+        }
+
+        if (!site.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Reservation impossible : le site est désactivé."
+            );
+        }
     }
 
     public void validateParticipants(List<String> participants) {

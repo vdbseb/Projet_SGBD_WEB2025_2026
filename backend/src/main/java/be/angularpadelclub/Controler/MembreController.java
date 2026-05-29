@@ -40,6 +40,11 @@ public class MembreController {
                 .toList();
     }
 
+    @GetMapping("/next-matricule")
+    public String getNextMatricule(@RequestParam("typeCode") String typeCode) {
+        return membreService.getNextMatricule(typeCode);
+    }
+
     @GetMapping(value = "/{matricule}", produces = "application/json")
     public MembreDTO findById(
             @PathVariable("matricule") String matricule
@@ -49,18 +54,32 @@ public class MembreController {
                 .orElseThrow(() -> new RuntimeException("Member not found"));
     }
 
-    @GetMapping("/next-matricule")
-    public String getNextMatricule(@RequestParam("typeCode") String typeCode) {
-        return membreService.getNextMatricule(typeCode);
-    }
-
     @PostMapping(consumes = "application/json")
     public void addMember(@RequestBody MembreDTO dto) {
         membreService.addMember(dto);
     }
 
+    @PatchMapping(
+            value = "/{id}/active",
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public MembreDTO updateMemberActiveStatus(
+            @PathVariable("id") int id,
+            @RequestBody MemberActiveStatusRequest request
+    ) {
+        return membreMapper.toDTO(
+                membreService.updateMemberActiveStatus(id, request.active())
+        );
+    }
+
     @DeleteMapping("/{id}")
     public void deleteMember(@PathVariable("id") int id) {
         membreService.deleteMember(id);
+    }
+
+    public record MemberActiveStatusRequest(
+            Boolean active
+    ) {
     }
 }

@@ -2,10 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { PadelService } from '../../../services/padel.service';
 import { MatDialog } from '@angular/material/dialog';
+import { forkJoin } from 'rxjs';
+
+import { PadelService } from '../../../services/padel.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
-import {AuthService} from '../../../services/auth.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-admin-reservations',
@@ -15,48 +17,62 @@ import {AuthService} from '../../../services/auth.service';
 })
 export class AdminReservations implements OnInit {
   private padelService = inject(PadelService);
+  private dialog = inject(MatDialog);
+
+  authService = inject(AuthService);
 
   reservations = signal<any[]>([]);
-  search = signal('');
-  selectedFilter = signal<'all' | 'today' | 'upcoming' | 'past'>('all');
   courts = signal<any[]>([]);
   sites = signal<any[]>([]);
   members = signal<any[]>([]);
-  private dialog = inject(MatDialog);
-  authService = inject(AuthService);
+
+  search = signal('');
+  selectedFilter = signal<'all' | 'today' | 'upcoming' | 'past'>('all');
+  viewMode = signal<'cards' | 'table'>('cards');
 
   ngOnInit() {
-    this.padelService.getAllReservations().subscribe(reservations => {
+    this.loadData();
+  }
+
+  loadData() {
+    forkJoin({
+      reservations: this.padelService.getAllReservations(),
+      courts: this.padelService.getCourts(),
+      sites: this.padelService.getSites(),
+      members: this.padelService.getMembers()
+    }).subscribe(({ reservations, courts, sites, members }) => {
+      this.courts.set(courts);
+      this.sites.set(sites);
+      this.members.set(members);
+
       const admin = this.authService.currentAdmin();
 
-      let filteredReservations = reservations;
+      let visibleReservations = reservations;
 
       if (this.authService.isSiteAdmin()) {
-        filteredReservations = reservations.filter(reservation => {
-          const court = this.courts().find(c => c.id === reservation.courtId);
+        visibleReservations = reservations.filter(reservation => {
+          const court = courts.find(c => c.id === reservation.courtId);
           return court?.siteId === admin.siteId;
         });
       }
 
-      const sorted = filteredReservations.sort((a, b) => {
+      const sorted = visibleReservations.sort((a, b) => {
         const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
         const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
+
         return dateA - dateB;
       });
 
       this.reservations.set(sorted);
     });
-    this.padelService.getCourts().subscribe(courts => {
-      this.courts.set(courts);
-    });
+  }
 
-    this.padelService.getSites().subscribe(sites => {
-      this.sites.set(sites);
-    });
+  showCardsView() {
+    this.viewMode.set('cards');
+  }
 
-    this.padelService.getMembers().subscribe(members => {
-      this.members.set(members);
-    });
+  showTableView() {
+    this.viewMode.set('table');
   }
 
   getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
@@ -81,8 +97,10 @@ export class AdminReservations implements OnInit {
     switch (status) {
       case 'today':
         return 'Aujourd’hui';
+
       case 'upcoming':
         return 'À venir';
+
       case 'past':
         return 'Passée';
     }
@@ -94,8 +112,10 @@ export class AdminReservations implements OnInit {
     switch (status) {
       case 'today':
         return 'bg-orange-100 text-orange-700';
+
       case 'upcoming':
         return 'bg-blue-100 text-blue-700';
+
       case 'past':
         return 'bg-slate-100 text-slate-500';
     }
@@ -109,7 +129,10 @@ export class AdminReservations implements OnInit {
     if (query) {
       data = data.filter(reservation =>
         reservation.courtName?.toLowerCase().includes(query) ||
-        reservation.playerMatricule?.toLowerCase().includes(query)
+        reservation.playerMatricule?.toLowerCase().includes(query) ||
+        this.getCourtName(reservation).toLowerCase().includes(query) ||
+        this.getSiteName(reservation).toLowerCase().includes(query) ||
+        this.getOrganizerLabel(reservation).toLowerCase().includes(query)
       );
     }
 
@@ -123,8 +146,10 @@ export class AdminReservations implements OnInit {
       this.getReservationStatus(reservation) === filter
     );
   }
+
   getCourtName(reservation: any): string {
     const court = this.courts().find(court => court.id === reservation.courtId);
+
     return reservation.courtName || court?.name || 'Terrain inconnu';
   }
 
@@ -172,12 +197,69 @@ export class AdminReservations implements OnInit {
       return 'Match public';
     }
 
-    if (reservation.matchType === 'PRIVATE') {
+    if (reservation.matchType === 'PRIVATE' || reservation.matchType === 'PRIVE') {
       return 'Match privé';
     }
 
     return 'Type non défini';
   }
+
+  getMatchTypeClass(reservation: any): string {
+    return reservation.matchType === 'PRIVATE' || reservation.matchType === 'PRIVE'
+      ? 'bg-violet-100 text-violet-700'
+      : 'bg-blue-100 text-blue-700';
+  }
+
+  getParticipantsCount(reservation: any): number {
+    const organizerCount = reservation.memberId ? 1 : 0;
+    const extraCount = reservation.participantMatricules?.length || 0;
+
+    return organizerCount + extraCount;
+  }
+
+  getMatchCapacityLabel(reservation: any): string {
+    return `${this.getParticipantsCount(reservation)}/4 joueurs`;
+  }
+
+  getMatchStatusLabel(reservation: any): string {
+    if (reservation.matchStatus === 'ANNULE') {
+      return 'Annulé';
+    }
+
+    if (reservation.matchStatus === 'COMPLET') {
+      return 'Complet';
+    }
+
+    if (reservation.matchStatus === 'OUVERT') {
+      return 'Ouvert';
+    }
+
+    if (reservation.matchStatus === 'TERMINE') {
+      return 'Terminé';
+    }
+
+    return reservation.matchStatus || 'Inconnu';
+  }
+
+  getMatchStatusClass(reservation: any): string {
+    switch (reservation.matchStatus) {
+      case 'COMPLET':
+        return 'bg-emerald-100 text-emerald-700';
+
+      case 'OUVERT':
+        return 'bg-orange-100 text-orange-700';
+
+      case 'ANNULE':
+        return 'bg-red-100 text-red-700';
+
+      case 'TERMINE':
+        return 'bg-slate-100 text-slate-600';
+
+      default:
+        return 'bg-slate-100 text-slate-600';
+    }
+  }
+
   deleteReservation(reservationId: number) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -196,7 +278,7 @@ export class AdminReservations implements OnInit {
       this.padelService.deleteReservation(reservationId).subscribe({
         next: () => {
           this.reservations.update(reservations =>
-            reservations.filter(r => r.id !== reservationId)
+            reservations.filter(reservation => reservation.id !== reservationId)
           );
         },
         error: () => {
@@ -204,56 +286,5 @@ export class AdminReservations implements OnInit {
         }
       });
     });
-  }
-  getParticipantsCount(reservation: any): number {
-    const organizerCount = reservation.memberId ? 1 : 0;
-    const extraCount = reservation.participantMatricules?.length || 0;
-
-    return organizerCount + extraCount;
-  }
-
-  getMatchCapacityLabel(reservation: any): string {
-    return `${this.getParticipantsCount(reservation)}/4 joueurs`;
-  }
-
-  getMatchStatusLabel(reservation: any): string {
-
-    if (reservation.matchStatus === 'ANNULE') {
-      return 'Annulé';
-    }
-
-    if (reservation.matchStatus === 'COMPLET') {
-      return 'Complet';
-    }
-
-    if (reservation.matchStatus === 'OUVERT') {
-      return 'Ouvert';
-    }
-
-    return reservation.matchStatus || 'Inconnu';
-  }
-
-  getMatchStatusClass(reservation: any): string {
-
-    switch (reservation.matchStatus) {
-
-      case 'COMPLET':
-        return 'bg-emerald-100 text-emerald-700';
-
-      case 'OUVERT':
-        return 'bg-orange-100 text-orange-700';
-
-      case 'ANNULE':
-        return 'bg-red-100 text-red-700';
-
-      default:
-        return 'bg-slate-100 text-slate-600';
-    }
-  }
-
-  getMatchTypeClass(reservation: any): string {
-    return reservation.matchType === 'PRIVATE'
-      ? 'bg-violet-100 text-violet-700'
-      : 'bg-blue-100 text-blue-700';
   }
 }

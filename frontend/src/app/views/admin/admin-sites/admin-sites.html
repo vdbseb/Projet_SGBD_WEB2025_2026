@@ -18,143 +18,218 @@
     </p>
   </header>
 
-  <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
-    <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
-      Recherche
-    </label>
+  <div class="bg-white border border-slate-100 rounded-4xl p-5 shadow-sm mb-8">
+    <div class="flex flex-col xl:flex-row gap-4 xl:items-end">
 
-    <input
-      type="text"
-      class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
-      placeholder="Rechercher un site ou une ville..."
-      [value]="search()"
-      (input)="search.set($any($event.target).value)"
-    />
+      <div class="flex-1">
+        <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+          Recherche
+        </label>
+
+        <input
+          type="text"
+          class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
+          placeholder="Rechercher un site, une ville ou une adresse..."
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+
+        <select
+          class="px-4 py-4 rounded-2xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+        >
+          <option value="ALL">Tous les statuts</option>
+          <option value="ACTIVE">Actifs</option>
+          <option value="INACTIVE">Inactifs</option>
+        </select>
+
+        <select
+          class="px-4 py-4 rounded-2xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedCity()"
+          (ngModelChange)="selectedCity.set($event)"
+        >
+          <option value="ALL">Toutes les villes</option>
+
+          @for (city of cities(); track city) {
+          <option [value]="city">
+            {{ city }}
+          </option>
+          }
+        </select>
+
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-4 rounded-2xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+        >
+          Réinitialiser
+        </button>
+
+      </div>
+    </div>
+
+    <p class="mt-4 text-sm text-slate-400">
+      {{ filteredSites().length }} site(s) affiché(s)
+    </p>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (site of filteredSites(); track site.id) {
-      <div class="bg-white border border-slate-100 rounded-4xl overflow-hidden shadow-sm">
+    <div class="bg-white border border-slate-100 rounded-4xl overflow-hidden shadow-sm">
 
-        <div
-          class="h-36 bg-cover bg-center relative"
-          [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
-        >
-          <div class="absolute top-4 right-4">
-            @if (site.active !== false) {
-              <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase">
-                Actif
-              </span>
-            } @else {
-              <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase">
-                Fermé
-              </span>
-            }
-          </div>
-        </div>
-
-        <div class="p-6">
-          <div class="flex justify-between items-start gap-4 mb-5">
-            <div>
-              <h2 class="font-black text-xl text-slate-900">
-                {{ site.clubName || site.name }}
-              </h2>
-
-              <p class="text-slate-500 flex items-center gap-1 mt-1">
-                <mat-icon class="text-base">location_on</mat-icon>
-                {{ site.city }}
-              </p>
-            </div>
-
-            <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
-              {{ site.initial || site.city?.charAt(0) }}
+      <div
+        class="h-36 bg-cover bg-center relative"
+        [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
+      >
+        <div class="absolute top-4 right-4">
+            <span
+              class="px-3 py-1 rounded-full text-xs font-black uppercase"
+              [class]="getSiteStatusClass(site)"
+            >
+              {{ getSiteStatusLabel(site) }}
             </span>
-          </div>
+        </div>
+      </div>
 
-          <div class="bg-slate-50 rounded-2xl p-4 mb-5">
-            <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
-              Horaires
+      <div class="p-6">
+        <div class="flex justify-between items-start gap-4 mb-5">
+          <div>
+            <h2 class="font-black text-xl text-slate-900">
+              {{ site.clubName || site.name }}
+            </h2>
+
+            <p class="text-slate-500 flex items-center gap-1 mt-1">
+              <mat-icon class="text-base">location_on</mat-icon>
+              {{ site.city }}
             </p>
 
-            <div class="flex items-center gap-2 text-slate-700 font-bold">
-              <mat-icon class="text-base">schedule</mat-icon>
-              <span>
+            @if (site.adresse) {
+            <p class="text-slate-400 text-sm mt-1">
+              {{ site.adresse }}
+            </p>
+            }
+          </div>
+
+          <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
+              {{ site.initial || site.city?.charAt(0) }}
+            </span>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-4 mb-5">
+          <p class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">
+            Horaires
+          </p>
+
+          <div class="flex items-center gap-2 text-slate-700 font-bold">
+            <mat-icon class="text-base">schedule</mat-icon>
+            <span>
                 {{ site.openingTime || site.heureOuverture || '—' }}
                 →
                 {{ site.closingTime || site.heureFermeture || '—' }}
               </span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-3 mb-6">
-            <div class="bg-slate-50 rounded-2xl p-3 text-center">
-              <p class="text-xl font-black text-slate-900">
-                {{ getCourtCount(site) }}
-              </p>
-              <p class="text-[10px] uppercase font-black text-slate-400">
-                Terrains
-              </p>
-            </div>
-
-            <div class="bg-blue-50 rounded-2xl p-3 text-center">
-              <p class="text-xl font-black text-blue-700">
-                {{ getIndoorCount(site) }}
-              </p>
-              <p class="text-[10px] uppercase font-black text-blue-400">
-                Indoor
-              </p>
-            </div>
-
-            <div class="bg-emerald-50 rounded-2xl p-3 text-center">
-              <p class="text-xl font-black text-emerald-700">
-                {{ getOutdoorCount(site) }}
-              </p>
-              <p class="text-[10px] uppercase font-black text-emerald-400">
-                Outdoor
-              </p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-violet-50 rounded-2xl p-3 text-center">
-              <p class="text-xl font-black text-violet-700">
-                {{ getSiteReservationCount(site) }}
-              </p>
-              <p class="text-[10px] uppercase font-black text-violet-400">
-                Réservations
-              </p>
-            </div>
-
-            <div class="bg-orange-50 rounded-2xl p-3 text-center">
-              <p class="text-xl font-black text-orange-700">
-                {{ getSiteRevenue(site) }}€
-              </p>
-              <p class="text-[10px] uppercase font-black text-orange-400">
-                CA estimé
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              class="flex-1 px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
-              disabled
-            >
-              Modifier horaires
-            </button>
-
-            <button
-              class="flex-1 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest"
-              [class]="site.active !== false
-                ? 'bg-red-50 text-red-600'
-                : 'bg-emerald-50 text-emerald-700'"
-              disabled
-            >
-              {{ site.active !== false ? 'Fermer' : 'Réouvrir' }}
-            </button>
           </div>
         </div>
+
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <div class="bg-slate-50 rounded-2xl p-3 text-center">
+            <p class="text-xl font-black text-slate-900">
+              {{ getCourtCount(site) }}
+            </p>
+            <p class="text-[10px] uppercase font-black text-slate-400">
+              Terrains
+            </p>
+          </div>
+
+          <div class="bg-blue-50 rounded-2xl p-3 text-center">
+            <p class="text-xl font-black text-blue-700">
+              {{ getIndoorCount(site) }}
+            </p>
+            <p class="text-[10px] uppercase font-black text-blue-400">
+              Indoor
+            </p>
+          </div>
+
+          <div class="bg-emerald-50 rounded-2xl p-3 text-center">
+            <p class="text-xl font-black text-emerald-700">
+              {{ getOutdoorCount(site) }}
+            </p>
+            <p class="text-[10px] uppercase font-black text-emerald-400">
+              Outdoor
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-6">
+          <div class="bg-violet-50 rounded-2xl p-3 text-center">
+            <p class="text-xl font-black text-violet-700">
+              {{ getSiteReservationCount(site) }}
+            </p>
+            <p class="text-[10px] uppercase font-black text-violet-400">
+              Réservations
+            </p>
+          </div>
+
+          <div class="bg-orange-50 rounded-2xl p-3 text-center">
+            <p class="text-xl font-black text-orange-700">
+              {{ getSiteRevenue(site) }}€
+            </p>
+            <p class="text-[10px] uppercase font-black text-orange-400">
+              CA théorique
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+          <button
+            class="px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
+            disabled
+          >
+            Modifier horaires
+          </button>
+
+          <button
+            class="px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-widest"
+            disabled
+          >
+            Ajouter fermeture
+          </button>
+
+          <button
+            (click)="toggleSiteActive(site)"
+            class="px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+            [class]="site.active !== false
+      ? 'bg-red-50 text-red-600 hover:bg-red-100'
+      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+          >
+            {{ site.active !== false ? 'Désactiver' : 'Réactiver' }}
+          </button>
+        </div>
       </div>
+    </div>
+    }
+
+    @if (filteredSites().length === 0) {
+    <div class="col-span-full bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
+      <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+      <h2 class="text-xl font-black text-slate-900 uppercase">
+        Aucun site trouvé
+      </h2>
+
+      <p class="text-slate-400 mt-2">
+        Modifie tes filtres ou réinitialise la recherche.
+      </p>
+
+      <button
+        (click)="resetFilters()"
+        class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
+      >
+        Réinitialiser
+      </button>
+    </div>
     }
   </div>
 
