@@ -1,8 +1,13 @@
 package be.angularpadelclub.Service;
 
-import be.angularpadelclub.Entity.*;
+import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.HoraireSiteEntity;
+import be.angularpadelclub.Entity.MembreEntity;
+import be.angularpadelclub.Entity.ReservationEntity;
+import be.angularpadelclub.Enum.DetteStatut;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.ReservationStatus;
+import be.angularpadelclub.Repository.DetteMembreRepository;
 import be.angularpadelclub.Repository.PenaliteRepository;
 import be.angularpadelclub.Repository.ReservationRepository;
 import org.springframework.http.HttpStatus;
@@ -18,17 +23,20 @@ public class ReservationValidationService {
 
     private final PenaliteRepository penaliteRepository;
     private final ReservationRepository reservationRepository;
+    private final DetteMembreRepository detteMembreRepository;
     private final JourFermetureService jourFermetureService;
     private final HoraireSiteService horaireSiteService;
 
     public ReservationValidationService(
             PenaliteRepository penaliteRepository,
             ReservationRepository reservationRepository,
+            DetteMembreRepository detteMembreRepository,
             JourFermetureService jourFermetureService,
             HoraireSiteService horaireSiteService
     ) {
         this.penaliteRepository = penaliteRepository;
         this.reservationRepository = reservationRepository;
+        this.detteMembreRepository = detteMembreRepository;
         this.jourFermetureService = jourFermetureService;
         this.horaireSiteService = horaireSiteService;
     }
@@ -67,7 +75,7 @@ public class ReservationValidationService {
         if (!participants.isEmpty() && nombreJoueurs != 4) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Un match privé doit avoir exactement 4 joueurs."
+                    "Un match prive doit avoir exactement 4 joueurs."
             );
         }
     }
@@ -76,7 +84,7 @@ public class ReservationValidationService {
         if (!member.isActif()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Réservation impossible : membre inactif."
+                    "Reservation impossible : membre inactif."
             );
         }
 
@@ -87,7 +95,19 @@ public class ReservationValidationService {
         if (hasBlockingPenalty) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Réservation impossible : le membre a une pénalité active."
+                    "Reservation impossible : le membre a une penalite active."
+            );
+        }
+
+        boolean hasOpenDebt = detteMembreRepository.existsByMembre_IdAndStatut(
+                member.getId(),
+                DetteStatut.OUVERTE
+        );
+
+        if (hasOpenDebt) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Reservation impossible : le membre a un solde du."
             );
         }
     }
@@ -102,7 +122,7 @@ public class ReservationValidationService {
         if (date.isBefore(today)) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Réservation impossible : la date est dans le passé."
+                    "Reservation impossible : la date est dans le passe."
             );
         }
 
@@ -112,7 +132,7 @@ public class ReservationValidationService {
             if (date.isAfter(today.plusWeeks(3))) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
-                        "Un membre global ne peut réserver que 3 semaines à l'avance."
+                        "Un membre global ne peut reserver que 3 semaines a l'avance."
                 );
             }
             return;
@@ -123,14 +143,14 @@ public class ReservationValidationService {
                     !member.getSite().getId().equals(court.getSite().getId())) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
-                        "Un membre de site ne peut réserver que sur son propre site."
+                        "Un membre de site ne peut reserver que sur son propre site."
                 );
             }
 
             if (date.isAfter(today.plusWeeks(2))) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
-                        "Un membre de site ne peut réserver que 2 semaines à l'avance."
+                        "Un membre de site ne peut reserver que 2 semaines a l'avance."
                 );
             }
             return;
@@ -140,7 +160,7 @@ public class ReservationValidationService {
             if (date.isAfter(today.plusDays(5))) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
-                        "Un membre libre ne peut réserver que 5 jours à l'avance."
+                        "Un membre libre ne peut reserver que 5 jours a l'avance."
                 );
             }
             return;
@@ -159,7 +179,7 @@ public class ReservationValidationService {
         if (fermetureSite || fermetureGlobale) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Réservation impossible : le site est fermé à cette date."
+                    "Reservation impossible : le site est ferme a cette date."
             );
         }
     }
@@ -173,7 +193,7 @@ public class ReservationValidationService {
         if (startTime.isBefore(horaire.getHeure_debut()) || endTime.isAfter(horaire.getHeure_fin())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Réservation impossible : en dehors des heures d'ouverture."
+                    "Reservation impossible : en dehors des heures d'ouverture."
             );
         }
     }
@@ -209,7 +229,7 @@ public class ReservationValidationService {
             if (overlap) {
                 throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "Réservation impossible : ce terrain est déjà réservé sur ce créneau."
+                        "Reservation impossible : ce terrain est deja reserve sur ce creneau."
                 );
             }
         }
