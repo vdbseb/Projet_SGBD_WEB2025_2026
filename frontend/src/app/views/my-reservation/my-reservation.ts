@@ -260,6 +260,12 @@ export class MyReservations implements OnInit {
   }
 
   payReservation(reservation: any) {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return;
+    }
+
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Paiement',
@@ -268,6 +274,19 @@ export class MyReservations implements OnInit {
         cancelLabel: 'Retour'
       }
     });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.snackBar.open(`Paiement confirmé pour la réservation ${reservation.id} !`, 'OK', {
+        duration: 3000
+      });
+
+      this.loadWallet(member.id);
+    });
+  }
 
     dialogRef.afterClosed().subscribe(confirmed => {
       if (!confirmed) {
