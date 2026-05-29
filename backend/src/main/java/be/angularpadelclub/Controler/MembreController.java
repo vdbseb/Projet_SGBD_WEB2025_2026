@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/api/members")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -29,19 +28,22 @@ public class MembreController {
         return membreMapper.toDTOList(membreService.findAll());
     }
 
-    @GetMapping("/search")
+    @GetMapping(value = "/search", produces = "application/json")
     public List<MembreDTO> findByNomAndPrenom(
-            @RequestParam String nom,
-            @RequestParam String prenom
+            @RequestParam("nom") String nom,
+            @RequestParam("prenom") String prenom
     ) {
         return membreService
                 .findByNomAndPrenom(nom, prenom)
-                .stream().map(membreMapper::toDTO)
+                .stream()
+                .map(membreMapper::toDTO)
                 .toList();
     }
 
     @GetMapping(value = "/{matricule}", produces = "application/json")
-    public MembreDTO findById(@PathVariable String matricule) {
+    public MembreDTO findById(
+            @PathVariable("matricule") String matricule
+    ) {
         return membreService.findByMatricule(matricule)
                 .map(membreMapper::toDTO)
                 .orElseThrow(() -> new RuntimeException("Member not found"));
@@ -53,7 +55,7 @@ public class MembreController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMember(@PathVariable int id) {
+    public void deleteMember(@PathVariable("id") int id) {
         membreService.deleteMember(id);
     }
 }

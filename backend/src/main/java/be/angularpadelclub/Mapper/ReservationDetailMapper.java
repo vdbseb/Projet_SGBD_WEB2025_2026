@@ -3,7 +3,9 @@ package be.angularpadelclub.Mapper;
 import be.angularpadelclub.DTO.MembreDTO;
 import be.angularpadelclub.DTO.ReservationDetailDTO;
 import be.angularpadelclub.Entity.MatchEntity;
+import be.angularpadelclub.Entity.PaiementEntity;
 import be.angularpadelclub.Entity.ParticipationEntity;
+import be.angularpadelclub.Repository.PaiementRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,9 +14,14 @@ import java.util.List;
 public class ReservationDetailMapper {
 
     private final MembreMapper membreMapper;
+    private final PaiementRepository paiementRepository;
 
-    public ReservationDetailMapper(MembreMapper membreMapper) {
+    public ReservationDetailMapper(
+            MembreMapper membreMapper,
+            PaiementRepository paiementRepository
+    ) {
         this.membreMapper = membreMapper;
+        this.paiementRepository = paiementRepository;
     }
 
     public ReservationDetailDTO toDetailsDTO(
@@ -30,9 +37,7 @@ public class ReservationDetailMapper {
                 .filter(participation -> participation.getMembre()
                         .getMatricule()
                         .equals(currentMatricule))
-                .map(participation -> participation.getPaiement() != null
-                        ? participation.getPaiement().getStatut().name()
-                        : "NON_PAYE")
+                .map(this::paymentStatusForParticipation)
                 .findFirst()
                 .orElse("NOT_PARTICIPATING");
 
@@ -54,5 +59,17 @@ public class ReservationDetailMapper {
                 members,
                 myPaymentStatus
         );
+    }
+
+    private String paymentStatusForParticipation(
+            ParticipationEntity participation
+    ) {
+        return paiementRepository
+                .findFirstByParticipation_IdOrderByDateCreationDesc(
+                        participation.getId()
+                )
+                .map(PaiementEntity::getStatut)
+                .map(Enum::name)
+                .orElse("NON_PAYE");
     }
 }

@@ -25,25 +25,25 @@ public class AdministrateurController {
                 administrateurMapper;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<AdministrateurDTO> findAll() {
         return administrateurMapper.toDTOList(
                 administrateurService.findAll()
         );
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = "application/json")
     public AdministrateurDTO findById(
-            @PathVariable Integer id
+            @PathVariable("id") Integer id
     ) {
         return administrateurMapper.toDTO(
                 administrateurService.findById(id)
         );
     }
 
-    @GetMapping("/matricule/{matricule}")
+    @GetMapping(value = "/matricule/{matricule}", produces = "application/json")
     public AdministrateurDTO findByMatricule(
-            @PathVariable String matricule
+            @PathVariable("matricule") String matricule
     ) {
         return administrateurMapper.toDTO(
                 administrateurService
@@ -51,9 +51,9 @@ public class AdministrateurController {
         );
     }
 
-    @GetMapping("/type/{typeAdmin}")
+    @GetMapping(value = "/type/{typeAdmin}", produces = "application/json")
     public List<AdministrateurDTO> findByTypeAdmin(
-            @PathVariable String typeAdmin
+            @PathVariable("typeAdmin") String typeAdmin
     ) {
         return administrateurMapper.toDTOList(
                 administrateurService
@@ -61,9 +61,9 @@ public class AdministrateurController {
         );
     }
 
-    @GetMapping("/site/{siteId}")
+    @GetMapping(value = "/site/{siteId}", produces = "application/json")
     public List<AdministrateurDTO> findBySiteId(
-            @PathVariable Integer siteId
+            @PathVariable("siteId") Integer siteId
     ) {
         return administrateurMapper.toDTOList(
                 administrateurService

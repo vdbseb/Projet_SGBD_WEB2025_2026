@@ -1,9 +1,7 @@
 package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.MatchDTO;
-
 import be.angularpadelclub.Mapper.MatchMapper;
-
 import be.angularpadelclub.Service.MatchService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +24,7 @@ public class MatchController {
         this.matchMapper = matchMapper;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<MatchDTO> getAllMatches() {
         return matchService.findAll()
                 .stream()
@@ -34,17 +32,13 @@ public class MatchController {
                 .toList();
     }
 
-//    @PostMapping
-//    public MatchDTO createMatch(@RequestBody MatchDTO dto) {
-//        return matchMapper.toDTO(
-//                matchService.createMatch(dto)
-//        );
-//    }
-
-    @PatchMapping("/{matchId}/annuler")
+    @PatchMapping(
+            value = "/{matchId}/annuler",
+            produces = "application/json"
+    )
     public MatchDTO annulerMatch(
-            @PathVariable Integer matchId,
-            @RequestParam String matricule
+            @PathVariable("matchId") Integer matchId,
+            @RequestParam("matricule") String matricule
     ) {
         return matchMapper.toDTO(
                 matchService.annulerMatch(matchId, matricule)
@@ -53,8 +47,8 @@ public class MatchController {
 
     @PostMapping("/{matchId}/join/{memberId}")
     public ResponseEntity<Void> joinMatch(
-            @PathVariable Integer matchId,
-            @PathVariable Integer memberId
+            @PathVariable("matchId") Integer matchId,
+            @PathVariable("memberId") Integer memberId
     ) {
         matchService.joinPublicMatch(
                 matchId,
@@ -66,8 +60,8 @@ public class MatchController {
 
     @DeleteMapping("/{matchId}/leave/{memberId}")
     public ResponseEntity<Void> leaveMatch(
-            @PathVariable Integer matchId,
-            @PathVariable Integer memberId
+            @PathVariable("matchId") Integer matchId,
+            @PathVariable("memberId") Integer memberId
     ) {
         matchService.leaveMatch(
                 matchId,

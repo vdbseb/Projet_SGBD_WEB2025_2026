@@ -13,35 +13,53 @@ public class SiteController {
 
     private final SiteService siteService;
 
-    public SiteController(SiteService siteService) {
+    public SiteController(
+            SiteService siteService
+    ) {
         this.siteService = siteService;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<SiteDTO> getAllSites() {
         return siteService.getAllSites();
     }
 
-    @GetMapping("/{id}")
-    public SiteDTO getSiteById(@PathVariable int id) {
+    @GetMapping(
+            value = "/{id}",
+            produces = "application/json"
+    )
+    public SiteDTO getSiteById(
+            @PathVariable("id") int id
+    ) {
         return siteService.getSiteById(id);
     }
 
-    @PostMapping
-    public SiteDTO createSite(@RequestBody SiteDTO dto) {
+    @PostMapping(
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public SiteDTO createSite(
+            @RequestBody SiteDTO dto
+    ) {
         return siteService.createSite(dto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(
+            value = "/{id}",
+            consumes = "application/json",
+            produces = "application/json"
+    )
     public SiteDTO updateSite(
-            @PathVariable int id,
+            @PathVariable("id") int id,
             @RequestBody SiteDTO dto
     ) {
         return siteService.updateSite(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteSite(@PathVariable int id) {
+    public void deleteSite(
+            @PathVariable("id") int id
+    ) {
         siteService.deleteSite(id);
     }
 }

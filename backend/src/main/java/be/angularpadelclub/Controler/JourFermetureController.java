@@ -23,41 +23,68 @@ public class JourFermetureController {
         this.jourFermetureMapper = jourFermetureMapper;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<JourFermetureDTO> findAll() {
-        return jourFermetureMapper.toDTOList(jourFermetureService.findAll());
+        return jourFermetureMapper.toDTOList(
+                jourFermetureService.findAll()
+        );
     }
 
-    @GetMapping("/{id}")
-    public JourFermetureDTO findById(@PathVariable Integer id) {
-        return jourFermetureMapper.toDTO(jourFermetureService.findById(id));
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public JourFermetureDTO findById(
+            @PathVariable("id") Integer id
+    ) {
+        return jourFermetureMapper.toDTO(
+                jourFermetureService.findById(id)
+        );
     }
 
-    @GetMapping("/site/{siteId}")
-    public List<JourFermetureDTO> findBySiteId(@PathVariable Integer siteId) {
-        return jourFermetureMapper.toDTOList(jourFermetureService.findBySiteId(siteId));
+    @GetMapping(value = "/site/{siteId}", produces = "application/json")
+    public List<JourFermetureDTO> findBySiteId(
+            @PathVariable("siteId") Integer siteId
+    ) {
+        return jourFermetureMapper.toDTOList(
+                jourFermetureService.findBySiteId(siteId)
+        );
     }
 
-    @GetMapping("/globales")
+    @GetMapping(value = "/globales", produces = "application/json")
     public List<JourFermetureDTO> findGlobalClosures() {
-        return jourFermetureMapper.toDTOList(jourFermetureService.findGlobalClosures());
+        return jourFermetureMapper.toDTOList(
+                jourFermetureService.findGlobalClosures()
+        );
     }
 
-    @PostMapping
-    public JourFermetureDTO create(@RequestBody JourFermetureDTO dto) {
-        return jourFermetureMapper.toDTO(jourFermetureService.create(dto));
-    }
-
-    @PutMapping("/{id}")
-    public JourFermetureDTO update(
-            @PathVariable Integer id,
+    @PostMapping(
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public JourFermetureDTO create(
             @RequestBody JourFermetureDTO dto
     ) {
-        return jourFermetureMapper.toDTO(jourFermetureService.update(id, dto));
+        return jourFermetureMapper.toDTO(
+                jourFermetureService.create(dto)
+        );
+    }
+
+    @PutMapping(
+            value = "/{id}",
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public JourFermetureDTO update(
+            @PathVariable("id") Integer id,
+            @RequestBody JourFermetureDTO dto
+    ) {
+        return jourFermetureMapper.toDTO(
+                jourFermetureService.update(id, dto)
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
+    public void delete(
+            @PathVariable("id") Integer id
+    ) {
         jourFermetureService.delete(id);
     }
 }
