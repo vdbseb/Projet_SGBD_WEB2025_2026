@@ -169,6 +169,11 @@ export class PadelService {
       `${this.apiBaseUrl}/jours-fermeture/globales`
     );
   }
+  getMemberWallet(memberId: number) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/paiements/member/${memberId}/wallet`
+    );
+  }
 
 }
 

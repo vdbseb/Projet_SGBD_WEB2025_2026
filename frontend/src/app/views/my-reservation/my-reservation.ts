@@ -23,26 +23,45 @@ export class MyReservations implements OnInit {
   sites = signal<any[]>([]);
   selectedFilter = signal<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
   courts = signal<any[]>([]);
+  wallet = signal<any | null>(null);
+
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
-  paidReservationIds = signal<number[]>([]);
 
   ngOnInit() {
     const member = this.authService.currentMember();
 
     if (!member) {
       this.reservations.set([]);
+      this.wallet.set(null);
       return;
     }
 
+    this.loadWallet(member.id);
+    this.loadReservations(member);
+    this.loadSites();
+    this.loadCourts();
+  }
+
+  private loadWallet(memberId: number) {
+    this.padelService.getMemberWallet(memberId).subscribe(wallet => {
+      this.wallet.set(wallet);
+    });
+  }
+
+  private loadSites() {
     this.padelService.getSites().subscribe(sites => {
       this.sites.set(sites);
     });
+  }
 
+  private loadCourts() {
     this.padelService.getCourts().subscribe(courts => {
       this.courts.set(courts);
     });
+  }
 
+  private loadReservations(member: any) {
     this.padelService.getAllReservations().subscribe(reservations => {
       const filteredReservations = reservations
         .filter(reservation =>
@@ -121,12 +140,12 @@ export class MyReservations implements OnInit {
 
     if (filter === 'upcoming') {
       return this.reservations().filter(reservation =>
-        reservation.reservationStatus !== 'ANNULEE'
-        && reservation.matchStatus !== 'ANNULE'
-        && (
-          this.getReservationStatus(reservation) === 'today'
-          || this.getReservationStatus(reservation) === 'upcoming'
-        )
+          reservation.reservationStatus !== 'ANNULEE'
+          && reservation.matchStatus !== 'ANNULE'
+          && (
+            this.getReservationStatus(reservation) === 'today'
+            || this.getReservationStatus(reservation) === 'upcoming'
+          )
       );
     }
 
@@ -150,12 +169,12 @@ export class MyReservations implements OnInit {
 
   countUpcomingReservations(): number {
     return this.reservations().filter(reservation =>
-      reservation.reservationStatus !== 'ANNULEE'
-      && reservation.matchStatus !== 'ANNULE'
-      && (
-        this.getReservationStatus(reservation) === 'today'
-        || this.getReservationStatus(reservation) === 'upcoming'
-      )
+        reservation.reservationStatus !== 'ANNULEE'
+        && reservation.matchStatus !== 'ANNULE'
+        && (
+          this.getReservationStatus(reservation) === 'today'
+          || this.getReservationStatus(reservation) === 'upcoming'
+        )
     ).length;
   }
 
@@ -207,6 +226,8 @@ export class MyReservations implements OnInit {
         return;
       }
 
+      const member = this.authService.currentMember();
+
       this.padelService.deleteReservation(reservationId).subscribe({
         next: () => {
           this.reservations.update(reservations =>
@@ -220,19 +241,25 @@ export class MyReservations implements OnInit {
                 : reservation
             )
           );
+
+          if (member) {
+            this.loadWallet(member.id);
+          }
         },
         error: () => {
-          alert('Impossible d’annuler la réservation.');
+          this.snackBar.open('Impossible d’annuler la réservation.', 'OK', {
+            duration: 4000
+          });
         }
       });
     });
   }
 
-  isPaid(reservationId: number): boolean {
-    return this.paidReservationIds().includes(reservationId);
+  isPaid(reservation: any): boolean {
+    return reservation.paiementStatut === 'VALIDE';
   }
 
-  payReservation(reservationId: number) {
+  payReservation(reservation: any) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Paiement',
@@ -247,17 +274,31 @@ export class MyReservations implements OnInit {
         return;
       }
 
-      this.paidReservationIds.update(ids => [...ids, reservationId]);
-
       this.snackBar.open('Paiement confirmé !', 'OK', {
         duration: 3000
       });
+
+      const member = this.authService.currentMember();
+
+      if (member) {
+        this.loadWallet(member.id);
+      }
     });
   }
 
   getPlayerBalance(): number {
-    return this.reservations()
-      .filter(reservation => reservation.reservationStatus === 'ANNULEE')
-      .length * 15;
+    return (this.wallet()?.balanceCentimes ?? 0) / 100;
+  }
+
+  getPlayerCredit(): number {
+    return (this.wallet()?.creditCentimes ?? 0) / 100;
+  }
+
+  getAmountDue(): number {
+    return (this.wallet()?.amountDueCentimes ?? 0) / 100;
+  }
+
+  getAmountRefunded(): number {
+    return (this.wallet()?.amountRefundedCentimes ?? 0) / 100;
   }
 }

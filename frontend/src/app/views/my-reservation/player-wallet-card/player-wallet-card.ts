@@ -11,4 +11,10 @@ export class PlayerWalletCard {
 
   balance = input<number>(0);
 
+  credit = input<number>(0);
+
+  amountDue = input<number>(0);
+
+  amountRefunded = input<number>(0);
+
 }
