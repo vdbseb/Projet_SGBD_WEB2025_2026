@@ -4,8 +4,10 @@ import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 
 import { PadelService } from '../../../services/padel.service';
+import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-admin-paiements',
@@ -17,6 +19,7 @@ export class AdminPaiements implements OnInit {
 
   private padelService = inject(PadelService);
   private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
 
   payments = signal<any[]>([]);
   members = signal<any[]>([]);
@@ -216,65 +219,110 @@ export class AdminPaiements implements OnInit {
   }
 
   confirmPayment(payment: any) {
-    this.padelService.confirmPayment(payment.id).subscribe({
-      next: () => {
-        this.loadPayments();
-
-        this.snackBar.open(
-          'Paiement confirmé.',
-          'OK',
-          { duration: 3000 }
-        );
-      },
-      error: () => {
-        this.snackBar.open(
-          'Impossible de confirmer le paiement.',
-          'OK',
-          { duration: 4000 }
-        );
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmer le paiement',
+        message: `Confirmer le paiement de ${this.getAmount(payment)}€ pour ${this.getMemberName(payment)} ?`,
+        confirmLabel: 'Confirmer',
+        cancelLabel: 'Annuler'
       }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.padelService.confirmPayment(payment.id).subscribe({
+        next: () => {
+          this.loadPayments();
+
+          this.snackBar.open(
+            'Paiement confirmé.',
+            'OK',
+            { duration: 3000 }
+          );
+        },
+        error: () => {
+          this.snackBar.open(
+            'Impossible de confirmer le paiement.',
+            'OK',
+            { duration: 4000 }
+          );
+        }
+      });
     });
   }
 
   refusePayment(payment: any) {
-    this.padelService.refusePayment(payment.id).subscribe({
-      next: () => {
-        this.loadPayments();
-
-        this.snackBar.open(
-          'Paiement refusé.',
-          'OK',
-          { duration: 3000 }
-        );
-      },
-      error: () => {
-        this.snackBar.open(
-          'Impossible de refuser le paiement.',
-          'OK',
-          { duration: 4000 }
-        );
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Refuser le paiement',
+        message: `Refuser le paiement de ${this.getAmount(payment)}€ pour ${this.getMemberName(payment)} ?`,
+        confirmLabel: 'Refuser',
+        cancelLabel: 'Annuler'
       }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.padelService.refusePayment(payment.id).subscribe({
+        next: () => {
+          this.loadPayments();
+
+          this.snackBar.open(
+            'Paiement refusé.',
+            'OK',
+            { duration: 3000 }
+          );
+        },
+        error: () => {
+          this.snackBar.open(
+            'Impossible de refuser le paiement.',
+            'OK',
+            { duration: 4000 }
+          );
+        }
+      });
     });
   }
 
   refundPayment(payment: any) {
-    this.padelService.refundPayment(payment.id).subscribe({
-      next: () => {
-        this.loadPayments();
-
-        this.snackBar.open(
-          'Remboursement effectué.',
-          'OK',
-          { duration: 3000 }
-        );
-      },
-      error: () => {
-        this.snackBar.open(
-          'Impossible d’effectuer le remboursement.',
-          'OK',
-          { duration: 4000 }
-        );
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Rembourser le paiement',
+        message: `Rembourser le paiement de ${this.getAmount(payment)}€ pour ${this.getMemberName(payment)} ?`,
+        confirmLabel: 'Rembourser',
+        cancelLabel: 'Annuler'
       }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.padelService.refundPayment(payment.id).subscribe({
+        next: () => {
+          this.loadPayments();
+
+          this.snackBar.open(
+            'Remboursement effectué.',
+            'OK',
+            { duration: 3000 }
+          );
+        },
+        error: () => {
+          this.snackBar.open(
+            'Impossible d’effectuer le remboursement.',
+            'OK',
+            { duration: 4000 }
+          );
+        }
+      });
     });
   }
 }
