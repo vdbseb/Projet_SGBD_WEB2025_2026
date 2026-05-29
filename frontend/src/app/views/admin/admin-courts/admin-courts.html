@@ -19,85 +19,170 @@
   </header>
 
   <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
+
+    <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+      Recherche
+    </label>
+
     <input
       type="text"
       placeholder="Rechercher terrain, type ou site..."
-      class="w-full border border-slate-200 rounded-2xl px-5 py-4"
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
       [value]="search()"
       (input)="search.set($any($event.target).value)"
     />
+
+    <div class="mt-5 flex flex-wrap gap-3">
+
+      <select
+        class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+        [ngModel]="selectedSiteId()"
+        (ngModelChange)="selectedSiteId.set($event === 'ALL' ? 'ALL' : +$event)"
+      >
+        <option value="ALL">Tous les sites</option>
+
+        @for (site of sites(); track site.id) {
+        <option [value]="site.id">
+          {{ site.clubName }}
+        </option>
+        }
+      </select>
+
+      <select
+        class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+        [ngModel]="selectedType()"
+        (ngModelChange)="selectedType.set($event)"
+      >
+        <option value="ALL">Tous les types</option>
+        <option value="INDOOR">Indoor</option>
+        <option value="OUTDOOR">Outdoor</option>
+      </select>
+
+      <select
+        class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+      >
+        <option value="ALL">Tous les statuts</option>
+        <option value="ACTIVE">Actifs</option>
+        <option value="INACTIVE">Inactifs</option>
+        <option value="MAINTENANCE">Maintenance</option>
+      </select>
+
+      <button
+        (click)="resetFilters()"
+        class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+      >
+        Réinitialiser
+      </button>
+
+    </div>
+
+    <p class="mt-4 text-sm text-slate-400">
+      {{ filteredCourts().length }} terrain(s) affiché(s)
+    </p>
+
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (court of filteredCourts(); track court.id) {
-      <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
+    <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
 
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h2 class="font-black text-xl text-slate-900">
-              {{ court.name }}
-            </h2>
-
-            <p class="text-slate-400 text-sm mt-1">
-              {{ getSiteName(court) }}
-            </p>
-          </div>
-
-          <span
-            class="px-3 py-1 rounded-full text-xs font-black uppercase"
-            [class]="getCourtTypeClass(court)"
-          >
-            {{ court.type }}
-          </span>
-        </div>
-
-        <div class="flex items-center gap-2 text-slate-500 text-sm mb-6">
-          <mat-icon class="text-base">sports_tennis</mat-icon>
-          <span>Terrain de padel</span>
-        </div>
-
+      <div class="flex justify-between items-start mb-4">
         <div>
-          <div class="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
-            <span>Taux d’occupation</span>
-            <span>{{ getOccupationRate(court) }}%</span>
-          </div>
+          <h2 class="font-black text-xl text-slate-900">
+            {{ court.name }}
+          </h2>
 
-          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              class="h-full rounded-full"
-              [class]="getOccupationClass(court)"
-              [style.width.%]="getOccupationRate(court)">
-            </div>
-          </div>
-
-          <p class="text-slate-400 text-xs mt-3">
-            {{ getCourtReservationCount(court) }} réservation(s) enregistrée(s)
+          <p class="text-slate-400 text-sm mt-1">
+            {{ getSiteName(court) }}
           </p>
         </div>
 
-        <div class="mt-6">
-          @if (isInMaintenance(court)) {
-            <div class="mb-4">
+        <span
+          class="px-3 py-1 rounded-full text-xs font-black uppercase"
+          [class]="getCourtTypeClass(court)"
+        >
+            {{ getCourtType(court) }}
+          </span>
+      </div>
+
+      <div class="flex items-center gap-2 text-slate-500 text-sm mb-6">
+        <mat-icon class="text-base">sports_tennis</mat-icon>
+        <span>Terrain de padel</span>
+      </div>
+
+      <div>
+        <div class="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
+          <span>Taux d’occupation</span>
+          <span>{{ getOccupationRate(court) }}%</span>
+        </div>
+
+        <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            class="h-full rounded-full"
+            [class]="getOccupationClass(court)"
+            [style.width.%]="getOccupationRate(court)">
+          </div>
+        </div>
+
+        <p class="text-slate-400 text-xs mt-3">
+          {{ getCourtReservationCount(court) }} réservation(s) enregistrée(s)
+        </p>
+      </div>
+
+      <div class="mt-6">
+        @if (isInMaintenance(court)) {
+        <div class="mb-4">
               <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase">
                 Maintenance
               </span>
-            </div>
-          }
+        </div>
+        }
 
-          <button
-            (click)="toggleMaintenance(court)"
-            class="w-full py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
-            [class]="isInMaintenance(court)
+        @if (!court.active) {
+        <div class="mb-4">
+              <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
+                Inactif
+              </span>
+        </div>
+        }
+
+        <button
+          (click)="toggleMaintenance(court)"
+          class="w-full py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+          [class]="isInMaintenance(court)
               ? 'bg-emerald-600 text-white hover:bg-emerald-700'
               : 'bg-red-600 text-white hover:bg-red-700'"
-          >
-            {{ isInMaintenance(court)
-            ? 'Remettre en service'
-            : 'Mettre en maintenance' }}
-          </button>
-        </div>
-
+        >
+          {{ isInMaintenance(court)
+          ? 'Remettre en service'
+          : 'Mettre en maintenance' }}
+        </button>
       </div>
+
+    </div>
+    }
+
+    @if (filteredCourts().length === 0) {
+    <div class="col-span-full bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
+      <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+      <h2 class="text-xl font-black text-slate-900 uppercase">
+        Aucun terrain trouvé
+      </h2>
+
+      <p class="text-slate-400 mt-2">
+        Modifie tes filtres ou réinitialise la recherche.
+      </p>
+
+      <button
+        (click)="resetFilters()"
+        class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
+      >
+        Réinitialiser
+      </button>
+    </div>
     }
   </div>
 

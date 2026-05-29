@@ -21,145 +21,292 @@
   <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
     <input
       type="text"
-      placeholder="Rechercher court ou matricule..."
-      class="w-full border border-slate-200 rounded-2xl px-5 py-4 mb-6"
+      placeholder="Rechercher court, site, organisateur ou matricule..."
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4 mb-6 outline-none focus:border-slate-900"
       [value]="search()"
       (input)="search.set($any($event.target).value)"
     />
 
-    <div class="flex gap-3 flex-wrap">
-      <button
-        (click)="selectedFilter.set('all')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'all'
-          ? 'bg-slate-900 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Toutes
-      </button>
+    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
 
-      <button
-        (click)="selectedFilter.set('today')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'today'
-          ? 'bg-orange-500 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Aujourd’hui
-      </button>
+      <div class="flex gap-3 flex-wrap">
+        <button
+          (click)="selectedFilter.set('all')"
+          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+          [class]="selectedFilter() === 'all'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Toutes
+        </button>
 
-      <button
-        (click)="selectedFilter.set('upcoming')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'upcoming'
-          ? 'bg-blue-500 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        À venir
-      </button>
+        <button
+          (click)="selectedFilter.set('today')"
+          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+          [class]="selectedFilter() === 'today'
+            ? 'bg-orange-500 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Aujourd’hui
+        </button>
 
-      <button
-        (click)="selectedFilter.set('past')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'past'
-          ? 'bg-slate-500 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Passées
-      </button>
+        <button
+          (click)="selectedFilter.set('upcoming')"
+          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+          [class]="selectedFilter() === 'upcoming'
+            ? 'bg-blue-500 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          À venir
+        </button>
+
+        <button
+          (click)="selectedFilter.set('past')"
+          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+          [class]="selectedFilter() === 'past'
+            ? 'bg-slate-500 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Passées
+        </button>
+      </div>
+
+      <div class="flex gap-3 flex-wrap">
+        <button
+          (click)="showCardsView()"
+          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+          [class]="viewMode() === 'cards'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Vue cartes
+        </button>
+
+        <button
+          (click)="showTableView()"
+          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
+          [class]="viewMode() === 'table'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Vue tableau
+        </button>
+      </div>
+
     </div>
+
+    <p class="mt-4 text-sm text-slate-400">
+      {{ filteredReservations().length }} réservation(s) affichée(s)
+    </p>
   </div>
 
+  @if (viewMode() === 'cards') {
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (reservation of filteredReservations(); track reservation.id) {
-      <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
+    <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
 
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h2 class="font-black text-slate-900">
-              {{ getCourtName(reservation) }}
-            </h2>
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h2 class="font-black text-slate-900">
+            {{ getCourtName(reservation) }}
+          </h2>
 
-            <p class="text-slate-400 text-sm mt-1">
-              {{ getSiteName(reservation) }}
-            </p>
-          </div>
+          <p class="text-slate-400 text-sm mt-1">
+            {{ getSiteName(reservation) }}
+          </p>
+        </div>
+
+        <span
+          class="px-3 py-1 rounded-full text-xs font-black uppercase"
+          [class]="getStatusClass(reservation)"
+        >
+              {{ getStatusLabel(reservation) }}
+            </span>
+      </div>
+
+      <div class="space-y-3 text-sm text-slate-500">
+
+        <div class="flex gap-2 flex-wrap">
+
+              <span
+                class="px-3 py-1 rounded-full text-xs font-black uppercase"
+                [class]="getMatchTypeClass(reservation)"
+              >
+                {{ getMatchTypeLabel(reservation) }}
+              </span>
 
           <span
             class="px-3 py-1 rounded-full text-xs font-black uppercase"
-            [class]="getStatusClass(reservation)"
+            [class]="getMatchStatusClass(reservation)"
           >
-            {{ getStatusLabel(reservation) }}
-          </span>
-        </div>
+                {{ getMatchStatusLabel(reservation) }}
+              </span>
 
-        <div class="space-y-3 text-sm text-slate-500">
-
-          <div class="flex gap-2 flex-wrap">
-
-            <span
-              class="px-3 py-1 rounded-full text-xs font-black uppercase"
-              [class]="getMatchTypeClass(reservation)"
-            >
-              {{ getMatchTypeLabel(reservation) }}
-            </span>
-
-            <span
-              class="px-3 py-1 rounded-full text-xs font-black uppercase"
-              [class]="getMatchStatusClass(reservation)"
-            >
-              {{ getMatchStatusLabel(reservation) }}
-            </span>
-
-            <span
-              class="px-3 py-1 rounded-full text-xs font-black uppercase"
-              [class]="reservation.reservationStatus === 'CONFIRMEE'
-                ? 'bg-emerald-100 text-emerald-700'
-                : reservation.reservationStatus === 'ANNULEE'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-orange-100 text-orange-700'"
-            >
-              {{ reservation.reservationStatus }}
-            </span>
-
-            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
-              {{ getMatchCapacityLabel(reservation) }}
-            </span>
-
-          </div>
-
-          <p>
-            <strong>Organisateur :</strong>
-            {{ getOrganizerLabel(reservation) }}
-          </p>
-
-          <p>
-            <strong>Date :</strong>
-            {{ reservation.date | date:'dd/MM/yyyy' }}
-          </p>
-
-          <p>
-            <strong>Heure :</strong>
-            {{ reservation.startTime }} - {{ reservation.endTime }}
-          </p>
-
-          <p>
-            <strong>Participants :</strong>
-            {{ getParticipantsLabel(reservation) }}
-          </p>
-        </div>
-
-        <div class="mt-5">
-          <button
-            (click)="deleteReservation(reservation.id)"
-            class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="reservation.reservationStatus === 'CONFIRMEE'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : reservation.reservationStatus === 'ANNULEE'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-orange-100 text-orange-700'"
           >
-            Supprimer
-          </button>
+                {{ reservation.reservationStatus }}
+              </span>
+
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
+                {{ getMatchCapacityLabel(reservation) }}
+              </span>
+
         </div>
 
+        <p>
+          <strong>Organisateur :</strong>
+          {{ getOrganizerLabel(reservation) }}
+        </p>
+
+        <p>
+          <strong>Date :</strong>
+          {{ reservation.date | date:'dd/MM/yyyy' }}
+        </p>
+
+        <p>
+          <strong>Heure :</strong>
+          {{ reservation.startTime }} - {{ reservation.endTime }}
+        </p>
+
+        <p>
+          <strong>Participants :</strong>
+          {{ getParticipantsLabel(reservation) }}
+        </p>
       </div>
+
+      <div class="mt-5">
+        <button
+          (click)="deleteReservation(reservation.id)"
+          class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+        >
+          Supprimer
+        </button>
+      </div>
+
+    </div>
     }
   </div>
+  }
+
+  @if (viewMode() === 'table') {
+  <div class="bg-white border border-slate-100 rounded-4xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-400">
+        <tr class="text-left text-[10px] uppercase tracking-widest font-black">
+          <th class="px-5 py-4">Date</th>
+          <th class="px-5 py-4">Heure</th>
+          <th class="px-5 py-4">Terrain</th>
+          <th class="px-5 py-4">Site</th>
+          <th class="px-5 py-4">Organisateur</th>
+          <th class="px-5 py-4">Type</th>
+          <th class="px-5 py-4">Statuts</th>
+          <th class="px-5 py-4">Joueurs</th>
+          <th class="px-5 py-4 text-right">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @for (reservation of filteredReservations(); track reservation.id) {
+        <tr class="border-t border-slate-100 hover:bg-slate-50">
+          <td class="px-5 py-4 font-bold text-slate-800 whitespace-nowrap">
+            {{ reservation.date | date:'dd/MM/yyyy' }}
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ reservation.startTime }} - {{ reservation.endTime }}
+          </td>
+
+          <td class="px-5 py-4 font-black text-slate-900 whitespace-nowrap">
+            {{ getCourtName(reservation) }}
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ getSiteName(reservation) }}
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 min-w-64">
+            {{ getOrganizerLabel(reservation) }}
+          </td>
+
+          <td class="px-5 py-4 whitespace-nowrap">
+                  <span
+                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                    [class]="getMatchTypeClass(reservation)"
+                  >
+                    {{ getMatchTypeLabel(reservation) }}
+                  </span>
+          </td>
+
+          <td class="px-5 py-4">
+            <div class="flex flex-wrap gap-2 min-w-56">
+                    <span
+                      class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                      [class]="getStatusClass(reservation)"
+                    >
+                      {{ getStatusLabel(reservation) }}
+                    </span>
+
+              <span
+                class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                [class]="getMatchStatusClass(reservation)"
+              >
+                      {{ getMatchStatusLabel(reservation) }}
+                    </span>
+
+              <span
+                class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                [class]="reservation.reservationStatus === 'CONFIRMEE'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : reservation.reservationStatus === 'ANNULEE'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-orange-100 text-orange-700'"
+              >
+                      {{ reservation.reservationStatus }}
+                    </span>
+            </div>
+          </td>
+
+          <td class="px-5 py-4 whitespace-nowrap">
+                  <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black uppercase">
+                    {{ getMatchCapacityLabel(reservation) }}
+                  </span>
+          </td>
+
+          <td class="px-5 py-4 text-right whitespace-nowrap">
+            <button
+              (click)="deleteReservation(reservation.id)"
+              class="px-3 py-2 rounded-xl bg-red-50 text-red-600 font-black uppercase text-[10px] tracking-widest hover:bg-red-100"
+            >
+              Supprimer
+            </button>
+          </td>
+        </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  @if (filteredReservations().length === 0) {
+  <div class="bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
+    <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+    <h2 class="text-xl font-black text-slate-900 uppercase">
+      Aucune réservation trouvée
+    </h2>
+
+    <p class="text-slate-400 mt-2">
+      Modifie ta recherche ou change de filtre.
+    </p>
+  </div>
+  }
 
 </div>

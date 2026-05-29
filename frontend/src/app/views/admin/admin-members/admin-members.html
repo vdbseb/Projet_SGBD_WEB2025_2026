@@ -37,88 +37,285 @@
     <input
       type="text"
       class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
-      placeholder="Rechercher par nom, prénom ou matricule..."
+      placeholder="Rechercher par nom, prénom, email ou matricule..."
       [value]="search()"
       (input)="search.set($any($event.target).value)"
     />
-  </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-    @for (member of filteredMembers(); track member.id) {
-      <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+    <div class="mt-5 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
 
-        <div class="flex items-start justify-between gap-4 mb-4">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center">
-              <mat-icon>person</mat-icon>
-            </div>
+      <div class="flex flex-wrap gap-3">
 
-            <div>
-              <h2 class="font-black text-slate-900">
-                {{ member.firstName }} {{ member.lastName }}
-              </h2>
+        <button
+          (click)="selectedType.set('ALL')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          [class.bg-slate-900]="selectedType() === 'ALL'"
+          [class.text-white]="selectedType() === 'ALL'"
+          [class.border-slate-900]="selectedType() === 'ALL'"
+        >
+          Tous
+        </button>
 
-              <p class="font-mono text-slate-400 text-sm">
-                {{ member.matricule }}
-              </p>
-            </div>
-          </div>
-          <span
-            class="px-3 py-1 rounded-full text-xs font-black uppercase"
-            [class]="member.active
-                 ? 'bg-emerald-100 text-emerald-700'
-                 : 'bg-red-100 text-red-700'" >
-  {{ member.active ? 'Actif' : 'Suspendu' }}
-</span>
+        <button
+          (click)="selectedType.set('GLOBAL')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          [class.bg-slate-900]="selectedType() === 'GLOBAL'"
+          [class.text-white]="selectedType() === 'GLOBAL'"
+          [class.border-slate-900]="selectedType() === 'GLOBAL'"
+        >
+          Global
+        </button>
 
-        </div>
+        <button
+          (click)="selectedType.set('SITE')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          [class.bg-slate-900]="selectedType() === 'SITE'"
+          [class.text-white]="selectedType() === 'SITE'"
+          [class.border-slate-900]="selectedType() === 'SITE'"
+        >
+          Site
+        </button>
 
-        <div class="space-y-3 text-sm text-slate-500">
+        <button
+          (click)="selectedType.set('LIBRE')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          [class.bg-slate-900]="selectedType() === 'LIBRE'"
+          [class.text-white]="selectedType() === 'LIBRE'"
+          [class.border-slate-900]="selectedType() === 'LIBRE'"
+        >
+          Libre
+        </button>
 
-          <div>
-  <span
-    class="px-3 py-1 rounded-full text-xs font-black uppercase"
-    [class]="member.type?.code === 'GLOBAL'
-      ? 'bg-violet-100 text-violet-700'
-      : member.type?.code === 'SITE'
-        ? 'bg-emerald-100 text-emerald-700'
-        : 'bg-slate-100 text-slate-600'"
-  >
-    {{ member.type?.code || 'Libre' }}
-    •
-    {{ member.type?.delai_reservation_jours || 5 }} jours
-  </span>
-          </div>
+        <select
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedSiteId()"
+          (ngModelChange)="selectedSiteId.set($event === 'ALL' ? 'ALL' : +$event)"
+        >
+          <option value="ALL">Tous les sites</option>
 
-          <p>
-            <span class="font-bold text-slate-700">Email :</span>
-            {{ member.email || 'Non renseigné' }}
-          </p>
+          @for (site of sites(); track site.id) {
+          <option [value]="site.id">
+            {{ site.clubName }}
+          </option>
+          }
+        </select>
 
-        </div>
-        <p>
-          <span class="font-bold text-slate-700">Club :</span>
-          {{ member.siteName || 'Global' }}
-        </p>
+        <select
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+        >
+          <option value="ALL">Tous les statuts</option>
+          <option value="ACTIVE">Actifs</option>
+          <option value="INACTIVE">Inactifs</option>
+        </select>
 
-        <div class="mt-6 flex gap-3">
-          <button
-            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
-            disabled
-          >
-            Modifier
-          </button>
-
-          <button
-            class="px-4 py-2 rounded-xl bg-red-50 text-red-500 font-bold text-xs uppercase tracking-widest"
-            disabled
-          >
-            Suspendre
-          </button>
-        </div>
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+        >
+          Réinitialiser
+        </button>
 
       </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button
+          (click)="showCardsView()"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="viewMode() === 'cards'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Vue cartes
+        </button>
+
+        <button
+          (click)="showTableView()"
+          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
+          [class]="viewMode() === 'table'
+            ? 'bg-slate-900 text-white'
+            : 'bg-slate-100 text-slate-500'"
+        >
+          Vue tableau
+        </button>
+      </div>
+
+    </div>
+
+    <p class="mt-4 text-sm text-slate-400">
+      {{ filteredMembers().length }} membre(s) affiché(s)
+    </p>
+  </div>
+
+  @if (viewMode() === 'cards') {
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    @for (member of filteredMembers(); track member.id) {
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center">
+            <mat-icon>person</mat-icon>
+          </div>
+
+          <div>
+            <h2 class="font-black text-slate-900">
+              {{ member.firstName }} {{ member.lastName }}
+            </h2>
+
+            <p class="font-mono text-slate-400 text-sm">
+              {{ member.matricule }}
+            </p>
+          </div>
+        </div>
+
+        <span
+          class="px-3 py-1 rounded-full text-xs font-black uppercase"
+          [class]="getMemberStatusClass(member)"
+        >
+              {{ getMemberStatusLabel(member) }}
+            </span>
+      </div>
+
+      <div class="space-y-3 text-sm text-slate-500">
+
+        <div>
+              <span
+                class="px-3 py-1 rounded-full text-xs font-black uppercase"
+                [class]="getMemberTypeClass(member)"
+              >
+                {{ getMemberTypeLabel(member) }}
+              </span>
+        </div>
+
+        <p>
+          <span class="font-bold text-slate-700">Email :</span>
+          {{ member.email || 'Non renseigné' }}
+        </p>
+
+        <p>
+          <span class="font-bold text-slate-700">Club :</span>
+          {{ getMemberSiteLabel(member) }}
+        </p>
+
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button
+          class="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
+          disabled
+        >
+          Modifier
+        </button>
+
+        <button
+          (click)="toggleMemberActive(member)"
+          class="px-3 py-2 rounded-xl font-black uppercase text-[10px] tracking-widest"
+          [class]="member.active !== false
+    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+        >
+          {{ member.active !== false ? 'Suspendre' : 'Réactiver' }}
+        </button>
+      </div>
+
+    </div>
     }
   </div>
+  }
+
+  @if (viewMode() === 'table') {
+  <div class="bg-white border border-slate-100 rounded-4xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-400">
+        <tr class="text-left text-[10px] uppercase tracking-widest font-black">
+          <th class="px-5 py-4">Matricule</th>
+          <th class="px-5 py-4">Membre</th>
+          <th class="px-5 py-4">Email</th>
+          <th class="px-5 py-4">Type</th>
+          <th class="px-5 py-4">Club</th>
+          <th class="px-5 py-4">Statut</th>
+          <th class="px-5 py-4 text-right">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        @for (member of filteredMembers(); track member.id) {
+        <tr class="border-t border-slate-100 hover:bg-slate-50">
+          <td class="px-5 py-4 font-mono text-slate-500 whitespace-nowrap">
+            {{ member.matricule }}
+          </td>
+
+          <td class="px-5 py-4 font-black text-slate-900 whitespace-nowrap">
+            {{ member.firstName }} {{ member.lastName }}
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ member.email || 'Non renseigné' }}
+          </td>
+
+          <td class="px-5 py-4 whitespace-nowrap">
+                  <span
+                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                    [class]="getMemberTypeClass(member)"
+                  >
+                    {{ getMemberTypeLabel(member) }}
+                  </span>
+          </td>
+
+          <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+            {{ getMemberSiteLabel(member) }}
+          </td>
+
+          <td class="px-5 py-4 whitespace-nowrap">
+                  <span
+                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                    [class]="getMemberStatusClass(member)"
+                  >
+                    {{ getMemberStatusLabel(member) }}
+                  </span>
+          </td>
+
+          <td class="px-5 py-4 text-right whitespace-nowrap">
+            <button
+              class="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest mr-2"
+              disabled
+            >
+              Modifier
+            </button>
+
+            <button
+              (click)="toggleMemberActive(member)"
+              class="px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+              [class]="member.active !== false
+    ? 'bg-red-50 text-red-500 hover:bg-red-100'
+    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+            >
+              {{ member.active !== false ? 'Suspendre' : 'Réactiver' }}
+            </button>
+          </td>
+        </tr>
+        }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  @if (filteredMembers().length === 0) {
+  <div class="bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
+    <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+    <h2 class="text-xl font-black text-slate-900 uppercase">
+      Aucun membre trouvé
+    </h2>
+
+    <p class="text-slate-400 mt-2">
+      Modifie ta recherche ou change de filtre.
+    </p>
+  </div>
+  }
 
 </div>

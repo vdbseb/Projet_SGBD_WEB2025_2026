@@ -1,52 +1,192 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
 import { PadelService } from '../../../services/padel.service';
-import {AuthService} from '../../../services/auth.service';
+import { AuthService } from '../../../services/auth.service';
+import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-admin-sites',
   standalone: true,
-  imports: [RouterLink, MatIconModule],
+  imports: [
+    RouterLink,
+    MatIconModule,
+    FormsModule,
+    MatSnackBarModule
+  ],
   templateUrl: './admin-sites.html'
 })
 export class AdminSites implements OnInit {
   private padelService = inject(PadelService);
+  private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
+
+  authService = inject(AuthService);
 
   sites = signal<any[]>([]);
   reservations = signal<any[]>([]);
+
   search = signal('');
-  authService = inject(AuthService);
+  selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  selectedCity = signal<string>('ALL');
 
   ngOnInit() {
+    this.loadSites();
+    this.loadReservations();
+  }
+
+  loadSites() {
     this.padelService.getSites().subscribe(sites => {
       this.sites.set(sites);
     });
+  }
 
+  loadReservations() {
     this.padelService.getAllReservations().subscribe(reservations => {
       this.reservations.set(reservations);
     });
   }
 
-  filteredSites() {
+  visibleSites() {
     const admin = this.authService.currentAdmin();
 
-    let visibleSites = this.sites();
-
     if (this.authService.isSiteAdmin()) {
-      visibleSites = visibleSites.filter(site => site.id === admin.siteId);
+      return this.sites().filter(site => site.id === admin.siteId);
     }
 
+    return this.sites();
+  }
+
+  filteredSites() {
     const query = this.search().toLowerCase().trim();
+    const selectedStatus = this.selectedStatus();
+    const selectedCity = this.selectedCity();
 
-    if (!query) {
-      return visibleSites;
-    }
+    return this.visibleSites().filter(site => {
+      const matchesSearch =
+        !query ||
+        site.clubName?.toLowerCase().includes(query) ||
+        site.name?.toLowerCase().includes(query) ||
+        site.city?.toLowerCase().includes(query) ||
+        site.adresse?.toLowerCase().includes(query);
 
-    return visibleSites.filter(site =>
-      site.clubName?.toLowerCase().includes(query) ||
-      site.name?.toLowerCase().includes(query) ||
-      site.city?.toLowerCase().includes(query)
+      const matchesStatus =
+        selectedStatus === 'ALL' ||
+        (selectedStatus === 'ACTIVE' && site.active) ||
+        (selectedStatus === 'INACTIVE' && !site.active);
+
+      const matchesCity =
+        selectedCity === 'ALL' ||
+        site.city === selectedCity;
+
+      return matchesSearch && matchesStatus && matchesCity;
+    });
+  }
+
+  cities() {
+    return [...new Set(
+      this.visibleSites()
+        .map(site => site.city)
+        .filter(Boolean)
+    )];
+  }
+
+  resetFilters() {
+    this.search.set('');
+    this.selectedStatus.set('ALL');
+    this.selectedCity.set('ALL');
+  }
+
+  toggleSiteActive(site: any) {
+    const isActive = site.active !== false;
+    const nextActive = !isActive;
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: isActive ? 'Désactiver le site' : 'Réactiver le site',
+        message: isActive
+          ? `Désactiver ${site.clubName || site.name} ? Les réservations futures ne devraient plus être possibles sur ce site.`
+          : `Réactiver ${site.clubName || site.name} ? Le site pourra à nouveau être utilisé.`,
+        confirmLabel: isActive ? 'Désactiver' : 'Réactiver',
+        cancelLabel: 'Annuler'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (!confirmed) {
+        return;
+      }
+
+      if (nextActive) {
+        this.padelService.updateSite(site.id, { active: true }).subscribe({
+          next: () => {
+            this.snackBar.open('Site réactivé avec succès.', 'OK', {
+              duration: 3000
+            });
+
+            this.loadSites();
+          },
+          error: () => {
+            this.snackBar.open('Impossible de réactiver le site.', 'OK', {
+              duration: 4000
+            });
+          }
+        });
+
+        return;
+      }
+
+      this.padelService.deactivateSite(site.id).subscribe({
+        next: () => {
+          this.snackBar.open('Site désactivé avec succès.', 'OK', {
+            duration: 3000
+          });
+
+          this.loadSites();
+        },
+        error: () => {
+          this.snackBar.open('Impossible de désactiver le site.', 'OK', {
+            duration: 4000
+          });
+        }
+      });
+    });
+  }
+
+  totalSites() {
+    return this.visibleSites().length;
+  }
+
+  activeSites() {
+    return this.visibleSites().filter(site => site.active).length;
+  }
+
+  inactiveSites() {
+    return this.visibleSites().filter(site => !site.active).length;
+  }
+
+  totalCourts() {
+    return this.visibleSites().reduce(
+      (total, site) => total + this.getCourtCount(site),
+      0
+    );
+  }
+
+  totalReservations() {
+    return this.visibleSites().reduce(
+      (total, site) => total + this.getSiteReservationCount(site),
+      0
+    );
+  }
+
+  totalRevenue() {
+    return this.visibleSites().reduce(
+      (total, site) => total + this.getSiteRevenue(site),
+      0
     );
   }
 
@@ -56,14 +196,18 @@ export class AdminSites implements OnInit {
 
   getIndoorCount(site: any): number {
     return site.courts?.filter((court: any) =>
-      court.type?.toLowerCase() === 'indoor'
+      this.getCourtType(court).toLowerCase() === 'indoor'
     ).length || 0;
   }
 
   getOutdoorCount(site: any): number {
     return site.courts?.filter((court: any) =>
-      court.type?.toLowerCase() === 'outdoor'
+      this.getCourtType(court).toLowerCase() === 'outdoor'
     ).length || 0;
+  }
+
+  getCourtType(court: any): string {
+    return court.type ?? (court.indoor ? 'Indoor' : 'Outdoor');
   }
 
   getSiteReservationCount(site: any): number {
@@ -76,5 +220,15 @@ export class AdminSites implements OnInit {
 
   getSiteRevenue(site: any): number {
     return this.getSiteReservationCount(site) * 60;
+  }
+
+  getSiteStatusLabel(site: any): string {
+    return site.active ? 'Actif' : 'Inactif';
+  }
+
+  getSiteStatusClass(site: any): string {
+    return site.active
+      ? 'bg-emerald-100 text-emerald-700'
+      : 'bg-red-100 text-red-700';
   }
 }

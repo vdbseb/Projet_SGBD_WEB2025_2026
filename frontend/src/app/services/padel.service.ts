@@ -46,6 +46,18 @@ export class PadelService {
       map(site => this.toPadelSite(site, []))
     );
   }
+deactivateSite(siteId: number) {
+  return this.httpClient.delete<void>(
+    `${this.apiBaseUrl}/sites/${siteId}`
+  );
+}
+
+updateSite(siteId: number, site: any) {
+  return this.httpClient.put<any>(
+    `${this.apiBaseUrl}/sites/${siteId}`,
+    site
+  );
+}
   getCourts(): Observable<CourtDTO[]> {
     return this.httpClient.get<CourtDTO[]>(this.courtsUrl);
   }
@@ -146,12 +158,27 @@ export class PadelService {
       `${this.apiBaseUrl}/matches/${matchId}/leave/${memberId}`
     );
   }
+  getNextMatricule(typeCode: string) {
+    return this.httpClient.get(
+      `${this.apiBaseUrl}/members/next-matricule`,
+        {
+        params: { typeCode },
+        responseType: 'text'
+        }
+    );
+  }
   createMember(member: any) {
     return this.httpClient.post<any>(
       `${this.apiBaseUrl}/members`,
       member
     );
   }
+updateMemberActiveStatus(memberId: number, active: boolean) {
+  return this.httpClient.patch<any>(
+    `${this.apiBaseUrl}/members/${memberId}/active`,
+    { active }
+  );
+}
   getSiteSchedule(siteId: number, year: number) {
     return this.httpClient.get<any>(
       `${this.apiBaseUrl}/horaires-sites/site/${siteId}/annee/${year}`
@@ -198,6 +225,7 @@ export class PadelService {
       null
     );
   }
+
 
 }
 

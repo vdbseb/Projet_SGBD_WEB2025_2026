@@ -6,11 +6,12 @@ import { AuthService } from '../../../services/auth.service';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-admin-courts',
   standalone: true,
-  imports: [RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule, FormsModule],
   templateUrl: './admin-courts.html'
 })
 export class AdminCourts implements OnInit {
@@ -24,6 +25,10 @@ export class AdminCourts implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   maintenanceCourts = signal<number[]>([]);
+
+  selectedSiteId = signal<number | 'ALL'>('ALL');
+  selectedType = signal<'ALL' | 'INDOOR' | 'OUTDOOR'>('ALL');
+  selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'>('ALL');
 
   ngOnInit() {
     this.padelService.getSites().subscribe(sites => {
@@ -39,6 +44,7 @@ export class AdminCourts implements OnInit {
 
       this.courts.set(visibleCourts);
     });
+
     this.padelService.getAllReservations().subscribe(reservations => {
       this.reservations.set(reservations);
     });
@@ -46,16 +52,47 @@ export class AdminCourts implements OnInit {
 
   filteredCourts() {
     const query = this.search().toLowerCase().trim();
+    const selectedSiteId = this.selectedSiteId();
+    const selectedType = this.selectedType();
+    const selectedStatus = this.selectedStatus();
 
-    if (!query) {
-      return this.courts();
-    }
+    return this.courts().filter(court => {
+      const type = this.getCourtType(court);
 
-    return this.courts().filter(court =>
-      court.name?.toLowerCase().includes(query) ||
-      court.type?.toLowerCase().includes(query) ||
-      this.getSiteName(court).toLowerCase().includes(query)
-    );
+      const matchesSearch =
+        !query ||
+        court.name?.toLowerCase().includes(query) ||
+        type.toLowerCase().includes(query) ||
+        this.getSiteName(court).toLowerCase().includes(query);
+
+      const matchesSite =
+        selectedSiteId === 'ALL' ||
+        court.siteId === selectedSiteId;
+
+      const matchesType =
+        selectedType === 'ALL' ||
+        (selectedType === 'INDOOR' && type.toLowerCase() === 'indoor') ||
+        (selectedType === 'OUTDOOR' && type.toLowerCase() === 'outdoor');
+
+      const matchesStatus =
+        selectedStatus === 'ALL' ||
+        (selectedStatus === 'ACTIVE' && court.active && !this.isInMaintenance(court)) ||
+        (selectedStatus === 'INACTIVE' && !court.active) ||
+        (selectedStatus === 'MAINTENANCE' && this.isInMaintenance(court));
+
+      return matchesSearch && matchesSite && matchesType && matchesStatus;
+    });
+  }
+
+  resetFilters() {
+    this.search.set('');
+    this.selectedSiteId.set('ALL');
+    this.selectedType.set('ALL');
+    this.selectedStatus.set('ALL');
+  }
+
+  getCourtType(court: any): string {
+    return court.type ?? (court.indoor ? 'Indoor' : 'Outdoor');
   }
 
   getSiteName(court: any): string {
@@ -64,10 +101,11 @@ export class AdminCourts implements OnInit {
   }
 
   getCourtTypeClass(court: any): string {
-    return court.type?.toLowerCase() === 'indoor'
+    return this.getCourtType(court).toLowerCase() === 'indoor'
       ? 'bg-blue-100 text-blue-700'
       : 'bg-emerald-100 text-emerald-700';
   }
+
   getCourtReservationCount(court: any): number {
     return this.reservations().filter(reservation =>
       reservation.courtId === court.id
@@ -76,8 +114,6 @@ export class AdminCourts implements OnInit {
 
   getOccupationRate(court: any): number {
     const reservationCount = this.getCourtReservationCount(court);
-
-    // Mock : on considère 8 créneaux max par terrain.
     const maxSlots = 8;
 
     return Math.min(100, Math.round((reservationCount / maxSlots) * 100));
@@ -96,6 +132,7 @@ export class AdminCourts implements OnInit {
 
     return 'bg-emerald-500';
   }
+
   isInMaintenance(court: any): boolean {
     return this.maintenanceCourts().includes(court.id);
   }
