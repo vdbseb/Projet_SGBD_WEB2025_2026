@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 
 import { PadelService } from '../../../services/padel.service';
+import { AuthService } from '../../../services/auth.service';
 import { CreateMemberDialog } from './create-member-dialog/create-member-dialog';
 
 @Component({
@@ -23,6 +24,7 @@ import { CreateMemberDialog } from './create-member-dialog/create-member-dialog'
 })
 export class AdminMembers implements OnInit {
   private padelService = inject(PadelService);
+  private authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
@@ -36,29 +38,78 @@ export class AdminMembers implements OnInit {
   viewMode = signal<'cards' | 'table'>('cards');
 
   ngOnInit() {
-    this.loadMembers();
     this.loadSites();
+    this.loadMembers();
   }
 
   loadMembers() {
-    this.padelService.getMembers().subscribe(members => {
-      this.members.set(members);
+    const admin = this.authService.currentAdmin();
+
+    if (!admin?.matricule) {
+      this.snackBar.open('Administrateur non connecté.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    this.padelService.getMembersForAdmin(admin.matricule).subscribe({
+      next: members => {
+        this.members.set(members);
+      },
+      error: () => {
+        this.snackBar.open('Impossible de charger les membres.', 'OK', {
+          duration: 4000
+        });
+      }
     });
   }
 
   loadSites() {
-    this.padelService.getSites().subscribe(sites => {
-      this.sites.set(sites);
+    const admin = this.authService.currentAdmin();
+    const adminSiteId = this.getAdminSiteId(admin);
+
+    this.padelService.getSites().subscribe({
+      next: sites => {
+        if (this.isSiteAdmin(admin)) {
+          this.sites.set(
+            sites.filter(site => Number(site.id) === Number(adminSiteId))
+          );
+
+          if (adminSiteId !== null) {
+            this.selectedSiteId.set(Number(adminSiteId));
+          }
+
+          this.selectedType.set('SITE');
+          return;
+        }
+
+        this.sites.set(sites);
+      },
+      error: () => {
+        this.snackBar.open('Impossible de charger les sites.', 'OK', {
+          duration: 4000
+        });
+      }
     });
   }
 
   filteredMembers() {
+    const admin = this.authService.currentAdmin();
+    const adminSiteId = this.getAdminSiteId(admin);
+
     const query = this.search().toLowerCase().trim();
     const selectedType = this.selectedType();
     const selectedSiteId = this.selectedSiteId();
     const selectedStatus = this.selectedStatus();
 
     return this.members().filter(member => {
+      const matchesAdminScope =
+        !this.isSiteAdmin(admin) ||
+        (
+          member.type?.code === 'SITE' &&
+          Number(member.siteId) === Number(adminSiteId)
+        );
+
       const matchesSearch =
         !query ||
         member.firstName?.toLowerCase().includes(query) ||
@@ -72,15 +123,59 @@ export class AdminMembers implements OnInit {
 
       const matchesSite =
         selectedSiteId === 'ALL' ||
-        member.siteId === selectedSiteId;
+        Number(member.siteId) === Number(selectedSiteId);
 
       const matchesStatus =
         selectedStatus === 'ALL' ||
         (selectedStatus === 'ACTIVE' && member.active) ||
         (selectedStatus === 'INACTIVE' && !member.active);
 
-      return matchesSearch && matchesType && matchesSite && matchesStatus;
+      return matchesAdminScope && matchesSearch && matchesType && matchesSite && matchesStatus;
     });
+  }
+
+  canCreateMember(): boolean {
+    const admin = this.authService.currentAdmin();
+
+    if (admin?.typeAdmin === 'GLOBAL') {
+      return true;
+    }
+
+    if (!this.isSiteAdmin(admin)) {
+      return false;
+    }
+
+    const adminSite = this.getCurrentAdminSite();
+
+    return adminSite?.active === true;
+  }
+
+  getCreateMemberDisabledReason(): string {
+    const admin = this.authService.currentAdmin();
+
+    if (!admin) {
+      return 'Administrateur non connecté.';
+    }
+
+    if (admin.typeAdmin === 'GLOBAL') {
+      return '';
+    }
+
+    if (!this.isSiteAdmin(admin)) {
+      return 'Type administrateur non autorisé.';
+    }
+
+    const adminSite = this.getCurrentAdminSite();
+
+    if (!adminSite) {
+      return 'Site administrateur introuvable.';
+    }
+
+    if (!adminSite.active) {
+      return 'Impossible d’ajouter un membre : votre site est inactif.';
+    }
+
+    return '';
   }
 
   showCardsView() {
@@ -92,10 +187,24 @@ export class AdminMembers implements OnInit {
   }
 
   resetFilters() {
+    const admin = this.authService.currentAdmin();
+    const adminSiteId = this.getAdminSiteId(admin);
+
     this.search.set('');
+    this.selectedStatus.set('ALL');
+
+    if (this.isSiteAdmin(admin)) {
+      this.selectedType.set('SITE');
+
+      if (adminSiteId !== null) {
+        this.selectedSiteId.set(Number(adminSiteId));
+      }
+
+      return;
+    }
+
     this.selectedType.set('ALL');
     this.selectedSiteId.set('ALL');
-    this.selectedStatus.set('ALL');
   }
 
   getMemberTypeLabel(member: any): string {
@@ -173,14 +282,35 @@ export class AdminMembers implements OnInit {
   }
 
   openCreateMemberDialog() {
-    const dialogRef = this.dialog.open(CreateMemberDialog);
+    if (!this.canCreateMember()) {
+      this.snackBar.open(this.getCreateMemberDisabledReason(), 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    const admin = this.authService.currentAdmin();
+
+    if (!admin?.matricule) {
+      this.snackBar.open('Administrateur non connecté.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(CreateMemberDialog, {
+      data: {
+        admin,
+        sites: this.sites()
+      }
+    });
 
     dialogRef.afterClosed().subscribe(member => {
       if (!member) {
         return;
       }
 
-      this.padelService.createMember(member).subscribe({
+      this.padelService.createMemberAsAdmin(admin.matricule, member).subscribe({
         next: () => {
           this.snackBar.open('Membre créé avec succès.', 'OK', {
             duration: 3000
@@ -188,12 +318,38 @@ export class AdminMembers implements OnInit {
 
           this.loadMembers();
         },
-        error: () => {
-          this.snackBar.open('Impossible de créer le membre.', 'OK', {
-            duration: 4000
+        error: error => {
+          const message =
+            error?.error?.message ||
+            error?.error?.error ||
+            'Impossible de créer le membre.';
+
+          this.snackBar.open(message, 'OK', {
+            duration: 5000
           });
         }
       });
     });
+  }
+
+  private getCurrentAdminSite(): any | null {
+    const admin = this.authService.currentAdmin();
+    const adminSiteId = this.getAdminSiteId(admin);
+
+    if (adminSiteId === null) {
+      return null;
+    }
+
+    return this.sites().find(site =>
+      Number(site.id) === Number(adminSiteId)
+    ) ?? null;
+  }
+
+  private isSiteAdmin(admin: any): boolean {
+    return admin?.typeAdmin === 'SITE';
+  }
+
+  private getAdminSiteId(admin: any): number | null {
+    return admin?.siteId ?? admin?.site?.id ?? null;
   }
 }
