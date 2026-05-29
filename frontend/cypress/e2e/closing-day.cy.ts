@@ -20,7 +20,6 @@ describe('Closing days flow', () => {
       .first()
       .click();
 
-    // Si ta date fermée est le 01/06/2026
     cy.contains('19')
       .click();
 
