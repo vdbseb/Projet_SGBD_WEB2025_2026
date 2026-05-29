@@ -12,6 +12,8 @@ import be.angularpadelclub.Enum.ParticipationStatut;
 import be.angularpadelclub.Repository.MatchRepository;
 import be.angularpadelclub.Repository.ParticipationRepository;
 import be.angularpadelclub.Repository.PenaliteRepository;
+import be.angularpadelclub.Service.MatchSchedulerService;
+import be.angularpadelclub.Service.PaiementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
