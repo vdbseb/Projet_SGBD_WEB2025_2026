@@ -3,8 +3,8 @@
   <header
     class="rounded-4xl p-10 text-white mb-16"
     [class]="isGlobalAdmin()
-  ? 'bg-gradient-to-r from-violet-700 to-indigo-800'
-  : 'bg-gradient-to-r from-emerald-500 to-teal-600'"
+      ? 'bg-gradient-to-r from-violet-700 to-indigo-800'
+      : 'bg-gradient-to-r from-emerald-500 to-teal-600'"
   >
     <div class="flex items-center gap-4 mb-4">
       <div class="w-16 h-16 rounded-3xl bg-white/20 flex items-center justify-center">
@@ -20,9 +20,9 @@
 
         <p class="mt-2 opacity-90 text-lg">
           {{
-            isGlobalAdmin()
-              ? 'Gestion globale Angular Padel Club'
-              : 'Gestion de votre club'
+          isGlobalAdmin()
+          ? 'Gestion globale Angular Padel Club'
+          : 'Gestion de votre club'
           }}
         </p>
       </div>
@@ -32,68 +32,82 @@
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
 
     @if (isGlobalAdmin()) {
-      <app-admin-card
-        title="Sites"
-        subtitle="Gérer tous les centres"
-        icon="location_city"
-        route="/admin/sites">
-      </app-admin-card>
+    <app-admin-card
+      title="Sites"
+      subtitle="Gérer tous les centres"
+      icon="location_city"
+      route="/admin/sites">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Terrains"
-        subtitle="Gestion globale des terrains"
-        icon="sports_tennis"
-        route="/admin/courts">
-      </app-admin-card>
+    <app-admin-card
+      title="Terrains"
+      subtitle="Gestion globale des terrains"
+      icon="sports_tennis"
+      route="/admin/courts">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Membres"
-        subtitle="Gestion des membres"
-        icon="groups"
-        route="/admin/members">
-      </app-admin-card>
+    <app-admin-card
+      title="Membres"
+      subtitle="Gestion des membres"
+      icon="groups"
+      route="/admin/members">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Réservations"
-        subtitle="Toutes les réservations"
-        icon="calendar_month"
-        route="/admin/reservations">
-      </app-admin-card>
+    <app-admin-card
+      title="Réservations"
+      subtitle="Toutes les réservations"
+      icon="calendar_month"
+      route="/admin/reservations">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Paiements"
-        subtitle="Suivi global des paiements"
-        icon="payments"
-        route="/admin/paiements">
-      </app-admin-card>
+    <app-admin-card
+      title="Paiements"
+      subtitle="Suivi global des paiements"
+      icon="payments"
+      route="/admin/paiements">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Statistiques"
+      subtitle="Vue globale de l’activité"
+      icon="bar_chart"
+      route="/admin/statistiques">
+    </app-admin-card>
     } @else {
-      <app-admin-card
-        title="Mon site"
-        subtitle="Informations du club"
-        icon="location_city"
-        route="/admin/sites">
-      </app-admin-card>
+    <app-admin-card
+      title="Mon site"
+      subtitle="Informations du club"
+      icon="location_city"
+      route="/admin/sites">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Mes terrains"
-        subtitle="Gestion des terrains"
-        icon="sports_tennis"
-        route="/admin/courts">
-      </app-admin-card>
+    <app-admin-card
+      title="Mes terrains"
+      subtitle="Gestion des terrains"
+      icon="sports_tennis"
+      route="/admin/courts">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Réservations"
-        subtitle="Réservations du site"
-        icon="calendar_month"
-        route="/admin/reservations">
-      </app-admin-card>
+    <app-admin-card
+      title="Réservations"
+      subtitle="Réservations du site"
+      icon="calendar_month"
+      route="/admin/reservations">
+    </app-admin-card>
 
-      <app-admin-card
-        title="Paiements"
-        subtitle="Paiements du club"
-        icon="payments"
-        route="/admin/paiements">
-      </app-admin-card>
+    <app-admin-card
+      title="Paiements"
+      subtitle="Paiements du club"
+      icon="payments"
+      route="/admin/paiements">
+    </app-admin-card>
+
+    <app-admin-card
+      title="Statistiques"
+      subtitle="Activité du club"
+      icon="bar_chart"
+      route="/admin/statistiques">
+    </app-admin-card>
     }
 
   </div>

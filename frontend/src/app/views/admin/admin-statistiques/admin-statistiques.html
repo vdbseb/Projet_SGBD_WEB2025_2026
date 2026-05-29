@@ -1,0 +1,617 @@
+<div class="min-h-screen bg-slate-50 p-8 md:p-12">
+
+  <a
+    routerLink="/admin"
+    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
+  >
+    <mat-icon>arrow_back</mat-icon>
+    Retour admin
+  </a>
+
+  <header class="mb-10">
+    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
+      Statistiques
+    </h1>
+
+    <p class="text-slate-500 mt-2">
+      Reporting global de l’activité du club.
+    </p>
+  </header>
+
+  <section class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
+
+    <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
+
+      <div>
+        <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
+          Vue rapport
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <button
+            (click)="setReportMode('YEAR')"
+            class="px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest"
+            [class]="reportMode() === 'YEAR'
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-100 text-slate-500'"
+          >
+            Année
+          </button>
+
+          <button
+            (click)="setReportMode('MONTH')"
+            class="px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest"
+            [class]="reportMode() === 'MONTH'
+              ? 'bg-slate-900 text-white'
+              : 'bg-slate-100 text-slate-500'"
+          >
+            Mois
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+
+        <select
+          class="px-4 py-3 rounded-2xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedYear()"
+          (ngModelChange)="selectedYear.set(+$event)"
+        >
+          @for (year of availableYears(); track year) {
+          <option [value]="year">
+            {{ year }}
+          </option>
+          }
+        </select>
+
+        @if (reportMode() === 'MONTH') {
+        <select
+          class="px-4 py-3 rounded-2xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedMonth()"
+          (ngModelChange)="selectedMonth.set(+$event)"
+        >
+          @for (month of months(); track month.value) {
+          <option [value]="month.value">
+            {{ month.label }}
+          </option>
+          }
+        </select>
+        }
+
+        @if (!authService.isSiteAdmin()) {
+        <select
+          class="px-4 py-3 rounded-2xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          [ngModel]="selectedSiteId()"
+          (ngModelChange)="selectedSiteId.set($event === 'ALL' ? 'ALL' : +$event)"
+        >
+          <option value="ALL">Tous les sites</option>
+
+          @for (site of sites(); track site.id) {
+          <option [value]="site.id">
+            {{ site.clubName || site.name || site.city }}
+          </option>
+          }
+        </select>
+        }
+
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-3 rounded-2xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+        >
+          Réinitialiser
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-3 text-sm">
+      <span class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-600 font-bold">
+        {{ selectedPeriodLabel() }}
+      </span>
+
+      <span class="px-4 py-2 rounded-2xl bg-slate-100 text-slate-600 font-bold">
+        {{ selectedSiteLabel() }}
+      </span>
+
+      <span class="px-4 py-2 rounded-2xl bg-blue-50 text-blue-700 font-bold">
+        {{ totalReservations() }} réservation(s)
+      </span>
+    </div>
+
+  </section>
+
+  <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        CA net période
+      </p>
+
+      <p class="text-4xl font-black text-emerald-700 mt-3">
+        {{ netRevenue() }}€
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        Encaissé {{ totalPaid() }}€ · Remboursé {{ totalRefunded() }}€
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Réservations période
+      </p>
+
+      <p class="text-4xl font-black text-blue-700 mt-3">
+        {{ totalReservations() }}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        {{ upcomingReservations() }} à venir · {{ todayReservations() }} aujourd’hui
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Occupation estimée
+      </p>
+
+      <p class="text-4xl font-black text-orange-700 mt-3">
+        {{ estimatedOccupationRate() }}%
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        Calculé sur {{ activeCourts() }} terrain(s) actif(s)
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Paiements en attente
+      </p>
+
+      <p class="text-4xl font-black text-red-700 mt-3">
+        {{ pendingPayments() }}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        {{ refusedPayments() }} paiement(s) refusé(s)
+      </p>
+    </div>
+
+  </section>
+
+  <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Membres actifs
+      </p>
+
+      <p class="text-3xl font-black text-violet-700 mt-3">
+        {{ activeMembers() }}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        {{ suspendedMembers() }} suspendu(s)
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Sites actifs
+      </p>
+
+      <p class="text-3xl font-black text-slate-900 mt-3">
+        {{ activeSites() }}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        {{ inactiveSites() }} site(s) inactif(s)
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Terrains actifs
+      </p>
+
+      <p class="text-3xl font-black text-slate-900 mt-3">
+        {{ activeCourts() }}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        {{ inactiveCourts() }} terrain(s) inactif(s)
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+        Plus actif
+      </p>
+
+      <p class="text-lg font-black text-slate-900 mt-3 truncate">
+        {{ mostActiveSiteLabel() }}
+      </p>
+
+      <p class="text-xs text-slate-400 mt-2">
+        Top terrain : {{ topCourtLabel() }}
+      </p>
+    </div>
+
+  </section>
+
+  @if (reportMode() === 'YEAR') {
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            CA par mois
+          </h2>
+          <p class="text-sm text-slate-400">
+            Revenus validés sur l’année sélectionnée.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">monitoring</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of monthlyRevenue(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+                <span class="font-bold text-slate-700">
+                  {{ item.label }}
+                </span>
+
+            <span class="font-black text-slate-900">
+                  {{ item.value }}€
+                </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-emerald-600"
+              [style.width.%]="barWidth(item.value, monthlyRevenue())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            Réservations par mois
+          </h2>
+          <p class="text-sm text-slate-400">
+            Volume mensuel de réservations.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">calendar_month</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of monthlyReservations(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+                <span class="font-bold text-slate-700">
+                  {{ item.label }}
+                </span>
+
+            <span class="font-black text-slate-900">
+                  {{ item.value }}
+                </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-blue-600"
+              [style.width.%]="barWidth(item.value, monthlyReservations())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+  </section>
+  }
+
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            Réservations par site
+          </h2>
+          <p class="text-sm text-slate-400">
+            Volume sur la période sélectionnée.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">bar_chart</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of reservationsBySite(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+              <span class="font-bold text-slate-700">
+                {{ item.label }}
+              </span>
+
+            <span class="font-black text-slate-900">
+                {{ item.value }}
+              </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-blue-600"
+              [style.width.%]="barWidth(item.value, reservationsBySite())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            Paiements par statut
+          </h2>
+          <p class="text-sm text-slate-400">
+            Répartition sur la période sélectionnée.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">payments</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of paymentsByStatus(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+              <span class="font-bold text-slate-700">
+                {{ item.label }}
+              </span>
+
+            <span class="font-black text-slate-900">
+                {{ item.value }}
+              </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-emerald-600"
+              [style.width.%]="barWidth(item.value, paymentsByStatus())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            Membres par type
+          </h2>
+          <p class="text-sm text-slate-400">
+            Répartition selon le site sélectionné.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">groups</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of membersByType(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+              <span class="font-bold text-slate-700">
+                {{ item.label }}
+              </span>
+
+            <span class="font-black text-slate-900">
+                {{ item.value }}
+              </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-violet-600"
+              [style.width.%]="barWidth(item.value, membersByType())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            Top terrains
+          </h2>
+          <p class="text-sm text-slate-400">
+            Terrains les plus réservés sur la période.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">sports_tennis</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of topCourts(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+              <span>
+                <span class="font-bold text-slate-700">
+                  {{ item.label }}
+                </span>
+                <span class="text-slate-400">
+                  · {{ item.subLabel }}
+                </span>
+              </span>
+
+            <span class="font-black text-slate-900">
+                {{ item.value }}
+              </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-orange-500"
+              [style.width.%]="barWidth(item.value, topCourts())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <h2 class="text-xl font-black text-slate-900 uppercase mb-6">
+        Prochaines réservations
+      </h2>
+
+      <div class="space-y-4">
+        @for (reservation of nextReservations(); track reservation.id) {
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0">
+          <div>
+            <p class="font-black text-slate-900">
+              {{ getCourtName(reservation) }}
+            </p>
+
+            <p class="text-sm text-slate-400">
+              {{ getSiteName(reservation) }}
+            </p>
+          </div>
+
+          <div class="text-right">
+            <p class="font-bold text-slate-700">
+              {{ reservation.date | date:'dd/MM/yyyy' }}
+            </p>
+
+            <p class="text-sm text-slate-400">
+              {{ reservation.startTime }} - {{ reservation.endTime }}
+            </p>
+          </div>
+        </div>
+        }
+
+        @if (nextReservations().length === 0) {
+        <p class="text-slate-400">
+          Aucune réservation à venir.
+        </p>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <h2 class="text-xl font-black text-slate-900 uppercase mb-6">
+        Paiements à traiter
+      </h2>
+
+      <div class="space-y-4">
+        @for (payment of pendingPaymentItems(); track payment.id) {
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0">
+          <div>
+            <p class="font-black text-slate-900">
+              {{ getMemberNameFromPayment(payment) }}
+            </p>
+
+            <p class="text-sm text-slate-400">
+              Réservation {{ payment.reservationId || '—' }}
+            </p>
+          </div>
+
+          <div class="text-right">
+            <p class="font-black text-orange-700">
+              {{ getPaymentAmount(payment) }}€
+            </p>
+
+            <p class="text-sm text-slate-400">
+              En attente
+            </p>
+          </div>
+        </div>
+        }
+
+        @if (pendingPaymentItems().length === 0) {
+        <p class="text-slate-400">
+          Aucun paiement en attente.
+        </p>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <h2 class="text-xl font-black text-slate-900 uppercase mb-6">
+        Points à surveiller
+      </h2>
+
+      <div class="space-y-5">
+
+        <div>
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
+            Sites inactifs
+          </p>
+
+          @for (site of inactiveSiteItems(); track site.id) {
+          <p class="text-sm font-bold text-red-600 mb-1">
+            {{ site.clubName || site.name || site.city }}
+          </p>
+          }
+
+          @if (inactiveSiteItems().length === 0) {
+          <p class="text-sm text-slate-400">
+            Aucun site inactif.
+          </p>
+          }
+        </div>
+
+        <div>
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
+            Terrains inactifs
+          </p>
+
+          @for (court of inactiveCourtItems(); track court.id) {
+          <p class="text-sm font-bold text-orange-600 mb-1">
+            {{ court.name }} · {{ getSiteNameByCourt(court) }}
+          </p>
+          }
+
+          @if (inactiveCourtItems().length === 0) {
+          <p class="text-sm text-slate-400">
+            Aucun terrain inactif.
+          </p>
+          }
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+</div>
