@@ -23,46 +23,77 @@ public class HoraireSiteController {
         this.horaireSiteMapper = horaireSiteMapper;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<HoraireSiteDTO> findAll() {
-        return horaireSiteMapper.toDTOList(horaireSiteService.findAll());
-    }
-
-    @GetMapping("/{id}")
-    public HoraireSiteDTO findById(@PathVariable Integer id) {
-        return horaireSiteMapper.toDTO(horaireSiteService.findById(id));
-    }
-
-    @GetMapping("/site/{siteId}")
-    public List<HoraireSiteDTO> findBySiteId(@PathVariable Integer siteId) {
-        return horaireSiteMapper.toDTOList(horaireSiteService.findBySiteId(siteId));
-    }
-
-    @GetMapping("/site/{siteId}/annee/{annee}")
-    public HoraireSiteDTO findBySiteIdAndAnnee(
-            @PathVariable Integer siteId,
-            @PathVariable int annee
-    ) {
-        return horaireSiteMapper.toDTO(
-                horaireSiteService.findBySiteIdAndAnnee(siteId, annee)
+        return horaireSiteMapper.toDTOList(
+                horaireSiteService.findAll()
         );
     }
 
-    @PostMapping
-    public HoraireSiteDTO create(@RequestBody HoraireSiteDTO dto) {
-        return horaireSiteMapper.toDTO(horaireSiteService.create(dto));
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public HoraireSiteDTO findById(
+            @PathVariable("id") Integer id
+    ) {
+        return horaireSiteMapper.toDTO(
+                horaireSiteService.findById(id)
+        );
     }
 
-    @PutMapping("/{id}")
-    public HoraireSiteDTO update(
-            @PathVariable Integer id,
+    @GetMapping(value = "/site/{siteId}", produces = "application/json")
+    public List<HoraireSiteDTO> findBySiteId(
+            @PathVariable("siteId") Integer siteId
+    ) {
+        return horaireSiteMapper.toDTOList(
+                horaireSiteService.findBySiteId(siteId)
+        );
+    }
+
+    @GetMapping(
+            value = "/site/{siteId}/annee/{annee}",
+            produces = "application/json"
+    )
+    public HoraireSiteDTO findBySiteIdAndAnnee(
+            @PathVariable("siteId") Integer siteId,
+            @PathVariable("annee") int annee
+    ) {
+        return horaireSiteMapper.toDTO(
+                horaireSiteService.findBySiteIdAndAnnee(
+                        siteId,
+                        annee
+                )
+        );
+    }
+
+    @PostMapping(
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public HoraireSiteDTO create(
             @RequestBody HoraireSiteDTO dto
     ) {
-        return horaireSiteMapper.toDTO(horaireSiteService.update(id, dto));
+        return horaireSiteMapper.toDTO(
+                horaireSiteService.create(dto)
+        );
+    }
+
+    @PutMapping(
+            value = "/{id}",
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public HoraireSiteDTO update(
+            @PathVariable("id") Integer id,
+            @RequestBody HoraireSiteDTO dto
+    ) {
+        return horaireSiteMapper.toDTO(
+                horaireSiteService.update(id, dto)
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
+    public void delete(
+            @PathVariable("id") Integer id
+    ) {
         horaireSiteService.delete(id);
     }
 }

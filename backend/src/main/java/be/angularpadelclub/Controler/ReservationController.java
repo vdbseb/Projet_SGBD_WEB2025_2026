@@ -1,6 +1,5 @@
 package be.angularpadelclub.Controler;
 
-import be.angularpadelclub.DTO.MatchDTO;
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Mapper.MatchMapper;
 import be.angularpadelclub.Mapper.ReservationMapper;
@@ -15,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/reservations")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class ReservationController {
 
@@ -30,7 +30,7 @@ public class ReservationController {
 
     @GetMapping(path = "/{id}", produces = "application/json")
     public ResponseEntity<ReservationDTO> reservation(
-            @PathVariable int id
+            @PathVariable("id") int id
     ) {
         return ResponseEntity.of(
                 reservationService.findById(id)
@@ -38,15 +38,19 @@ public class ReservationController {
     }
 
     @PostMapping(consumes = "application/json")
-    public void addReservation(@RequestBody ReservationDTO reservationDTO) {
+    public void addReservation(
+            @RequestBody ReservationDTO reservationDTO
+    ) {
         reservationService.addReservation(reservationDTO);
     }
 
-
-    @GetMapping(params = {"courtId", "date"}, produces = "application/json")
+    @GetMapping(
+            params = {"courtId", "date"},
+            produces = "application/json"
+    )
     public List<ReservationDTO> reservationsByCourtAndDate(
-            @RequestParam int courtId,
-            @RequestParam LocalDate date
+            @RequestParam("courtId") int courtId,
+            @RequestParam("date") LocalDate date
     ) {
         return reservationMapper.toDTOList(
                 reservationService.findByCourtAndDate(courtId, date)
@@ -54,7 +58,9 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelReservation(@PathVariable int id) {
+    public ResponseEntity<Void> cancelReservation(
+            @PathVariable("id") int id
+    ) {
         reservationService.cancelReservation(id);
         return ResponseEntity.noContent().build();
     }

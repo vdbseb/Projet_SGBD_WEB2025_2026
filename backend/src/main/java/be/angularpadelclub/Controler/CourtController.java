@@ -18,25 +18,36 @@ public class CourtController {
         this.courtService = courtService;
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<CourtDTO> getAllCourts() {
         return courtService.getAllCourts();
     }
 
-    @GetMapping("/{id}")
-    public CourtDTO getCourtById(@PathVariable int id) {
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public CourtDTO getCourtById(
+            @PathVariable("id") int id
+    ) {
         return courtService.getCourtById(id);
     }
 
-    @PostMapping
+    @PostMapping(
+            consumes = "application/json",
+            produces = "application/json"
+    )
     @ResponseStatus(HttpStatus.CREATED)
-    public CourtDTO createCourt(@RequestBody CourtDTO dto) {
+    public CourtDTO createCourt(
+            @RequestBody CourtDTO dto
+    ) {
         return courtService.createCourt(dto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(
+            value = "/{id}",
+            consumes = "application/json",
+            produces = "application/json"
+    )
     public CourtDTO updateCourt(
-            @PathVariable int id,
+            @PathVariable("id") int id,
             @RequestBody CourtDTO dto
     ) {
         return courtService.updateCourt(id, dto);
@@ -44,7 +55,9 @@ public class CourtController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCourt(@PathVariable int id) {
+    public void deleteCourt(
+            @PathVariable("id") int id
+    ) {
         courtService.deleteCourt(id);
     }
 }
