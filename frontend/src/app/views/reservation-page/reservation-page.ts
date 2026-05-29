@@ -50,6 +50,10 @@ export class ReservationPage implements OnInit {
   participantMatricules = signal<string[]>([]);
   isMatchSelectionValid = signal(false);
 
+  matchDurationMinutes = signal(90);
+  pauseMinutes = signal(15);
+  closedDates = signal<string[]>([]);
+
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
@@ -57,6 +61,17 @@ export class ReservationPage implements OnInit {
     if (Number.isFinite(id)) {
       this.padelService.getSiteById(id).subscribe(site => {
         this.site.set(site);
+
+        const year = new Date().getFullYear();
+
+        this.padelService.getSiteSchedule(site.id, year).subscribe(schedule => {
+          this.matchDurationMinutes.set(schedule.duree_match_minutes ?? 90);
+          this.pauseMinutes.set(schedule.pause_minutes ?? 15);
+        });
+
+        this.padelService.getSiteClosingDays(site.id).subscribe(days => {
+          this.closedDates.set(days.map(day => day.dateFermeture));
+        });
       });
     }
   }
@@ -66,21 +81,29 @@ export class ReservationPage implements OnInit {
   }
 
   onDateSelected(date: Date) {
+    const formattedDate = this.formatLocalDate(date);
+
+    if (this.closedDates().includes(formattedDate)) {
+      this.snackBar.open('Le centre est fermé à cette date.', 'OK', {
+        duration: 4000
+      });
+
+      this.selectedDate.set(null);
+      this.selectedTime.set(null);
+      this.reservedTimes.set([]);
+      return;
+    }
+
     this.selectedDate.set(date);
     this.selectedTime.set(null);
     this.loadReservedTimes();
   }
 
   selectCourt(court: PadelCourt) {
-
     if (!court.active) {
-      this.snackBar.open(
-        'Ce terrain est actuellement en maintenance.',
-        'OK',
-        {
-          duration: 4000
-        }
-      );
+      this.snackBar.open('Ce terrain est actuellement en maintenance.', 'OK', {
+        duration: 4000
+      });
 
       return;
     }
@@ -152,7 +175,7 @@ export class ReservationPage implements OnInit {
     startDateTime.setHours(hour, minute, 0, 0);
 
     const endDateTime = new Date(startDateTime);
-    endDateTime.setMinutes(endDateTime.getMinutes() + 90);
+    endDateTime.setMinutes(endDateTime.getMinutes() + this.matchDurationMinutes());
 
     const endTime = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime
       .getMinutes()
@@ -181,7 +204,7 @@ export class ReservationPage implements OnInit {
         this.selectedTime.set(null);
         this.loadReservedTimes();
       },
-      error: (error) => {
+      error: error => {
         const message =
           error?.error?.detail ??
           error?.error?.message ??

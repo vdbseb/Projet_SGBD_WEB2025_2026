@@ -5,7 +5,7 @@ describe('Reservation happy flow', () => {
     cy.visit('http://localhost:4200');
 
 
-    cy.contains(/réserve à liège/i)
+    cy.contains(/réserve à arlon/i)
       .click();
 
 
@@ -16,7 +16,7 @@ describe('Reservation happy flow', () => {
       .click();
 
 
-    cy.contains(/the carré club/i)
+    cy.contains(/arlon blue padel/i)
       .should('be.visible');
 
 
@@ -26,7 +26,7 @@ describe('Reservation happy flow', () => {
 
 
     cy.get('[data-cy="time-slot"]')
-      .contains('09:00')
+      .contains('10:15')
       .click();
 
 

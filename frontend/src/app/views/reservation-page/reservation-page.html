@@ -55,6 +55,8 @@
           [reservedTimes]="reservedTimes()"
           [openingTime]="currentSite.openingTime"
           [closingTime]="currentSite.closingTime"
+          [matchDurationMinutes]="matchDurationMinutes()"
+          [pauseMinutes]="pauseMinutes()"
           (slotSelected)="onTimeSelected($event)">
         </app-time-slots>
 
