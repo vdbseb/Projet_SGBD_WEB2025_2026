@@ -79,6 +79,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./views/admin/admin-courts/admin-courts')
         .then(m => m.AdminCourts)
+  },
+
+  {
+    path: 'admin/statistiques',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+     import('./views/admin/admin-statistiques/admin-statistiques')
+       .then(m => m.AdminStatistiques)
   }
 
 ];
