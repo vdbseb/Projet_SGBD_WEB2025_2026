@@ -14,187 +14,92 @@
     </h1>
 
     <p class="text-slate-500 mt-2">
-      Suivi financier des matchs.
+      Suivi des paiements enregistrés par le backend.
     </p>
   </header>
 
-  <!-- STATS -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
-      <p class="text-slate-400 text-xs font-black uppercase tracking-widest">
-        Chiffre d'affaires
+      <p class="text-xs uppercase font-black text-slate-400 mb-2">
+        Total encaissé
       </p>
-      <p class="text-3xl font-black text-emerald-600 mt-2">
-        {{ getRevenue() }}€
+      <p class="text-3xl font-black text-emerald-700">
+        {{ getTotalPaid() }}€
       </p>
     </div>
 
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
-      <p class="text-slate-400 text-xs font-black uppercase tracking-widest">
-        Montant restant
+      <p class="text-xs uppercase font-black text-slate-400 mb-2">
+        Remboursé
       </p>
-      <p class="text-3xl font-black text-orange-600 mt-2">
-        {{ getRemainingRevenue() }}€
+      <p class="text-3xl font-black text-violet-700">
+        {{ getTotalRefunded() }}€
       </p>
     </div>
 
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
-      <p class="text-slate-400 text-xs font-black uppercase tracking-widest">
-        Matchs incomplets
+      <p class="text-xs uppercase font-black text-slate-400 mb-2">
+        En attente
       </p>
-      <p class="text-3xl font-black text-slate-900 mt-2">
-        {{ getIncompleteMatchesCount() }}
+      <p class="text-3xl font-black text-orange-700">
+        {{ getPendingCount() }}
       </p>
     </div>
-
   </div>
 
-  <!-- SEARCH -->
-  <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
+  <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
     <input
       type="text"
-      placeholder="Rechercher organisateur, site ou terrain..."
-      class="w-full border border-slate-200 rounded-2xl px-5 py-4 mb-6"
+      placeholder="Rechercher matricule, membre, statut..."
+      class="w-full border border-slate-200 rounded-2xl px-5 py-4"
       [value]="search()"
       (input)="search.set($any($event.target).value)"
     />
-
-    <!-- FILTERS -->
-    <div class="flex gap-3 flex-wrap">
-      <button
-        (click)="selectedFilter.set('all')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'all'
-          ? 'bg-slate-900 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Tous
-      </button>
-
-      <button
-        (click)="selectedFilter.set('paid')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'paid'
-          ? 'bg-emerald-600 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Payés
-      </button>
-
-      <button
-        (click)="selectedFilter.set('partial')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'partial'
-          ? 'bg-orange-500 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Partiels
-      </button>
-
-      <button
-        (click)="selectedFilter.set('organizer')"
-        class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-        [class]="selectedFilter() === 'organizer'
-          ? 'bg-red-500 text-white'
-          : 'bg-slate-100 text-slate-500'"
-      >
-        Solde organisateur
-      </button>
-    </div>
   </div>
 
-  <!-- CARDS -->
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-    @for (reservation of getVisibleReservations(); track reservation.id) {
+    @for (payment of filteredPayments(); track payment.id) {
       <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
 
-        <div class="flex justify-between items-start mb-4">
+        <div class="flex justify-between items-start gap-4 mb-4">
           <div>
             <h2 class="font-black text-slate-900">
-              {{ getCourtName(reservation) }}
+              {{ getMemberName(payment) }}
             </h2>
 
-            <p class="text-slate-400 text-sm mt-1">
-              {{ getSiteName(reservation) }}
+            <p class="text-slate-400 text-sm font-mono">
+              {{ getMemberMatricule(payment) }}
             </p>
           </div>
 
           <span
             class="px-3 py-1 rounded-full text-xs font-black uppercase"
-            [class]="getPaymentStatusClass(reservation)"
+            [class]="getStatusClass(payment)"
           >
-            {{ getPaymentStatus(reservation) }}
+            {{ payment.statut || 'EN_ATTENTE' }}
           </span>
         </div>
 
-        <div class="space-y-3 text-sm text-slate-500 mb-6">
+        <div class="space-y-2 text-sm text-slate-500">
           <p>
-            <strong>Organisateur :</strong>
-            {{ getOrganizerLabel(reservation) }}
+            <strong>Montant :</strong>
+            {{ getAmount(payment) }}€
+          </p>
+
+          <p>
+            <strong>Méthode :</strong>
+            {{ payment.methode || 'Non renseignée' }}
           </p>
 
           <p>
             <strong>Date :</strong>
-            {{ reservation.date | date:'dd/MM/yyyy' }}
+            {{ payment.datePaiement | date:'dd/MM/yyyy HH:mm' }}
           </p>
 
           <p>
-            <strong>Heure :</strong>
-            {{ reservation.startTime }} - {{ reservation.endTime }}
+            <strong>Réservation :</strong>
+            {{ payment.reservationId || '—' }}
           </p>
-        </div>
-
-        <!-- MONEY -->
-        <div class="grid grid-cols-3 gap-3 mb-6">
-
-          <div class="bg-slate-50 rounded-2xl p-3 text-center">
-            <p class="text-xl font-black text-slate-900">
-              60€
-            </p>
-            <p class="text-[10px] uppercase font-black text-slate-400">
-              Total
-            </p>
-          </div>
-
-          <div class="bg-emerald-50 rounded-2xl p-3 text-center">
-            <p class="text-xl font-black text-emerald-700">
-              {{ getPaidAmount(reservation) }}€
-            </p>
-            <p class="text-[10px] uppercase font-black text-emerald-400">
-              Payé
-            </p>
-          </div>
-
-          <div class="bg-orange-50 rounded-2xl p-3 text-center">
-            <p class="text-xl font-black text-orange-700">
-              {{ getRemainingAmount(reservation) }}€
-            </p>
-            <p class="text-[10px] uppercase font-black text-orange-400">
-              Restant
-            </p>
-          </div>
-
-        </div>
-
-        <!-- PARTICIPANTS -->
-        <div class="space-y-2">
-          @for (participant of getParticipantRows(reservation); track participant) {
-            <div class="flex justify-between items-center bg-slate-50 rounded-2xl px-4 py-3">
-              <span class="text-sm font-medium text-slate-700">
-                {{ participant }}
-              </span>
-
-              <span
-                class="text-[10px] font-black uppercase px-2 py-1 rounded-full"
-                [class]="participant === 'Place libre'
-                  ? 'bg-slate-200 text-slate-500'
-                  : 'bg-emerald-100 text-emerald-700'"
-              >
-                {{ participant === 'Place libre' ? 'Disponible' : 'Payé' }}
-              </span>
-            </div>
-          }
         </div>
 
       </div>

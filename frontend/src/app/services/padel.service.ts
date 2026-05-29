@@ -174,6 +174,10 @@ export class PadelService {
       `${this.apiBaseUrl}/paiements/member/${memberId}/wallet`
     );
   }
+  getPayments(){
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/paiements`);
+  }
 
 }
 
