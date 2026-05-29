@@ -54,6 +54,26 @@ public class MembreController {
                 .orElseThrow(() -> new RuntimeException("Member not found"));
     }
 
+    @GetMapping(value = "/admin/{adminMatricule}", produces = "application/json")
+    public List<MembreDTO> findVisibleByAdmin(
+            @PathVariable("adminMatricule") String adminMatricule
+    ) {
+        return membreMapper.toDTOList(
+                membreService.findVisibleByAdmin(adminMatricule)
+        );
+    }
+
+    @PostMapping(
+            value = "/admin/{adminMatricule}",
+            consumes = "application/json"
+    )
+    public void addMemberAsAdmin(
+            @PathVariable("adminMatricule") String adminMatricule,
+            @RequestBody MembreDTO dto
+    ) {
+        membreService.addMemberAsAdmin(adminMatricule, dto);
+    }
+
     @PostMapping(consumes = "application/json")
     public void addMember(@RequestBody MembreDTO dto) {
         membreService.addMember(dto);

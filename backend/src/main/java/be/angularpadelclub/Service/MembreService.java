@@ -1,9 +1,11 @@
 package be.angularpadelclub.Service;
 
 import be.angularpadelclub.DTO.MembreDTO;
+import be.angularpadelclub.Entity.AdministrateurEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.SiteEntity;
 import be.angularpadelclub.Mapper.MembreMapper;
+import be.angularpadelclub.Repository.AdministrateurRepository;
 import be.angularpadelclub.Repository.MembreRepository;
 import be.angularpadelclub.Repository.SiteRepository;
 import org.springframework.http.HttpStatus;
@@ -19,19 +21,41 @@ public class MembreService {
     private final MembreRepository membreRepository;
     private final SiteRepository siteRepository;
     private final MembreMapper membreMapper;
+    private final AdministrateurRepository administrateurRepository;
 
     public MembreService(
             MembreRepository membreRepository,
             SiteRepository siteRepository,
-            MembreMapper membreMapper
+            MembreMapper membreMapper,
+            AdministrateurRepository administrateurRepository
     ) {
         this.membreRepository = membreRepository;
         this.siteRepository = siteRepository;
         this.membreMapper = membreMapper;
+        this.administrateurRepository = administrateurRepository;
     }
 
     public List<MembreEntity> findAll() {
         return membreRepository.findAll();
+    }
+
+    public List<MembreEntity> findVisibleByAdmin(String adminMatricule) {
+        AdministrateurEntity admin = findAdminOrThrow(adminMatricule);
+
+        if (isGlobalAdmin(admin)) {
+            return membreRepository.findAll();
+        }
+
+        if (isSiteAdmin(admin)) {
+            SiteEntity adminSite = getAdminSiteOrThrow(admin);
+
+            return membreRepository.findBySiteId(adminSite.getId());
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Accès refusé : type d'administrateur non autorisé."
+        );
     }
 
     public Optional<MembreEntity> findById(int id) {
@@ -74,20 +98,46 @@ public class MembreService {
             );
         }
 
-        SiteEntity site = null;
-
-        if (dto.siteId() != null) {
-            site = siteRepository.findById(dto.siteId())
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Création impossible : site introuvable avec l'id " + dto.siteId()
-                    ));
-        }
+        SiteEntity site = resolveSiteForMember(dto);
 
         MembreEntity member = membreMapper.toEntity(dto, site);
         member.setId(null);
 
         membreRepository.save(member);
+    }
+
+    public void addMemberAsAdmin(String adminMatricule, MembreDTO dto) {
+        AdministrateurEntity admin = findAdminOrThrow(adminMatricule);
+
+        if (isGlobalAdmin(admin)) {
+            addMember(dto);
+            return;
+        }
+
+        if (!isSiteAdmin(admin)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Création impossible : type d'administrateur non autorisé."
+            );
+        }
+
+        SiteEntity adminSite = getAdminSiteOrThrow(admin);
+
+        validateLocalAdminMemberCreation(dto);
+
+        MembreDTO securedDto = new MembreDTO(
+                dto.id(),
+                dto.active(),
+                dto.email(),
+                dto.matricule(),
+                dto.firstName(),
+                dto.lastName(),
+                dto.type(),
+                adminSite.getId(),
+                adminSite.getNom()
+        );
+
+        addMember(securedDto);
     }
 
     /**
@@ -170,6 +220,42 @@ public class MembreService {
                 ));
     }
 
+    private AdministrateurEntity findAdminOrThrow(String adminMatricule) {
+        if (adminMatricule == null || adminMatricule.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le matricule administrateur est obligatoire."
+            );
+        }
+
+        return administrateurRepository.findByMatricule(adminMatricule)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Administrateur introuvable avec le matricule : " + adminMatricule
+                ));
+    }
+
+    private SiteEntity getAdminSiteOrThrow(AdministrateurEntity admin) {
+        if (admin.getSite() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Action impossible : cet administrateur local n'est rattaché à aucun site."
+            );
+        }
+
+        return admin.getSite();
+    }
+
+    private boolean isGlobalAdmin(AdministrateurEntity admin) {
+        return admin.getTypeAdmin() != null
+                && "GLOBAL".equalsIgnoreCase(admin.getTypeAdmin());
+    }
+
+    private boolean isSiteAdmin(AdministrateurEntity admin) {
+        return admin.getTypeAdmin() != null
+                && "SITE".equalsIgnoreCase(admin.getTypeAdmin());
+    }
+
     private void validateMemberCreateRequest(MembreDTO dto) {
         if (dto == null) {
             throw new ResponseStatusException(
@@ -221,6 +307,38 @@ public class MembreService {
         }
 
         validateMatriculeMatchesType(dto);
+        validateSiteMatchesType(dto);
+    }
+
+    private void validateLocalAdminMemberCreation(MembreDTO dto) {
+        if (dto == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Les données du membre sont obligatoires."
+            );
+        }
+
+        if (dto.type() == null || dto.type().getCode() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le type de membre est obligatoire."
+            );
+        }
+
+        if (!"SITE".equalsIgnoreCase(dto.type().getCode())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Un administrateur local ne peut créer que des membres de type SITE."
+            );
+        }
+
+        if (dto.matricule() != null && !dto.matricule().isBlank()
+                && !dto.matricule().toUpperCase().startsWith("S")) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Un administrateur local ne peut créer que des matricules commençant par S."
+            );
+        }
     }
 
     private void validateMatriculeMatchesType(MembreDTO dto) {
@@ -258,6 +376,51 @@ public class MembreService {
         }
     }
 
+    private void validateSiteMatchesType(MembreDTO dto) {
+        String typeCode = dto.type().getCode().toUpperCase();
+
+        if ("SITE".equals(typeCode) && dto.siteId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Un membre SITE doit être rattaché à un site."
+            );
+        }
+
+        if ("GLOBAL".equals(typeCode) && dto.siteId() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Un membre GLOBAL ne doit pas être rattaché à un site."
+            );
+        }
+
+        if ("LIBRE".equals(typeCode) && dto.siteId() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Un membre LIBRE ne doit pas être rattaché à un site."
+            );
+        }
+    }
+
+    private SiteEntity resolveSiteForMember(MembreDTO dto) {
+        if (dto.siteId() == null) {
+            return null;
+        }
+
+        SiteEntity site = siteRepository.findById(dto.siteId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Création impossible : site introuvable avec l'id " + dto.siteId()
+                ));
+
+        if (!site.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Création impossible : le site " + site.getNom() + " est fermé."
+            );
+        }
+
+        return site;
+    }
     private String getPrefixForTypeCode(String typeCode) {
         if (typeCode == null || typeCode.isBlank()) {
             throw new ResponseStatusException(

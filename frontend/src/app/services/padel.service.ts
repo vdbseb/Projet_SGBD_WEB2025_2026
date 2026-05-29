@@ -1,7 +1,8 @@
-import {inject, Injectable} from '@angular/core';
-import {PadelCourt, PadelSite} from '../shared/site.model';
-import {HttpClient} from '@angular/common/http';
-import {map, Observable} from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+
+import { PadelCourt, PadelSite } from '../shared/site.model';
 
 interface SiteDTO {
   id: number;
@@ -30,10 +31,14 @@ interface CourtDTO {
 })
 export class PadelService {
   private readonly httpClient = inject(HttpClient);
-  private readonly sitesUrl = 'http://localhost:8080/api/sites';
-  private readonly courtsUrl = 'http://localhost:8080/api/courts';
-  private readonly apiBaseUrl = 'http://localhost:8080/api';
 
+  private readonly apiBaseUrl = 'http://localhost:8080/api';
+  private readonly sitesUrl = `${this.apiBaseUrl}/sites`;
+  private readonly courtsUrl = `${this.apiBaseUrl}/courts`;
+
+  // =========================
+  // SITES
+  // =========================
 
   getSites(): Observable<PadelSite[]> {
     return this.httpClient.get<SiteDTO[]>(this.sitesUrl).pipe(
@@ -46,21 +51,205 @@ export class PadelService {
       map(site => this.toPadelSite(site, []))
     );
   }
-deactivateSite(siteId: number) {
-  return this.httpClient.delete<void>(
-    `${this.apiBaseUrl}/sites/${siteId}`
-  );
-}
 
-updateSite(siteId: number, site: any) {
-  return this.httpClient.put<any>(
-    `${this.apiBaseUrl}/sites/${siteId}`,
-    site
-  );
-}
+  deactivateSite(siteId: number) {
+    return this.httpClient.delete<void>(
+      `${this.apiBaseUrl}/sites/${siteId}`
+    );
+  }
+
+  updateSite(siteId: number, site: any) {
+    return this.httpClient.put<any>(
+      `${this.apiBaseUrl}/sites/${siteId}`,
+      site
+    );
+  }
+
+  // =========================
+  // TERRAINS
+  // =========================
+
   getCourts(): Observable<CourtDTO[]> {
     return this.httpClient.get<CourtDTO[]>(this.courtsUrl);
   }
+
+  // =========================
+  // RÉSERVATIONS
+  // =========================
+
+  getReservations(courtId: number, date: string) {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/reservations?courtId=${courtId}&date=${date}`
+    );
+  }
+
+  getAllReservations() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/reservations`
+    );
+  }
+
+  createReservation(reservation: any) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/reservations`,
+      reservation
+    );
+  }
+
+  deleteReservation(id: number) {
+    return this.httpClient.delete<void>(
+      `${this.apiBaseUrl}/reservations/${id}`
+    );
+  }
+
+  // =========================
+  // MEMBRES
+  // =========================
+
+  getMembers() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/members`
+    );
+  }
+
+  getMembersForAdmin(adminMatricule: string) {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/members/admin/${adminMatricule}`
+    );
+  }
+
+  getMemberByMatricule(matricule: string) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/members/${matricule}`
+    );
+  }
+
+  getNextMatricule(typeCode: string) {
+    return this.httpClient.get(
+      `${this.apiBaseUrl}/members/next-matricule`,
+      {
+        params: { typeCode },
+        responseType: 'text'
+      }
+    );
+  }
+
+  createMember(member: any) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/members`,
+      member
+    );
+  }
+
+  createMemberAsAdmin(adminMatricule: string, member: any) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/members/admin/${adminMatricule}`,
+      member
+    );
+  }
+
+  updateMemberActiveStatus(memberId: number, active: boolean) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/members/${memberId}/active`,
+      { active }
+    );
+  }
+
+  getMemberWallet(memberId: number) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/paiements/member/${memberId}/wallet`
+    );
+  }
+
+  // =========================
+  // ADMINISTRATEURS
+  // =========================
+
+  getAdministrators() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/administrateurs`
+    );
+  }
+
+  // =========================
+  // MATCHS
+  // =========================
+
+  getMatches() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/matches`
+    );
+  }
+
+  joinPublicMatch(matchId: number, memberId: number) {
+    return this.httpClient.post<void>(
+      `${this.apiBaseUrl}/matches/${matchId}/join/${memberId}`,
+      null
+    );
+  }
+
+  leavePublicMatch(matchId: number, memberId: number) {
+    return this.httpClient.delete<void>(
+      `${this.apiBaseUrl}/matches/${matchId}/leave/${memberId}`
+    );
+  }
+
+  // =========================
+  // HORAIRES / FERMETURES
+  // =========================
+
+  getSiteSchedule(siteId: number, year: number) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/horaires-sites/site/${siteId}/annee/${year}`
+    );
+  }
+
+  getSiteClosingDays(siteId: number) {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/jours-fermeture/site/${siteId}`
+    );
+  }
+
+  getGlobalClosingDays() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/jours-fermeture/globales`
+    );
+  }
+
+  // =========================
+  // PAIEMENTS
+  // =========================
+
+  getPayments() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/paiements`
+    );
+  }
+
+  confirmPayment(paymentId: number) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/paiements/${paymentId}/confirmer`,
+      null
+    );
+  }
+
+  refusePayment(paymentId: number) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/paiements/${paymentId}/refuser`,
+      null
+    );
+  }
+
+  refundPayment(paymentId: number) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/paiements/${paymentId}/rembourser`,
+      null
+    );
+  }
+
+  // =========================
+  // MAPPERS FRONT
+  // =========================
 
   private toPadelCourt(court: CourtDTO): PadelCourt {
     const type = court.type ?? (court.indoor ? 'Indoor' : 'Outdoor');
@@ -83,7 +272,6 @@ updateSite(siteId: number, site: any) {
       initial: site.city.charAt(0).toUpperCase(),
       description: site.description,
       courts: site.courts?.map(court => this.toPadelCourt(court)) || courts,
-
       openingTime: site.openingTime,
       closingTime: site.closingTime,
       active: site.active,
@@ -104,176 +292,4 @@ updateSite(siteId: number, site: any) {
         return 'images/bruxelles.jpg';
     }
   }
-  getReservations(courtId: number, date: string) {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/reservations?courtId=${courtId}&date=${date}`
-    );
-  }
-
-  createReservation(reservation: any) {
-    return this.httpClient.post(
-      `${this.apiBaseUrl}/reservations`,
-      reservation
-    );
-  }
-
-  getMembers() {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/members`
-    );
-  }
-  getMemberByMatricule(matricule: string) {
-    return this.httpClient.get<any>(
-      `${this.apiBaseUrl}/members/${matricule}`
-    );
-  }
-  getAllReservations() {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/reservations`
-    );
-  }
-  deleteReservation(id: number) {
-    return this.httpClient.delete(
-      `${this.apiBaseUrl}/reservations/${id}`
-    );
-  }
-  getAdministrators() {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/administrateurs`
-    );
-  }
-  getMatches() {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/matches`
-    );
-  }
-  joinPublicMatch(matchId: number, memberId: number) {
-    return this.httpClient.post<void>(
-      `${this.apiBaseUrl}/matches/${matchId}/join/${memberId}`,
-      null
-    );
-  }
-  leavePublicMatch(matchId: number, memberId: number) {
-    return this.httpClient.delete<void>(
-      `${this.apiBaseUrl}/matches/${matchId}/leave/${memberId}`
-    );
-  }
-  getNextMatricule(typeCode: string) {
-    return this.httpClient.get(
-      `${this.apiBaseUrl}/members/next-matricule`,
-        {
-        params: { typeCode },
-        responseType: 'text'
-        }
-    );
-  }
-  createMember(member: any) {
-    return this.httpClient.post<any>(
-      `${this.apiBaseUrl}/members`,
-      member
-    );
-  }
-updateMemberActiveStatus(memberId: number, active: boolean) {
-  return this.httpClient.patch<any>(
-    `${this.apiBaseUrl}/members/${memberId}/active`,
-    { active }
-  );
 }
-  getSiteSchedule(siteId: number, year: number) {
-    return this.httpClient.get<any>(
-      `${this.apiBaseUrl}/horaires-sites/site/${siteId}/annee/${year}`
-    );
-  }
-
-  getSiteClosingDays(siteId: number) {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/jours-fermeture/site/${siteId}`
-    );
-  }
-
-  getGlobalClosingDays() {
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/jours-fermeture/globales`
-    );
-  }
-  getMemberWallet(memberId: number) {
-    return this.httpClient.get<any>(
-      `${this.apiBaseUrl}/paiements/member/${memberId}/wallet`
-    );
-  }
-  getPayments(){
-    return this.httpClient.get<any[]>(
-      `${this.apiBaseUrl}/paiements`);
-  }
-  confirmPayment(paymentId: number) {
-    return this.httpClient.patch<any>(
-      `${this.apiBaseUrl}/paiements/${paymentId}/confirmer`,
-      null
-    );
-  }
-
-  refusePayment(paymentId: number) {
-    return this.httpClient.patch<any>(
-      `${this.apiBaseUrl}/paiements/${paymentId}/refuser`,
-      null
-    );
-  }
-
-  refundPayment(paymentId: number) {
-    return this.httpClient.patch<any>(
-      `${this.apiBaseUrl}/paiements/${paymentId}/rembourser`,
-      null
-    );
-  }
-
-
-}
-
-
-  /*
-  private readonly sites: PadelSite[] = [
-    {
-      id: uuid(),
-      city: 'Bruxelles',
-      clubName: 'The Atomium Padel Club',
-      image: 'images/bruxelles.jpg',
-      initial: 'B',
-      description: 'Situé au cœur de la capitale, ce centre propose des terrains indoor de dernière génération. Idéal pour une partie entre collègues ou un tournoi intensif.',
-      courts:[
-        {id : uuid(), name: 'Court1', type: 'Indoor'},
-        {id : uuid(), name: 'Court2', type: 'Outdoor'}
-      ]
-    },
-    {
-      id: uuid(),
-      city: 'Liège',
-      clubName: 'The Carré Club',
-      image: 'images/liege.jpg',
-      initial: 'L',
-      description: 'La "Cité Ardente" porte bien son nom ! Profitez de terrains spacieux et d\'un club-house réputé pour sa convivialité et son ambiance unique.',
-      courts:[
-        {id : uuid(), name: 'Court1', type: 'Outdoor'},
-        {id : uuid(), name: 'Court2', type: 'Indoor'}
-      ]
-    },
-    {
-      id: uuid(),
-      city: 'Arlon',
-      clubName: 'Arlon Green Padel',
-      image: 'images/arlon.jpg',
-      initial: 'A',
-      description: 'À la frontière du Luxembourg, ce site offre un cadre verdoyant et apaisant. Des installations modernes parfaites pour s\'évader du quotidien.',
-      courts:[
-        {id : uuid(), name: 'Court1', type: 'Indoor'},
-        {id : uuid(), name: 'Court2', type: 'Outdoor'}
-      ]
-    }
-  ];
-  getSites(): PadelSite[] {
-    return this.sites;
-  }
-  getSiteById(id: string): PadelSite | undefined {
-    return this.sites.find(site => site.id === id);
-  }
-}
-*/

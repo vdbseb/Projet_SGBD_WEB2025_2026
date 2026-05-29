@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { PadelService } from '../../../../services/padel.service';
 
 @Component({
@@ -10,20 +10,32 @@ import { PadelService } from '../../../../services/padel.service';
   templateUrl: './create-member-dialog.html'
 })
 export class CreateMemberDialog implements OnInit {
-  private dialogRef = inject(MatDialogRef<CreateMemberDialog>);
   private padelService = inject(PadelService);
+  private dialogRef = inject(MatDialogRef<CreateMemberDialog>);
 
+  data = inject(MAT_DIALOG_DATA);
+
+  typeId = signal(1);
   matricule = signal('');
   firstName = signal('');
   lastName = signal('');
   email = signal('');
-  typeId = signal(1);
 
   ngOnInit() {
+    if (this.data?.admin?.typeAdmin === 'SITE') {
+      this.typeId.set(2);
+    }
+
     this.loadNextMatricule();
   }
 
   onTypeChange(value: number) {
+    if (this.data?.admin?.typeAdmin === 'SITE') {
+      this.typeId.set(2);
+      this.loadNextMatricule();
+      return;
+    }
+
     this.typeId.set(Number(value));
     this.loadNextMatricule();
   }
@@ -33,12 +45,16 @@ export class CreateMemberDialog implements OnInit {
       return;
     }
 
+    const admin = this.data?.admin;
+    const isSiteAdmin = admin?.typeAdmin === 'SITE';
+
     this.dialogRef.close({
       matricule: this.matricule().toUpperCase(),
       firstName: this.firstName(),
       lastName: this.lastName(),
       email: this.email(),
       type: this.buildType(),
+      siteId: isSiteAdmin ? admin.siteId : null,
       active: true
     });
   }
@@ -48,60 +64,50 @@ export class CreateMemberDialog implements OnInit {
   }
 
   private loadNextMatricule() {
-    const typeCode = this.getTypeCodeFromId(this.typeId());
+    const typeCode = this.getTypeCode();
 
     this.padelService.getNextMatricule(typeCode).subscribe({
-      next: (matricule: string) => {
+      next: matricule => {
         this.matricule.set(matricule);
-      },
-      error: () => {
-        this.matricule.set('');
       }
     });
   }
 
-  private getTypeCodeFromId(typeId: number): string {
-    switch (Number(typeId)) {
-      case 1:
-        return 'GLOBAL';
-      case 2:
-        return 'SITE';
-      case 3:
-        return 'LIBRE';
-      default:
-        return 'GLOBAL';
+  private getTypeCode(): 'GLOBAL' | 'SITE' | 'LIBRE' {
+    if (this.typeId() === 1) {
+      return 'GLOBAL';
     }
+
+    if (this.typeId() === 2) {
+      return 'SITE';
+    }
+
+    return 'LIBRE';
   }
 
   private buildType() {
-    switch (this.typeId()) {
-      case 1:
-        return {
-          id: 1,
-          code: 'GLOBAL',
-          delai_reservation_jours: 21
-        };
+    const typeCode = this.getTypeCode();
 
-      case 2:
-        return {
-          id: 2,
-          code: 'SITE',
-          delai_reservation_jours: 14
-        };
-
-      case 3:
-        return {
-          id: 3,
-          code: 'LIBRE',
-          delai_reservation_jours: 5
-        };
-
-      default:
-        return {
-          id: 1,
-          code: 'GLOBAL',
-          delai_reservation_jours: 21
-        };
+    if (typeCode === 'GLOBAL') {
+      return {
+        id: 1,
+        code: 'GLOBAL',
+        delai_reservation_jours: 21
+      };
     }
+
+    if (typeCode === 'SITE') {
+      return {
+        id: 2,
+        code: 'SITE',
+        delai_reservation_jours: 14
+      };
+    }
+
+    return {
+      id: 3,
+      code: 'LIBRE',
+      delai_reservation_jours: 5
+    };
   }
 }
