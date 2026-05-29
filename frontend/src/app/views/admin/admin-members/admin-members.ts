@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FormsModule } from '@angular/forms';
 
 import { PadelService } from '../../../services/padel.service';
 import { CreateMemberDialog } from './create-member-dialog/create-member-dialog';
@@ -14,7 +15,8 @@ import { CreateMemberDialog } from './create-member-dialog/create-member-dialog'
     RouterLink,
     MatIconModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    FormsModule
   ],
   templateUrl: './admin-members.html'
 })
@@ -24,10 +26,16 @@ export class AdminMembers implements OnInit {
   private snackBar = inject(MatSnackBar);
 
   members = signal<any[]>([]);
+  sites = signal<any[]>([]);
+
   search = signal('');
+  selectedType = signal<'ALL' | 'GLOBAL' | 'SITE' | 'LIBRE'>('ALL');
+  selectedSiteId = signal<number | 'ALL'>('ALL');
+  selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
   ngOnInit() {
     this.loadMembers();
+    this.loadSites();
   }
 
   loadMembers() {
@@ -36,18 +44,48 @@ export class AdminMembers implements OnInit {
     });
   }
 
+  loadSites() {
+    this.padelService.getSites().subscribe(sites => {
+      this.sites.set(sites);
+    });
+  }
+
   filteredMembers() {
     const query = this.search().toLowerCase().trim();
+    const selectedType = this.selectedType();
+    const selectedSiteId = this.selectedSiteId();
+    const selectedStatus = this.selectedStatus();
 
-    if (!query) {
-      return this.members();
-    }
+    return this.members().filter(member => {
+      const matchesSearch =
+        !query ||
+        member.firstName?.toLowerCase().includes(query) ||
+        member.lastName?.toLowerCase().includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.matricule?.toLowerCase().includes(query);
 
-    return this.members().filter(member =>
-      member.firstName?.toLowerCase().includes(query) ||
-      member.lastName?.toLowerCase().includes(query) ||
-      member.matricule?.toLowerCase().includes(query)
-    );
+      const matchesType =
+        selectedType === 'ALL' ||
+        member.type?.code === selectedType;
+
+      const matchesSite =
+        selectedSiteId === 'ALL' ||
+        member.siteId === selectedSiteId;
+
+      const matchesStatus =
+        selectedStatus === 'ALL' ||
+        (selectedStatus === 'ACTIVE' && member.active) ||
+        (selectedStatus === 'INACTIVE' && !member.active);
+
+      return matchesSearch && matchesType && matchesSite && matchesStatus;
+    });
+  }
+
+  resetFilters() {
+    this.search.set('');
+    this.selectedType.set('ALL');
+    this.selectedSiteId.set('ALL');
+    this.selectedStatus.set('ALL');
   }
 
   openCreateMemberDialog() {

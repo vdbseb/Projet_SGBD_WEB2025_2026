@@ -37,10 +37,89 @@
     <input
       type="text"
       class="w-full border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:border-slate-900"
-      placeholder="Rechercher par nom, prénom ou matricule..."
+      placeholder="Rechercher par nom, prénom, email ou matricule..."
       [value]="search()"
       (input)="search.set($any($event.target).value)"
     />
+
+    <div class="mt-5 flex flex-wrap gap-3">
+
+      <button
+        (click)="selectedType.set('ALL')"
+        class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+        [class.bg-slate-900]="selectedType() === 'ALL'"
+        [class.text-white]="selectedType() === 'ALL'"
+        [class.border-slate-900]="selectedType() === 'ALL'"
+      >
+        Tous
+      </button>
+
+      <button
+        (click)="selectedType.set('GLOBAL')"
+        class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+        [class.bg-slate-900]="selectedType() === 'GLOBAL'"
+        [class.text-white]="selectedType() === 'GLOBAL'"
+        [class.border-slate-900]="selectedType() === 'GLOBAL'"
+      >
+        Global
+      </button>
+
+      <button
+        (click)="selectedType.set('SITE')"
+        class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+        [class.bg-slate-900]="selectedType() === 'SITE'"
+        [class.text-white]="selectedType() === 'SITE'"
+        [class.border-slate-900]="selectedType() === 'SITE'"
+      >
+        Site
+      </button>
+
+      <button
+        (click)="selectedType.set('LIBRE')"
+        class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+        [class.bg-slate-900]="selectedType() === 'LIBRE'"
+        [class.text-white]="selectedType() === 'LIBRE'"
+        [class.border-slate-900]="selectedType() === 'LIBRE'"
+      >
+        Libre
+      </button>
+
+      <select
+        class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+        [ngModel]="selectedSiteId()"
+        (ngModelChange)="selectedSiteId.set($event === 'ALL' ? 'ALL' : +$event)"
+      >
+        <option value="ALL">Tous les sites</option>
+
+        @for (site of sites(); track site.id) {
+        <option [value]="site.id">
+          {{ site.clubName }}
+        </option>
+        }
+      </select>
+
+      <select
+        class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+        [ngModel]="selectedStatus()"
+        (ngModelChange)="selectedStatus.set($event)"
+      >
+        <option value="ALL">Tous les statuts</option>
+        <option value="ACTIVE">Actifs</option>
+        <option value="INACTIVE">Inactifs</option>
+      </select>
+
+      <button
+        (click)="resetFilters()"
+        class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+      >
+        Réinitialiser
+      </button>
+
+    </div>
+
+    <p class="mt-4 text-sm text-slate-400">
+      {{ filteredMembers().length }} membre(s) affiché(s)
+    </p>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
