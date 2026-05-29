@@ -88,9 +88,11 @@ public class ReservationValidationService {
             );
         }
 
-        boolean hasBlockingPenalty = penaliteRepository.existsByMembre_IdAndActiveTrue(
-                member.getId()
-        );
+        boolean hasBlockingPenalty =
+                penaliteRepository.existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
+                        member.getId(),
+                        LocalDate.now()
+                );
 
         if (hasBlockingPenalty) {
             throw new ResponseStatusException(
