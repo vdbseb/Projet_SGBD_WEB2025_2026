@@ -146,6 +146,15 @@ export class PadelService {
       `${this.apiBaseUrl}/matches/${matchId}/leave/${memberId}`
     );
   }
+  getNextMatricule(typeCode: string) {
+    return this.httpClient.get(
+      `${this.apiBaseUrl}/members/next-matricule`,
+        {
+        params: { typeCode },
+        responseType: 'text'
+        }
+    );
+  }
   createMember(member: any) {
     return this.httpClient.post<any>(
       `${this.apiBaseUrl}/members`,

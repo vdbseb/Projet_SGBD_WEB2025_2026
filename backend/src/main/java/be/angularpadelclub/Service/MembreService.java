@@ -71,4 +71,34 @@ public class MembreService {
     public void deleteMember(int id) {
         membreRepository.deleteById(id);
     }
+    public String getNextMatricule(String typeCode) {
+        String prefix = getPrefixForTypeCode(typeCode);
+
+        String lastMatricule = membreRepository
+                .findTopByMatriculeStartingWithOrderByMatriculeDesc(prefix)
+                .map(MembreEntity::getMatricule)
+                .orElse(null);
+
+        int nextNumber = 1;
+
+        if (lastMatricule != null) {
+            String numericPart = lastMatricule.substring(1);
+            nextNumber = Integer.parseInt(numericPart) + 1;
+        }
+
+        return prefix + String.format("%04d", nextNumber);
+    }
+
+    private String getPrefixForTypeCode(String typeCode) {
+        if (typeCode == null || typeCode.isBlank()) {
+            throw new RuntimeException("Type membre obligatoire.");
+        }
+
+        return switch (typeCode.toUpperCase()) {
+            case "GLOBAL" -> "G";
+            case "SITE" -> "S";
+            case "LIBRE" -> "L";
+            default -> throw new RuntimeException("Type membre inconnu : " + typeCode);
+        };
+    }
 }

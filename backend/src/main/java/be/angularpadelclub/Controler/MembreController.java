@@ -49,6 +49,11 @@ public class MembreController {
                 .orElseThrow(() -> new RuntimeException("Member not found"));
     }
 
+    @GetMapping("/next-matricule")
+    public String getNextMatricule(@RequestParam("typeCode") String typeCode) {
+        return membreService.getNextMatricule(typeCode);
+    }
+
     @PostMapping(consumes = "application/json")
     public void addMember(@RequestBody MembreDTO dto) {
         membreService.addMember(dto);

@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface MembreRepository extends JpaRepository<MembreEntity, Integer> {
 
+    Optional<MembreEntity> findTopByMatriculeStartingWithOrderByMatriculeDesc(String prefix);
     Optional<MembreEntity> findByMatricule(String matricule);
     List<MembreEntity> findByNomIgnoreCaseAndPrenomIgnoreCase(String nom, String prenom);
 
