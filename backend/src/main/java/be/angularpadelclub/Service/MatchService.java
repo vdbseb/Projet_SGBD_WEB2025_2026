@@ -8,7 +8,6 @@ import be.angularpadelclub.Entity.ParticipationEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
-import be.angularpadelclub.Enum.ParticipationStatut;
 import be.angularpadelclub.Repository.CourtRepository;
 import be.angularpadelclub.Repository.MatchRepository;
 import be.angularpadelclub.Repository.MembreRepository;
@@ -25,34 +24,24 @@ import java.util.List;
 @Service
 public class MatchService {
 
-    private static final int PLAYER_SHARE_CENTS = 1500;
-    private static final List<ParticipationStatut> ACTIVE_PARTICIPATION_STATUSES =
-            List.of(
-                    ParticipationStatut.EN_ATTENTE_PAIEMENT,
-                    ParticipationStatut.PAYEE
-            );
-
     private final MatchRepository matchRepository;
     private final CourtRepository courtRepository;
     private final MembreRepository membreRepository;
     private final ParticipationRepository participationRepository;
     private final ReservationRepository reservationRepository;
-    private final PaiementService paiementService;
 
     public MatchService(
             MatchRepository matchRepository,
             CourtRepository courtRepository,
             MembreRepository membreRepository,
             ParticipationRepository participationRepository,
-            ReservationRepository reservationRepository,
-            PaiementService paiementService
+            ReservationRepository reservationRepository
     ) {
         this.matchRepository = matchRepository;
         this.courtRepository = courtRepository;
         this.membreRepository = membreRepository;
         this.participationRepository = participationRepository;
         this.reservationRepository = reservationRepository;
-        this.paiementService = paiementService;
     }
 
 //    public MatchEntity createMatch(MatchDTO dto) {
@@ -170,14 +159,7 @@ public class MatchService {
         participation.setDateInscription(
                 LocalDateTime.now()
         );
-        participation.setStatut(ParticipationStatut.EN_ATTENTE_PAIEMENT);
-        participation.setMontantDuCentimes(PLAYER_SHARE_CENTS);
-        participation.setDateLimitePaiement(
-                LocalDateTime.of(
-                        match.getDateMatch().minusDays(1),
-                        match.getHeureDebut()
-                )
-        );
+        participation.setPaiement(null);
 
         participationRepository.save(
                 participation
@@ -231,7 +213,6 @@ public class MatchService {
         }
 
         match.setStatut(MatchStatus.ANNULE);
-        paiementService.rembourserPaiementsMatch(match.getId());
 
         return matchRepository.save(match);
     }
@@ -280,10 +261,9 @@ public class MatchService {
         }
 
         boolean alreadyRegistered =
-                participationRepository.existsByMatch_IdAndMembre_IdAndStatutIn(
+                participationRepository.existsByMatch_IdAndMembre_Id(
                         matchId,
-                        memberId,
-                        ACTIVE_PARTICIPATION_STATUSES
+                        memberId
                 );
 
         if (alreadyRegistered) {
@@ -294,10 +274,7 @@ public class MatchService {
         }
 
         int nombreParticipants =
-                participationRepository.countByMatch_IdAndStatutIn(
-                        matchId,
-                        ACTIVE_PARTICIPATION_STATUSES
-                );
+                participationRepository.countByMatch_Id(matchId);
 
         if (nombreParticipants >= 4) {
             throw new ResponseStatusException(
@@ -310,14 +287,7 @@ public class MatchService {
         participation.setMatch(match);
         participation.setMembre(membre);
         participation.setDateInscription(LocalDateTime.now());
-        participation.setStatut(ParticipationStatut.EN_ATTENTE_PAIEMENT);
-        participation.setMontantDuCentimes(PLAYER_SHARE_CENTS);
-        participation.setDateLimitePaiement(
-                LocalDateTime.of(
-                        match.getDateMatch().minusDays(1),
-                        match.getHeureDebut()
-                )
-        );
+        participation.setPaiement(null);
 
         participationRepository.save(participation);
 
@@ -362,10 +332,9 @@ public class MatchService {
 
         ParticipationEntity participation =
                 participationRepository
-                        .findFirstByMatch_IdAndMembre_IdAndStatutIn(
+                        .findByMatch_IdAndMembre_Id(
                                 matchId,
-                                memberId,
-                                ACTIVE_PARTICIPATION_STATUSES
+                                memberId
                         )
                         .orElseThrow(() ->
                                 new ResponseStatusException(
@@ -386,14 +355,10 @@ public class MatchService {
             );
         }
 
-        paiementService.rembourserPaiementsParticipation(participation.getId());
-        participation.setStatut(ParticipationStatut.ANNULEE);
+        participationRepository.delete(participation);
 
         int nombreParticipants =
-                participationRepository.countByMatch_IdAndStatutIn(
-                        matchId,
-                        ACTIVE_PARTICIPATION_STATUSES
-                );
+                participationRepository.countByMatch_Id(matchId);
 
         if (nombreParticipants < 4
                 && match.getStatut() == MatchStatus.COMPLET) {

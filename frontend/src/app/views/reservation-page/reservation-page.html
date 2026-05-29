@@ -53,8 +53,10 @@
 
         <app-time-slots
           [reservedTimes]="reservedTimes()"
-          [openingTime]="currentSite.openingTime"
-          [closingTime]="currentSite.closingTime"
+          [openingTime]="site()?.openingTime ?? '08:00:00'"
+          [closingTime]="site()?.closingTime ?? '22:00:00'"
+          [matchDurationMinutes]="matchDurationMinutes()"
+          [pauseMinutes]="pauseMinutes()"
           (slotSelected)="onTimeSelected($event)">
         </app-time-slots>
 
