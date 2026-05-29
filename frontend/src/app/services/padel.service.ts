@@ -174,6 +174,30 @@ export class PadelService {
       `${this.apiBaseUrl}/paiements/member/${memberId}/wallet`
     );
   }
+  getPayments(){
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/paiements`);
+  }
+  confirmPayment(paymentId: number) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/paiements/${paymentId}/confirmer`,
+      null
+    );
+  }
+
+  refusePayment(paymentId: number) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/paiements/${paymentId}/refuser`,
+      null
+    );
+  }
+
+  refundPayment(paymentId: number) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/paiements/${paymentId}/rembourser`,
+      null
+    );
+  }
 
 }
 
