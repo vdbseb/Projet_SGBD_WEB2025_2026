@@ -10,7 +10,7 @@ describe('Reservation happy flow', () => {
 
 
     cy.get('[data-cy="login-input"]')
-      .type('G0001');
+      .type('L0003');
 
     cy.get('[data-cy="login-button"]')
       .click();

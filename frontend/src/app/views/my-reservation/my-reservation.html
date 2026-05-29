@@ -16,7 +16,10 @@
     </p>
 
     <app-player-wallet-card
-      [balance]="getPlayerBalance()">
+      [balance]="getPlayerBalance()"
+      [credit]="getPlayerCredit()"
+      [amountDue]="getAmountDue()"
+      [amountRefunded]="getAmountRefunded()">
     </app-player-wallet-card>
   }
 
@@ -130,13 +133,13 @@
           && reservation.reservationStatus !== 'ANNULEE'
           ) {
           <div class="flex gap-3 mt-5 flex-wrap">
-            @if (isPaid(reservation.id)) {
+            @if (isPaid(reservation)) {
               <span class="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
                 Payé
               </span>
             } @else {
               <button
-                (click)="payReservation(reservation.id)"
+                (click)="payReservation(reservation)"
                 class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
               >
                 Payer ma part — 15€
