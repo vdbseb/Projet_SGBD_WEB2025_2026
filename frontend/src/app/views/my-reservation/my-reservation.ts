@@ -288,22 +288,7 @@ export class MyReservations implements OnInit {
     });
   }
 
-    dialogRef.afterClosed().subscribe(confirmed => {
-      if (!confirmed) {
-        return;
-      }
 
-      this.snackBar.open('Paiement confirmé !', 'OK', {
-        duration: 3000
-      });
-
-      const member = this.authService.currentMember();
-
-      if (member) {
-        this.loadWallet(member.id);
-      }
-    });
-  }
 
   getPlayerBalance(): number {
     return (this.wallet()?.balanceCentimes ?? 0) / 100;
