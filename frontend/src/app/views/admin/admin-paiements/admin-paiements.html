@@ -23,6 +23,7 @@
       <p class="text-xs uppercase font-black text-slate-400 mb-2">
         Total encaissé
       </p>
+
       <p class="text-3xl font-black text-emerald-700">
         {{ getTotalPaid() }}€
       </p>
@@ -32,6 +33,7 @@
       <p class="text-xs uppercase font-black text-slate-400 mb-2">
         Remboursé
       </p>
+
       <p class="text-3xl font-black text-violet-700">
         {{ getTotalRefunded() }}€
       </p>
@@ -41,6 +43,7 @@
       <p class="text-xs uppercase font-black text-slate-400 mb-2">
         En attente
       </p>
+
       <p class="text-3xl font-black text-orange-700">
         {{ getPendingCount() }}
       </p>
@@ -93,13 +96,47 @@
 
           <p>
             <strong>Date :</strong>
-            {{ payment.datePaiement | date:'dd/MM/yyyy HH:mm' }}
+            {{ (payment.datePaiement || payment.dateCreation) | date:'dd/MM/yyyy HH:mm' }}
           </p>
 
           <p>
             <strong>Réservation :</strong>
             {{ payment.reservationId || '—' }}
           </p>
+
+          <p>
+            <strong>Type :</strong>
+            {{ payment.participationId ? 'Participation' : 'Réservation' }}
+          </p>
+        </div>
+
+        <div class="flex gap-3 mt-5 flex-wrap">
+
+          @if (payment.statut === 'EN_ATTENTE') {
+            <button
+              (click)="confirmPayment(payment)"
+              class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
+            >
+              Confirmer
+            </button>
+
+            <button
+              (click)="refusePayment(payment)"
+              class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
+            >
+              Refuser
+            </button>
+          }
+
+          @if (payment.statut === 'VALIDE') {
+            <button
+              (click)="refundPayment(payment)"
+              class="px-4 py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-xs uppercase tracking-widest hover:bg-violet-100 transition-all"
+            >
+              Rembourser
+            </button>
+          }
+
         </div>
 
       </div>

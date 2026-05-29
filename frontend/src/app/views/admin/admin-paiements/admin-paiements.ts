@@ -104,4 +104,21 @@ export class AdminPaiements implements OnInit {
   getMemberMatricule(payment: any): string {
     return this.getMember(payment)?.matricule || 'Matricule inconnu';
   }
+  confirmPayment(payment: any) {
+    this.padelService.confirmPayment(payment.id).subscribe(() => {
+      this.loadPayments();
+    });
+  }
+
+  refusePayment(payment: any) {
+    this.padelService.refusePayment(payment.id).subscribe(() => {
+      this.loadPayments();
+    });
+  }
+
+  refundPayment(payment: any) {
+    this.padelService.refundPayment(payment.id).subscribe(() => {
+      this.loadPayments();
+    });
+  }
 }
