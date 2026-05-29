@@ -269,7 +269,7 @@ export class MyReservations implements OnInit {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Paiement',
-        message: 'Simuler le paiement de votre part de 15€ ?',
+        message: 'Le montant de votre participation est de 15€. Confirmez-vous le paiement ?',
         confirmLabel: 'Payer 15€',
         cancelLabel: 'Retour'
       }
