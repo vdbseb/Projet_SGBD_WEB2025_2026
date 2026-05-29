@@ -52,7 +52,8 @@ export class ReservationPage implements OnInit {
 
   matchDurationMinutes = signal(90);
   pauseMinutes = signal(15);
-  closedDates = signal<string[]>([]);
+
+  closedDays = signal<any[]>([]);
 
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -69,11 +70,20 @@ export class ReservationPage implements OnInit {
           this.pauseMinutes.set(schedule.pause_minutes ?? 15);
         });
 
-        this.padelService.getSiteClosingDays(site.id).subscribe(days => {
-          this.closedDates.set(days.map(day => day.dateFermeture));
-        });
+        this.loadClosingDays(site.id);
       });
     }
+  }
+
+  private loadClosingDays(siteId: number) {
+    this.padelService.getSiteClosingDays(siteId).subscribe(siteDays => {
+      this.padelService.getGlobalClosingDays().subscribe(globalDays => {
+        this.closedDays.set([
+          ...siteDays,
+          ...globalDays
+        ]);
+      });
+    });
   }
 
   onTimeSelected(time: string) {
@@ -83,9 +93,17 @@ export class ReservationPage implements OnInit {
   onDateSelected(date: Date) {
     const formattedDate = this.formatLocalDate(date);
 
-    if (this.closedDates().includes(formattedDate)) {
-      this.snackBar.open('Le centre est fermé à cette date.', 'OK', {
-        duration: 4000
+    const closingDay = this.closedDays().find(day =>
+      day.dateFermeture === formattedDate
+    );
+
+    if (closingDay) {
+      const reason = closingDay.raison
+        ? ` : ${closingDay.raison}`
+        : '.';
+
+      this.snackBar.open(`Le centre est fermé à cette date${reason}`, 'OK', {
+        duration: 5000
       });
 
       this.selectedDate.set(null);
