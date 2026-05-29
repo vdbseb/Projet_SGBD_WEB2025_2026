@@ -15,8 +15,8 @@ export class TimeSlotsComponent implements OnInit {
   availableSlots = signal<string[]>([]);
   selectedSlot = signal<string | null>(null);
 
-  private readonly matchDurationMinutes = 90;
-  private readonly pauseMinutes = 15;
+  matchDurationMinutes = input<number>(90);
+  pauseMinutes = input<number>(15);
 
   ngOnInit() {
     this.generateSlots();
@@ -36,7 +36,7 @@ export class TimeSlotsComponent implements OnInit {
 
     while (true) {
       const end = new Date(current);
-      end.setMinutes(end.getMinutes() + this.matchDurationMinutes);
+      end.setMinutes(end.getMinutes() + this.matchDurationMinutes());
 
       if (end > closing) {
         break;
@@ -46,8 +46,8 @@ export class TimeSlotsComponent implements OnInit {
 
       current.setMinutes(
         current.getMinutes() +
-        this.matchDurationMinutes +
-        this.pauseMinutes
+        this.matchDurationMinutes() +
+        this.pauseMinutes()
       );
     }
 

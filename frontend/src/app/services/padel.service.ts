@@ -152,6 +152,23 @@ export class PadelService {
       member
     );
   }
+  getSiteSchedule(siteId: number, year: number) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/horaires-sites/site/${siteId}/annee/${year}`
+    );
+  }
+
+  getSiteClosingDays(siteId: number) {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/jours-fermeture/site/${siteId}`
+    );
+  }
+
+  getGlobalClosingDays() {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/jours-fermeture/globales`
+    );
+  }
 
 }
 

@@ -24,7 +24,7 @@ describe('Public match flow', () => {
       .should('be.visible');
 
 
-    cy.contains('L1')
+    cy.contains('A1')
       .closest('.bg-white')
       .within(() => {
         cy.get('[data-cy="join-public-match-button"]').click();
