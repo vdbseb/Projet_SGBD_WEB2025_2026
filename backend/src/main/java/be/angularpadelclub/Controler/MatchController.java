@@ -4,6 +4,7 @@ import be.angularpadelclub.DTO.MatchDTO;
 import be.angularpadelclub.Entity.ParticipationEntity;
 import be.angularpadelclub.Mapper.MatchMapper;
 import be.angularpadelclub.Service.MatchService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,15 +51,13 @@ public class MatchController {
             path = "/{matchId}/join/{memberId}",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Integer> joinMatch(
             @PathVariable("matchId") Integer matchId,
             @PathVariable("memberId") Integer memberId
     ) {
         ParticipationEntity participation =
-                matchService.joinPublicMatch(
-                        matchId,
-                        memberId
-                );
+                matchService.joinPublicMatch(matchId, memberId);
 
         return Map.of(
                 "participationId",
@@ -67,13 +66,11 @@ public class MatchController {
     }
 
     @DeleteMapping("/{matchId}/leave/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void leaveMatch(
             @PathVariable("matchId") Integer matchId,
             @PathVariable("memberId") Integer memberId
     ) {
-        matchService.leaveMatch(
-                matchId,
-                memberId
-        );
+        matchService.leaveMatch(matchId, memberId);
     }
 }

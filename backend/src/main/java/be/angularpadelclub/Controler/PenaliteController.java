@@ -13,11 +13,16 @@ public class PenaliteController {
 
     private final PenaliteService penaliteService;
 
-    public PenaliteController(PenaliteService penaliteService) {
+    public PenaliteController(
+            PenaliteService penaliteService
+    ) {
         this.penaliteService = penaliteService;
     }
 
-    @GetMapping("/member/{memberId}/active")
+    @GetMapping(
+            value = "/member/{memberId}/active",
+            produces = "application/json"
+    )
     public List<PenaliteDTO> findActivePenaltiesForMember(
             @PathVariable("memberId") Integer memberId
     ) {

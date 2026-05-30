@@ -4,8 +4,9 @@ import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Service.ReservationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,15 +26,18 @@ public class ReservationController {
     }
 
     @GetMapping(path = "/{id}", produces = "application/json")
-    public ResponseEntity<ReservationDTO> reservation(
+    public ReservationDTO reservation(
             @PathVariable("id") int id
     ) {
-        return ResponseEntity.of(
-                reservationService.findById(id)
-        );
+        return reservationService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Réservation introuvable avec l'id : " + id
+                ));
     }
 
     @PostMapping(consumes = "application/json")
+    @ResponseStatus(HttpStatus.CREATED)
     public void addReservation(
             @RequestBody ReservationDTO reservationDTO
     ) {
@@ -54,19 +58,16 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelReservation(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void cancelReservation(
             @PathVariable("id") int id,
             @RequestParam(value = "memberId", required = false) Integer memberId
     ) {
         if (memberId == null) {
             reservationService.cancelReservationByAdmin(id);
-        } else {
-            reservationService.cancelReservation(
-                    id,
-                    memberId
-            );
+            return;
         }
 
-        return ResponseEntity.noContent().build();
+        reservationService.cancelReservation(id, memberId);
     }
 }

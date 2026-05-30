@@ -3,7 +3,7 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.MemberWalletDTO;
 import be.angularpadelclub.DTO.PaiementDTO;
 import be.angularpadelclub.Service.PaiementService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,9 +43,7 @@ public class PaiementController {
     public List<PaiementDTO> findByReservation(
             @PathVariable("reservationId") Integer reservationId
     ) {
-        return paiementService.findByReservation(
-                reservationId
-        );
+        return paiementService.findByReservation(reservationId);
     }
 
     @GetMapping(
@@ -55,40 +53,36 @@ public class PaiementController {
     public MemberWalletDTO getMemberWallet(
             @PathVariable("memberId") Integer memberId
     ) {
-        return paiementService.getWallet(
-                memberId
-        );
+        return paiementService.getWallet(memberId);
     }
 
     @PostMapping(
             path = "/reservation/{reservationId}/initier",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public PaiementDTO initierPaiement(
             @PathVariable("reservationId") Integer reservationId
     ) {
-        return paiementService.initierPaiement(
-                reservationId
-        );
+        return paiementService.initierPaiement(reservationId);
     }
 
     @PostMapping(
             path = "/participation/{participationId}/initier",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public PaiementDTO initierPaiementPourParticipation(
             @PathVariable("participationId") Integer participationId
     ) {
-        return paiementService
-                .initierPaiementPourParticipation(
-                        participationId
-                );
+        return paiementService.initierPaiementPourParticipation(participationId);
     }
 
     @PostMapping(
             path = "/member/{memberId}/dettes/initier",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public PaiementDTO initierPaiementDettesMembre(
             @PathVariable("memberId") Integer memberId
     ) {

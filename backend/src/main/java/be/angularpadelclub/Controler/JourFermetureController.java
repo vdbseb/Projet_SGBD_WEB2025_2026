@@ -3,6 +3,7 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.JourFermetureDTO;
 import be.angularpadelclub.Mapper.JourFermetureMapper;
 import be.angularpadelclub.Service.JourFermetureService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,6 +60,7 @@ public class JourFermetureController {
             consumes = "application/json",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public JourFermetureDTO create(
             @RequestBody JourFermetureDTO dto
     ) {
@@ -82,6 +84,7 @@ public class JourFermetureController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
             @PathVariable("id") Integer id
     ) {

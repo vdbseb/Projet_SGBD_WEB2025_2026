@@ -3,6 +3,7 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.HoraireSiteDTO;
 import be.angularpadelclub.Mapper.HoraireSiteMapper;
 import be.angularpadelclub.Service.HoraireSiteService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,10 +58,7 @@ public class HoraireSiteController {
             @PathVariable("annee") int annee
     ) {
         return horaireSiteMapper.toDTO(
-                horaireSiteService.findBySiteIdAndAnnee(
-                        siteId,
-                        annee
-                )
+                horaireSiteService.findBySiteIdAndAnnee(siteId, annee)
         );
     }
 
@@ -68,6 +66,7 @@ public class HoraireSiteController {
             consumes = "application/json",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public HoraireSiteDTO create(
             @RequestBody HoraireSiteDTO dto
     ) {
@@ -91,6 +90,7 @@ public class HoraireSiteController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
             @PathVariable("id") Integer id
     ) {

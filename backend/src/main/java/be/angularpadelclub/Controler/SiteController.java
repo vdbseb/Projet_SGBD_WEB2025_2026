@@ -2,6 +2,7 @@ package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.SiteDTO;
 import be.angularpadelclub.Service.SiteService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class SiteController {
             consumes = "application/json",
             produces = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public SiteDTO createSite(
             @RequestBody SiteDTO dto
     ) {
@@ -57,6 +59,7 @@ public class SiteController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSite(
             @PathVariable("id") int id
     ) {

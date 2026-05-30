@@ -3,7 +3,9 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.MembreDTO;
 import be.angularpadelclub.Mapper.MembreMapper;
 import be.angularpadelclub.Service.MembreService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -25,7 +27,9 @@ public class MembreController {
 
     @GetMapping(produces = "application/json")
     public List<MembreDTO> findAll() {
-        return membreMapper.toDTOList(membreService.findAll());
+        return membreMapper.toDTOList(
+                membreService.findAll()
+        );
     }
 
     @GetMapping(value = "/search", produces = "application/json")
@@ -33,25 +37,32 @@ public class MembreController {
             @RequestParam("nom") String nom,
             @RequestParam("prenom") String prenom
     ) {
-        return membreService
-                .findByNomAndPrenom(nom, prenom)
+        return membreService.findByNomAndPrenom(nom, prenom)
                 .stream()
                 .map(membreMapper::toDTO)
                 .toList();
     }
 
-    @GetMapping("/next-matricule")
-    public String getNextMatricule(@RequestParam("typeCode") String typeCode) {
+    @GetMapping(
+            value = "/next-matricule",
+            produces = "text/plain"
+    )
+    public String getNextMatricule(
+            @RequestParam("typeCode") String typeCode
+    ) {
         return membreService.getNextMatricule(typeCode);
     }
 
     @GetMapping(value = "/{matricule}", produces = "application/json")
-    public MembreDTO findById(
+    public MembreDTO findByMatricule(
             @PathVariable("matricule") String matricule
     ) {
         return membreService.findByMatricule(matricule)
                 .map(membreMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Membre introuvable avec le matricule : " + matricule
+                ));
     }
 
     @GetMapping(value = "/admin/{adminMatricule}", produces = "application/json")
@@ -67,6 +78,7 @@ public class MembreController {
             value = "/admin/{adminMatricule}",
             consumes = "application/json"
     )
+    @ResponseStatus(HttpStatus.CREATED)
     public void addMemberAsAdmin(
             @PathVariable("adminMatricule") String adminMatricule,
             @RequestBody MembreDTO dto
@@ -75,7 +87,10 @@ public class MembreController {
     }
 
     @PostMapping(consumes = "application/json")
-    public void addMember(@RequestBody MembreDTO dto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public void addMember(
+            @RequestBody MembreDTO dto
+    ) {
         membreService.addMember(dto);
     }
 
@@ -113,7 +128,10 @@ public class MembreController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMember(@PathVariable("id") int id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMember(
+            @PathVariable("id") int id
+    ) {
         membreService.deleteMember(id);
     }
 
