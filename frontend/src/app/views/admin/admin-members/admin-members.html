@@ -41,6 +41,19 @@
 
   </header>
 
+  @if (isCurrentAdminSiteAdmin()) {
+  <div class="mb-6 rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+    <div class="flex items-start gap-3">
+      <mat-icon class="text-amber-600">info</mat-icon>
+
+      <p>
+        Vous êtes administrateur de site : vous pouvez uniquement consulter et gérer les membres
+        de votre site. Les filtres <strong>Tous</strong>, <strong>Global</strong> et <strong>Libre</strong> sont donc désactivés.
+      </p>
+    </div>
+  </div>
+  }
+
   <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
     <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
       Recherche
@@ -60,8 +73,11 @@
 
         <button
           type="button"
-          (click)="selectedType.set('ALL')"
-          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          (click)="setTypeFilter('ALL')"
+          [disabled]="isTypeFilterDisabledForCurrentAdmin('ALL')"
+          [title]="getTypeFilterDisabledReason('ALL')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all
+         disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           [class.bg-slate-900]="selectedType() === 'ALL'"
           [class.text-white]="selectedType() === 'ALL'"
           [class.border-slate-900]="selectedType() === 'ALL'"
@@ -71,8 +87,11 @@
 
         <button
           type="button"
-          (click)="selectedType.set('GLOBAL')"
-          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          (click)="setTypeFilter('GLOBAL')"
+          [disabled]="isTypeFilterDisabledForCurrentAdmin('GLOBAL')"
+          [title]="getTypeFilterDisabledReason('GLOBAL')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all
+                 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           [class.bg-slate-900]="selectedType() === 'GLOBAL'"
           [class.text-white]="selectedType() === 'GLOBAL'"
           [class.border-slate-900]="selectedType() === 'GLOBAL'"
@@ -82,8 +101,8 @@
 
         <button
           type="button"
-          (click)="selectedType.set('SITE')"
-          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          (click)="setTypeFilter('SITE')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all"
           [class.bg-slate-900]="selectedType() === 'SITE'"
           [class.text-white]="selectedType() === 'SITE'"
           [class.border-slate-900]="selectedType() === 'SITE'"
@@ -93,8 +112,11 @@
 
         <button
           type="button"
-          (click)="selectedType.set('LIBRE')"
-          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest"
+          (click)="setTypeFilter('LIBRE')"
+          [disabled]="isTypeFilterDisabledForCurrentAdmin('LIBRE')"
+          [title]="getTypeFilterDisabledReason('LIBRE')"
+          class="px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest transition-all
+                 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           [class.bg-slate-900]="selectedType() === 'LIBRE'"
           [class.text-white]="selectedType() === 'LIBRE'"
           [class.border-slate-900]="selectedType() === 'LIBRE'"
@@ -103,11 +125,16 @@
         </button>
 
         <select
-          class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
+          class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600
+                 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
           [ngModel]="selectedSiteId()"
-          (ngModelChange)="selectedSiteId.set($event === 'ALL' ? 'ALL' : +$event)"
+          [disabled]="isCurrentAdminSiteAdmin()"
+          [title]="isCurrentAdminSiteAdmin() ? 'Un administrateur de site est limité à son site.' : ''"
+          (ngModelChange)="onSiteFilterChange($event)"
         >
+          @if (!isCurrentAdminSiteAdmin()) {
           <option value="ALL">Tous les sites</option>
+          }
 
           @for (site of sites(); track site.id) {
           <option [value]="site.id">
@@ -193,19 +220,19 @@
           class="px-3 py-1 rounded-full text-xs font-black uppercase"
           [class]="getMemberStatusClass(member)"
         >
-              {{ getMemberStatusLabel(member) }}
-            </span>
+          {{ getMemberStatusLabel(member) }}
+        </span>
       </div>
 
       <div class="space-y-3 text-sm text-slate-500">
 
         <div>
-              <span
-                class="px-3 py-1 rounded-full text-xs font-black uppercase"
-                [class]="getMemberTypeClass(member)"
-              >
-                {{ getMemberTypeLabel(member) }}
-              </span>
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="getMemberTypeClass(member)"
+          >
+            {{ getMemberTypeLabel(member) }}
+          </span>
         </div>
 
         <p>
@@ -278,12 +305,12 @@
           </td>
 
           <td class="px-5 py-4 whitespace-nowrap">
-                  <span
-                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
-                    [class]="getMemberTypeClass(member)"
-                  >
-                    {{ getMemberTypeLabel(member) }}
-                  </span>
+            <span
+              class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+              [class]="getMemberTypeClass(member)"
+            >
+              {{ getMemberTypeLabel(member) }}
+            </span>
           </td>
 
           <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
@@ -291,12 +318,12 @@
           </td>
 
           <td class="px-5 py-4 whitespace-nowrap">
-                  <span
-                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
-                    [class]="getMemberStatusClass(member)"
-                  >
-                    {{ getMemberStatusLabel(member) }}
-                  </span>
+            <span
+              class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+              [class]="getMemberStatusClass(member)"
+            >
+              {{ getMemberStatusLabel(member) }}
+            </span>
           </td>
 
           <td class="px-5 py-4 text-right whitespace-nowrap">
