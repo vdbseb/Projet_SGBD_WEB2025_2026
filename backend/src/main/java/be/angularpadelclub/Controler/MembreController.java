@@ -3,6 +3,10 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.MembreDTO;
 import be.angularpadelclub.Mapper.MembreMapper;
 import be.angularpadelclub.Service.MembreService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -81,7 +85,7 @@ public class MembreController {
     @ResponseStatus(HttpStatus.CREATED)
     public void addMemberAsAdmin(
             @PathVariable("adminMatricule") String adminMatricule,
-            @RequestBody MembreDTO dto
+            @Valid @RequestBody MembreDTO dto
     ) {
         membreService.addMemberAsAdmin(adminMatricule, dto);
     }
@@ -89,7 +93,7 @@ public class MembreController {
     @PostMapping(consumes = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
     public void addMember(
-            @RequestBody MembreDTO dto
+            @Valid @RequestBody MembreDTO dto
     ) {
         membreService.addMember(dto);
     }
@@ -101,7 +105,7 @@ public class MembreController {
     )
     public MembreDTO updateMemberActiveStatus(
             @PathVariable("id") int id,
-            @RequestBody MemberActiveStatusRequest request
+            @Valid @RequestBody MemberActiveStatusRequest request
     ) {
         return membreMapper.toDTO(
                 membreService.updateMemberActiveStatus(id, request.active())
@@ -115,7 +119,7 @@ public class MembreController {
     )
     public MembreDTO updateOwnProfile(
             @PathVariable("id") int id,
-            @RequestBody MemberProfileUpdateRequest request
+            @Valid @RequestBody MemberProfileUpdateRequest request
     ) {
         return membreMapper.toDTO(
                 membreService.updateOwnProfile(
@@ -136,13 +140,20 @@ public class MembreController {
     }
 
     public record MemberActiveStatusRequest(
+            @NotNull(message = "Le statut actif du membre est obligatoire.")
             Boolean active
     ) {
     }
 
     public record MemberProfileUpdateRequest(
+            @NotBlank(message = "Le prénom du membre est obligatoire.")
             String firstName,
+
+            @NotBlank(message = "Le nom du membre est obligatoire.")
             String lastName,
+
+            @NotBlank(message = "L'email du membre est obligatoire.")
+            @Email(message = "L'email du membre doit être valide.")
             String email
     ) {
     }

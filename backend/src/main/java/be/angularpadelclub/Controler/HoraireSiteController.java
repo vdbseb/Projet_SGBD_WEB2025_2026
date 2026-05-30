@@ -3,6 +3,7 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.HoraireSiteDTO;
 import be.angularpadelclub.Mapper.HoraireSiteMapper;
 import be.angularpadelclub.Service.HoraireSiteService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,7 +69,7 @@ public class HoraireSiteController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     public HoraireSiteDTO create(
-            @RequestBody HoraireSiteDTO dto
+            @Valid @RequestBody HoraireSiteDTO dto
     ) {
         return horaireSiteMapper.toDTO(
                 horaireSiteService.create(dto)
@@ -82,7 +83,7 @@ public class HoraireSiteController {
     )
     public HoraireSiteDTO update(
             @PathVariable("id") Integer id,
-            @RequestBody HoraireSiteDTO dto
+            @Valid  @RequestBody HoraireSiteDTO dto
     ) {
         return horaireSiteMapper.toDTO(
                 horaireSiteService.update(id, dto)

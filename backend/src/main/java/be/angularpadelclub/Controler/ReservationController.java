@@ -3,6 +3,7 @@ package be.angularpadelclub.Controler;
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Mapper.ReservationMapper;
 import be.angularpadelclub.Service.ReservationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class ReservationController {
     @PostMapping(consumes = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
     public void addReservation(
-            @RequestBody ReservationDTO reservationDTO
+            @Valid  @RequestBody ReservationDTO reservationDTO
     ) {
         reservationService.addReservation(reservationDTO);
     }

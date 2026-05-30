@@ -2,6 +2,7 @@ package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.CourtDTO;
 import be.angularpadelclub.Service.CourtService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +39,7 @@ public class CourtController {
     )
     @ResponseStatus(HttpStatus.CREATED)
     public CourtDTO createCourt(
-            @RequestBody CourtDTO dto
+            @Valid @RequestBody CourtDTO dto
     ) {
         return courtService.createCourt(dto);
     }
@@ -50,7 +51,7 @@ public class CourtController {
     )
     public CourtDTO updateCourt(
             @PathVariable("id") int id,
-            @RequestBody CourtDTO dto
+            @Valid @RequestBody CourtDTO dto
     ) {
         return courtService.updateCourt(id, dto);
     }
