@@ -8,6 +8,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { FormsModule } from '@angular/forms';
 
+type CourtViewMode = 'CARDS' | 'TABLE';
+type CourtTypeFilter = 'ALL' | 'INDOOR' | 'OUTDOOR';
+type CourtStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
+
 @Component({
   selector: 'app-admin-courts',
   standalone: true,
@@ -20,41 +24,38 @@ export class AdminCourts implements OnInit {
 
   courts = signal<any[]>([]);
   sites = signal<any[]>([]);
-  search = signal('');
   reservations = signal<any[]>([]);
+  search = signal('');
+
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
-  maintenanceCourts = signal<number[]>([]);
 
   selectedSiteId = signal<number | 'ALL'>('ALL');
-  selectedType = signal<'ALL' | 'INDOOR' | 'OUTDOOR'>('ALL');
-  selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'>('ALL');
+  selectedType = signal<CourtTypeFilter>('ALL');
+  selectedStatus = signal<CourtStatusFilter>('ALL');
+  viewMode = signal<CourtViewMode>('CARDS');
 
   ngOnInit() {
-    this.padelService.getSites().subscribe(sites => {
-      this.sites.set(sites);
-    });
-
-    this.padelService.getCourts().subscribe(courts => {
-      const admin = this.authService.currentAdmin();
-
-      const visibleCourts = this.authService.isSiteAdmin()
-        ? courts.filter(court => court.siteId === admin.siteId)
-        : courts;
-
-      this.courts.set(visibleCourts);
-    });
-
-    this.padelService.getAllReservations().subscribe(reservations => {
-      this.reservations.set(reservations);
-    });
+    this.loadSites();
+    this.loadCourts();
+    this.loadReservations();
   }
 
   filteredCourts() {
+    const selectedStatus = this.selectedStatus();
+
+    return this.courtsForCurrentScope().filter(court =>
+      selectedStatus === 'ALL' ||
+      (selectedStatus === 'ACTIVE' && court.active === true && !this.isInMaintenance(court)) ||
+      (selectedStatus === 'INACTIVE' && court.active === false) ||
+      (selectedStatus === 'MAINTENANCE' && this.isInMaintenance(court))
+    );
+  }
+
+  courtsForCurrentScope() {
     const query = this.search().toLowerCase().trim();
     const selectedSiteId = this.selectedSiteId();
     const selectedType = this.selectedType();
-    const selectedStatus = this.selectedStatus();
 
     return this.courts().filter(court => {
       const type = this.getCourtType(court);
@@ -74,21 +75,85 @@ export class AdminCourts implements OnInit {
         (selectedType === 'INDOOR' && type.toLowerCase() === 'indoor') ||
         (selectedType === 'OUTDOOR' && type.toLowerCase() === 'outdoor');
 
-      const matchesStatus =
-        selectedStatus === 'ALL' ||
-        (selectedStatus === 'ACTIVE' && court.active && !this.isInMaintenance(court)) ||
-        (selectedStatus === 'INACTIVE' && !court.active) ||
-        (selectedStatus === 'MAINTENANCE' && this.isInMaintenance(court));
-
-      return matchesSearch && matchesSite && matchesType && matchesStatus;
+      return matchesSearch && matchesSite && matchesType;
     });
   }
 
   resetFilters() {
     this.search.set('');
-    this.selectedSiteId.set('ALL');
+    this.selectedSiteId.set(this.authService.isSiteAdmin()
+      ? this.authService.currentAdmin()?.siteId
+      : 'ALL'
+    );
     this.selectedType.set('ALL');
     this.selectedStatus.set('ALL');
+  }
+
+  setStatusFilter(status: CourtStatusFilter) {
+    this.selectedStatus.set(status);
+  }
+
+  setViewMode(mode: CourtViewMode) {
+    this.viewMode.set(mode);
+  }
+
+  totalCourtCount(): number {
+    return this.courtsForCurrentScope().length;
+  }
+
+  activeCourtCount(): number {
+    return this.courtsForCurrentScope()
+      .filter(court => court.active === true && court.maintenance !== true)
+      .length;
+  }
+
+  maintenanceCourtCount(): number {
+    return this.courtsForCurrentScope()
+      .filter(court => court.maintenance === true)
+      .length;
+  }
+
+  inactiveCourtCount(): number {
+    return this.courtsForCurrentScope()
+      .filter(court => court.active === false)
+      .length;
+  }
+
+  hasActiveFilters(): boolean {
+    const siteFilterActive = this.authService.isSiteAdmin()
+      ? false
+      : this.selectedSiteId() !== 'ALL';
+
+    return this.search().trim().length > 0 ||
+      siteFilterActive ||
+      this.selectedType() !== 'ALL' ||
+      this.selectedStatus() !== 'ALL';
+  }
+
+  getStatusPillClass(status: CourtStatusFilter): string {
+    const selected = this.selectedStatus() === status;
+
+    if (status === 'ACTIVE') {
+      return selected
+        ? 'bg-emerald-600 text-white shadow-sm'
+        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100';
+    }
+
+    if (status === 'MAINTENANCE') {
+      return selected
+        ? 'bg-red-600 text-white shadow-sm'
+        : 'bg-red-50 text-red-700 hover:bg-red-100';
+    }
+
+    if (status === 'INACTIVE') {
+      return selected
+        ? 'bg-slate-700 text-white shadow-sm'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+    }
+
+    return selected
+      ? 'bg-slate-900 text-white shadow-sm'
+      : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
   }
 
   getCourtType(court: any): string {
@@ -97,13 +162,49 @@ export class AdminCourts implements OnInit {
 
   getSiteName(court: any): string {
     const site = this.sites().find(site => site.id === court.siteId);
-    return site?.clubName || site?.name || 'Site inconnu';
+    return site?.clubName || site?.name || site?.city || 'Site inconnu';
   }
 
   getCourtTypeClass(court: any): string {
     return this.getCourtType(court).toLowerCase() === 'indoor'
       ? 'bg-blue-100 text-blue-700'
       : 'bg-emerald-100 text-emerald-700';
+  }
+
+  getCourtStatusLabel(court: any): string {
+    if (court.maintenance === true) {
+      return 'Maintenance';
+    }
+
+    if (court.active === false) {
+      return 'Inactif';
+    }
+
+    return 'Actif';
+  }
+
+  getCourtStatusClass(court: any): string {
+    if (court.maintenance === true) {
+      return 'bg-red-100 text-red-700';
+    }
+
+    if (court.active === false) {
+      return 'bg-slate-100 text-slate-600';
+    }
+
+    return 'bg-emerald-100 text-emerald-700';
+  }
+
+  getCourtStatusIcon(court: any): string {
+    if (court.maintenance === true) {
+      return 'construction';
+    }
+
+    if (court.active === false) {
+      return 'block';
+    }
+
+    return 'check_circle';
   }
 
   getCourtReservationCount(court: any): number {
@@ -120,33 +221,67 @@ export class AdminCourts implements OnInit {
   }
 
   getOccupationClass(court: any): string {
-    const rate = this.getOccupationRate(court);
-
-    if (rate >= 75) {
+    if (court.maintenance === true) {
       return 'bg-red-500';
     }
 
-    if (rate >= 40) {
+    if (court.active === false) {
+      return 'bg-slate-400';
+    }
+
+    const rate = this.getOccupationRate(court);
+
+    if (rate >= 75) {
       return 'bg-orange-500';
+    }
+
+    if (rate >= 40) {
+      return 'bg-blue-500';
     }
 
     return 'bg-emerald-500';
   }
 
   isInMaintenance(court: any): boolean {
-    return this.maintenanceCourts().includes(court.id);
+    return court?.maintenance === true;
+  }
+
+  canToggleMaintenance(court: any): boolean {
+    return court.active !== false || this.isInMaintenance(court);
+  }
+
+  getMaintenanceActionLabel(court: any): string {
+    if (this.isInMaintenance(court)) {
+      return 'Remettre en service';
+    }
+
+    if (court.active === false) {
+      return 'Terrain inactif';
+    }
+
+    return 'Mettre en maintenance';
   }
 
   toggleMaintenance(court: any) {
+    if (!this.canToggleMaintenance(court)) {
+      this.snackBar.open(
+        'Ce terrain est inactif. Réactive-le avant de gérer sa maintenance.',
+        'OK',
+        { duration: 4000 }
+      );
+      return;
+    }
+
     const inMaintenance = this.isInMaintenance(court);
+    const nextMaintenanceState = !inMaintenance;
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: inMaintenance ? 'Remise en service' : 'Maintenance',
+        title: inMaintenance ? 'Remise en service' : 'Maintenance terrain',
         message: inMaintenance
-          ? 'Remettre ce terrain en service ?'
-          : 'Mettre ce terrain en maintenance ?',
-        confirmLabel: inMaintenance ? 'Remettre en service' : 'Confirmer',
+          ? `Remettre ${court.name} en service ?`
+          : `Mettre ${court.name} en maintenance ? Les réservations futures de ce terrain seront annulées et les paiements validés seront remboursés.`,
+        confirmLabel: inMaintenance ? 'Remettre en service' : 'Confirmer la maintenance',
         cancelLabel: 'Annuler'
       }
     });
@@ -156,23 +291,87 @@ export class AdminCourts implements OnInit {
         return;
       }
 
-      if (inMaintenance) {
-        this.maintenanceCourts.update(ids =>
-          ids.filter(id => id !== court.id)
-        );
+      this.padelService.setCourtMaintenance(court.id, nextMaintenanceState)
+        .subscribe({
+          next: updatedCourt => {
+            this.courts.update(courts =>
+              courts.map(existingCourt =>
+                existingCourt.id === court.id
+                  ? {
+                      ...existingCourt,
+                      ...updatedCourt,
+                      maintenance: updatedCourt.maintenance ?? nextMaintenanceState
+                    }
+                  : existingCourt
+              )
+            );
 
-        this.snackBar.open('Terrain remis en service.', 'OK', {
-          duration: 3000
+            this.loadReservations();
+
+            this.snackBar.open(
+              nextMaintenanceState
+                ? 'Terrain mis en maintenance. Les réservations futures ont été annulées/remboursées.'
+                : 'Terrain remis en service.',
+              'OK',
+              { duration: 4500 }
+            );
+          },
+          error: (error: any) => {
+            const message =
+              error?.error?.detail ??
+              error?.error?.message ??
+              'Impossible de modifier la maintenance du terrain.';
+
+            this.snackBar.open(message, 'OK', {
+              duration: 5000
+            });
+          }
         });
+    });
+  }
 
-        return;
+  private loadSites() {
+    this.padelService.getSites().subscribe({
+      next: sites => {
+        this.sites.set(sites);
+      },
+      error: () => {
+        this.snackBar.open('Impossible de charger les sites.', 'OK', {
+          duration: 4000
+        });
       }
+    });
+  }
 
-      this.maintenanceCourts.update(ids => [...ids, court.id]);
+  private loadCourts() {
+    this.padelService.getCourts().subscribe({
+      next: courts => {
+        const admin = this.authService.currentAdmin();
 
-      this.snackBar.open('Terrain mis en maintenance.', 'OK', {
-        duration: 3000
-      });
+        const visibleCourts = this.authService.isSiteAdmin()
+          ? courts.filter(court => court.siteId === admin?.siteId)
+          : courts;
+
+        this.courts.set(visibleCourts);
+      },
+      error: () => {
+        this.snackBar.open('Impossible de charger les terrains.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
+  }
+
+  private loadReservations() {
+    this.padelService.getAllReservations().subscribe({
+      next: reservations => {
+        this.reservations.set(reservations);
+      },
+      error: () => {
+        this.snackBar.open('Impossible de charger les réservations.', 'OK', {
+          duration: 4000
+        });
+      }
     });
   }
 }

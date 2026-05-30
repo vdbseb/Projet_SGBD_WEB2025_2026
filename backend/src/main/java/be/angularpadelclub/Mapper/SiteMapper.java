@@ -19,9 +19,10 @@ public class SiteMapper {
                 .map(court -> new CourtDTO(
                         court.getId(),
                         court.getNom(),
-                        entity.getId(),
+                        court.getSite().getId(),
                         court.isCouvert(),
-                        court.isActif()
+                        court.isActif(),
+                        court.isMaintenance()
                 ))
                 .toList();
 

@@ -24,6 +24,7 @@ interface CourtDTO {
   indoor?: boolean;
   siteId: number;
   active: boolean;
+  maintenance: boolean;
 }
 
 @Injectable({
@@ -72,6 +73,18 @@ export class PadelService {
   getCourts(): Observable<CourtDTO[]> {
     return this.httpClient.get<CourtDTO[]>(this.courtsUrl);
   }
+
+setCourtMaintenance(courtId: number, maintenance: boolean) {
+  return this.httpClient.patch<CourtDTO>(
+    `${this.courtsUrl}/${courtId}/maintenance`,
+    null,
+    {
+      params: {
+        maintenance
+      }
+    }
+  );
+}
 
   // =========================
   // RÉSERVATIONS
@@ -259,6 +272,7 @@ export class PadelService {
       name: court.name,
       type,
       active: court.active ?? true,
+      maintenance: court.maintenance ?? false,
       siteId: court.siteId
     };
   }

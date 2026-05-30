@@ -10,13 +10,21 @@ import java.util.List;
 public class PaiementMapper {
 
     public PaiementDTO toDTO(PaiementEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
         return new PaiementDTO(
                 entity.getId(),
-                entity.getReservation().getId(),
+                entity.getReservation() != null
+                        ? entity.getReservation().getId()
+                        : null,
                 entity.getParticipation() != null
                         ? entity.getParticipation().getId()
                         : null,
-                entity.getMembre().getId(),
+                entity.getMembre() != null
+                        ? entity.getMembre().getId()
+                        : null,
                 entity.getMontantCentimes(),
                 entity.getDevise(),
                 entity.getProvider(),
@@ -31,6 +39,10 @@ public class PaiementMapper {
     }
 
     public List<PaiementDTO> toDTOList(List<PaiementEntity> entities) {
+        if (entities == null) {
+            return List.of();
+        }
+
         return entities.stream()
                 .map(this::toDTO)
                 .toList();

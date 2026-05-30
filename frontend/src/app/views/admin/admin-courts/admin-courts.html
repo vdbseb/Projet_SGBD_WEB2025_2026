@@ -9,16 +9,46 @@
   </a>
 
   <header class="mb-10">
-    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-      Terrains
-    </h1>
+    <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
+      <div>
+        <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
+          Terrains
+        </h1>
 
-    <p class="text-slate-500 mt-2">
-      Liste des terrains disponibles et taux d’occupation estimé.
-    </p>
+        <p class="text-slate-500 mt-2">
+          Liste des terrains, taux d’occupation estimé et état de maintenance.
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        <button
+          type="button"
+          (click)="setViewMode('CARDS')"
+          class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+          [class]="viewMode() === 'CARDS'
+            ? 'bg-slate-900 text-white'
+            : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-100'"
+        >
+          <mat-icon class="text-base">dashboard</mat-icon>
+          Cartes
+        </button>
+
+        <button
+          type="button"
+          (click)="setViewMode('TABLE')"
+          class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+          [class]="viewMode() === 'TABLE'
+            ? 'bg-slate-900 text-white'
+            : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-100'"
+        >
+          <mat-icon class="text-base">table_rows</mat-icon>
+          Tableau
+        </button>
+      </div>
+    </div>
   </header>
 
-  <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
+  <section class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
 
     <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
       Recherche
@@ -34,6 +64,7 @@
 
     <div class="mt-5 flex flex-wrap gap-3">
 
+      @if (!authService.isSiteAdmin()) {
       <select
         class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
         [ngModel]="selectedSiteId()"
@@ -43,10 +74,11 @@
 
         @for (site of sites(); track site.id) {
         <option [value]="site.id">
-          {{ site.clubName }}
+          {{ site.clubName || site.name || site.city }}
         </option>
         }
       </select>
+      }
 
       <select
         class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
@@ -70,26 +102,92 @@
       </select>
 
       <button
+        type="button"
         (click)="resetFilters()"
-        class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
+        class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-black uppercase tracking-widest transition-all"
+        [class]="hasActiveFilters()
+          ? 'text-slate-900 bg-slate-100 hover:bg-slate-200'
+          : 'text-slate-300 bg-white'"
       >
         Réinitialiser
       </button>
 
     </div>
 
-    <p class="mt-4 text-sm text-slate-400">
-      {{ filteredCourts().length }} terrain(s) affiché(s)
-    </p>
+    <div class="mt-5 flex flex-wrap items-center gap-3 text-sm">
+      <button
+        type="button"
+        (click)="setStatusFilter('ALL')"
+        class="px-4 py-2 rounded-2xl font-bold transition-all"
+        [class]="getStatusPillClass('ALL')"
+      >
+        {{ filteredCourts().length }} terrain(s) affiché(s)
+      </button>
 
-  </div>
+      <button
+        type="button"
+        (click)="setStatusFilter('ACTIVE')"
+        class="px-4 py-2 rounded-2xl font-bold transition-all"
+        [class]="getStatusPillClass('ACTIVE')"
+      >
+        Actifs : {{ activeCourtCount() }}
+      </button>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <button
+        type="button"
+        (click)="setStatusFilter('MAINTENANCE')"
+        class="px-4 py-2 rounded-2xl font-bold transition-all"
+        [class]="getStatusPillClass('MAINTENANCE')"
+      >
+        Maintenance : {{ maintenanceCourtCount() }}
+      </button>
+
+      <button
+        type="button"
+        (click)="setStatusFilter('INACTIVE')"
+        class="px-4 py-2 rounded-2xl font-bold transition-all"
+        [class]="getStatusPillClass('INACTIVE')"
+      >
+        Inactifs : {{ inactiveCourtCount() }}
+      </button>
+    </div>
+
+  </section>
+
+  @if (viewMode() === 'CARDS') {
+  <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (court of filteredCourts(); track court.id) {
-    <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100">
+    <article
+      class="bg-white rounded-4xl p-6 shadow-sm border transition-all"
+      [class]="court.maintenance
+            ? 'border-red-100 ring-4 ring-red-50'
+            : court.active === false
+              ? 'border-slate-200 opacity-80'
+              : 'border-slate-100 hover:shadow-md'"
+    >
 
       <div class="flex justify-between items-start mb-4">
         <div>
+          <div class="flex items-center gap-2 mb-2">
+            <mat-icon
+              class="text-base"
+              [class]="court.maintenance
+                    ? 'text-red-500'
+                    : court.active === false
+                      ? 'text-slate-400'
+                      : 'text-emerald-500'"
+            >
+              {{ getCourtStatusIcon(court) }}
+            </mat-icon>
+
+            <span
+              class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+              [class]="getCourtStatusClass(court)"
+            >
+                  {{ getCourtStatusLabel(court) }}
+                </span>
+          </div>
+
           <h2 class="font-black text-xl text-slate-900">
             {{ court.name }}
           </h2>
@@ -103,87 +201,214 @@
           class="px-3 py-1 rounded-full text-xs font-black uppercase"
           [class]="getCourtTypeClass(court)"
         >
-            {{ getCourtType(court) }}
-          </span>
+              {{ getCourtType(court) }}
+            </span>
       </div>
 
-      <div class="flex items-center gap-2 text-slate-500 text-sm mb-6">
-        <mat-icon class="text-base">sports_tennis</mat-icon>
-        <span>Terrain de padel</span>
+      @if (court.maintenance) {
+      <div class="mb-5 rounded-3xl bg-red-50 border border-red-100 p-4">
+        <p class="font-black text-red-700 text-sm">
+          Maintenance en cours
+        </p>
+
+        <p class="text-red-500 text-xs mt-1">
+          Les nouvelles réservations sont bloquées pour ce terrain.
+        </p>
+      </div>
+      }
+
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div class="rounded-3xl bg-slate-50 p-4">
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+            Réservations
+          </p>
+
+          <p class="text-2xl font-black text-slate-900 mt-1">
+            {{ getCourtReservationCount(court) }}
+          </p>
+        </div>
+
+        <div class="rounded-3xl bg-slate-50 p-4">
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400">
+            Occupation
+          </p>
+
+          <p class="text-2xl font-black text-slate-900 mt-1">
+            {{ getOccupationRate(court) }}%
+          </p>
+        </div>
       </div>
 
       <div>
         <div class="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
-          <span>Taux d’occupation</span>
+          <span>Occupation estimée</span>
           <span>{{ getOccupationRate(court) }}%</span>
         </div>
 
         <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
           <div
-            class="h-full rounded-full"
+            class="h-full rounded-full transition-all"
             [class]="getOccupationClass(court)"
             [style.width.%]="getOccupationRate(court)">
           </div>
         </div>
-
-        <p class="text-slate-400 text-xs mt-3">
-          {{ getCourtReservationCount(court) }} réservation(s) enregistrée(s)
-        </p>
       </div>
 
       <div class="mt-6">
-        @if (isInMaintenance(court)) {
-        <div class="mb-4">
-              <span class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase">
-                Maintenance
-              </span>
-        </div>
-        }
-
-        @if (!court.active) {
-        <div class="mb-4">
-              <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
-                Inactif
-              </span>
-        </div>
-        }
-
         <button
+          type="button"
           (click)="toggleMaintenance(court)"
           class="w-full py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+          [disabled]="!canToggleMaintenance(court)"
           [class]="isInMaintenance(court)
-              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-              : 'bg-red-600 text-white hover:bg-red-700'"
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                : canToggleMaintenance(court)
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'"
         >
-          {{ isInMaintenance(court)
-          ? 'Remettre en service'
-          : 'Mettre en maintenance' }}
+          {{ getMaintenanceActionLabel(court) }}
         </button>
       </div>
 
-    </div>
+    </article>
     }
+  </section>
+  }
 
-    @if (filteredCourts().length === 0) {
-    <div class="col-span-full bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
-      <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+  @if (viewMode() === 'TABLE') {
+  <section class="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
 
-      <h2 class="text-xl font-black text-slate-900 uppercase">
-        Aucun terrain trouvé
-      </h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead class="bg-slate-100 text-slate-500 text-xs uppercase tracking-widest">
+        <tr>
+          <th class="px-6 py-4 font-black">Terrain</th>
+          <th class="px-6 py-4 font-black">Site</th>
+          <th class="px-6 py-4 font-black">Type</th>
+          <th class="px-6 py-4 font-black">Statut</th>
+          <th class="px-6 py-4 font-black">Réservations</th>
+          <th class="px-6 py-4 font-black">Occupation</th>
+          <th class="px-6 py-4 font-black text-right">Action</th>
+        </tr>
+        </thead>
 
-      <p class="text-slate-400 mt-2">
-        Modifie tes filtres ou réinitialise la recherche.
-      </p>
+        <tbody>
+        @for (court of filteredCourts(); track court.id) {
+        <tr
+          class="border-t border-slate-100 hover:bg-slate-50"
+          [class]="court.maintenance ? 'bg-red-50/40' : ''"
+        >
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-3">
+              <mat-icon
+                class="text-base"
+                [class]="court.maintenance
+                        ? 'text-red-500'
+                        : court.active === false
+                          ? 'text-slate-400'
+                          : 'text-emerald-500'"
+              >
+                {{ getCourtStatusIcon(court) }}
+              </mat-icon>
 
-      <button
-        (click)="resetFilters()"
-        class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
-      >
-        Réinitialiser
-      </button>
+              <p class="font-black text-slate-900">
+                {{ court.name }}
+              </p>
+            </div>
+          </td>
+
+          <td class="px-6 py-4 text-sm text-slate-500">
+            {{ getSiteName(court) }}
+          </td>
+
+          <td class="px-6 py-4">
+                  <span
+                    class="px-3 py-1 rounded-full text-xs font-black uppercase"
+                    [class]="getCourtTypeClass(court)"
+                  >
+                    {{ getCourtType(court) }}
+                  </span>
+          </td>
+
+          <td class="px-6 py-4">
+                  <span
+                    class="px-3 py-1 rounded-full text-xs font-black uppercase"
+                    [class]="getCourtStatusClass(court)"
+                  >
+                    {{ getCourtStatusLabel(court) }}
+                  </span>
+          </td>
+
+          <td class="px-6 py-4 text-sm font-bold text-slate-700">
+            {{ getCourtReservationCount(court) }}
+          </td>
+
+          <td class="px-6 py-4 min-w-[190px]">
+            <div class="flex items-center gap-3">
+              <div class="h-2 bg-slate-100 rounded-full overflow-hidden flex-1">
+                <div
+                  class="h-full rounded-full"
+                  [class]="getOccupationClass(court)"
+                  [style.width.%]="getOccupationRate(court)">
+                </div>
+              </div>
+
+              <span class="text-xs font-black text-slate-500">
+                      {{ getOccupationRate(court) }}%
+                    </span>
+            </div>
+          </td>
+
+          <td class="px-6 py-4 text-right">
+            <button
+              type="button"
+              (click)="toggleMaintenance(court)"
+              class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest transition-all"
+              [disabled]="!canToggleMaintenance(court)"
+              [class]="isInMaintenance(court)
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      : canToggleMaintenance(court)
+                        ? 'bg-red-600 text-white hover:bg-red-700'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'"
+            >
+              {{ isInMaintenance(court)
+              ? 'Remettre'
+              : canToggleMaintenance(court)
+              ? 'Maintenance'
+              : 'Inactif' }}
+            </button>
+          </td>
+        </tr>
+        }
+        </tbody>
+      </table>
     </div>
+
+  </section>
+  }
+
+  @if (filteredCourts().length === 0) {
+  <div class="bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm mt-6">
+    <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+    <h2 class="text-xl font-black text-slate-900 uppercase">
+      Aucun terrain trouvé
+    </h2>
+
+    <p class="text-slate-400 mt-2">
+      Aucun terrain ne correspond aux filtres actuels.
+    </p>
+
+    @if (hasActiveFilters()) {
+    <button
+      type="button"
+      (click)="resetFilters()"
+      class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
+    >
+      Réinitialiser les filtres
+    </button>
     }
   </div>
+  }
 
 </div>

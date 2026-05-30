@@ -512,4 +512,124 @@ class PaiementServiceTest {
             ParticipationEntity participation
     ) {
     }
+
+    @Test
+    void confirmerPaiement_nePlantePasSiReservationEstNull() {
+        TestData data = buildData();
+        PaiementEntity paiement = buildPaiement(
+                100,
+                data.membre,
+                null,
+                data.participation,
+                1500,
+                PaiementStatut.EN_ATTENTE
+        );
+
+        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
+                .thenReturn(List.of());
+        when(paiementRepository.save(paiement)).thenReturn(paiement);
+
+        PaiementDTO result = paiementService.confirmerPaiement(100);
+
+        assertEquals(PaiementStatut.VALIDE, result.statut());
+        assertEquals(ParticipationStatut.PAYEE, data.participation.getStatut());
+        verify(paiementRepository).save(paiement);
+    }
+
+    @Test
+    void confirmerPaiement_nePlantePasSiParticipationEstNull() {
+        TestData data = buildData();
+        PaiementEntity paiement = buildPaiement(
+                100,
+                data.membre,
+                data.reservation,
+                null,
+                1500,
+                PaiementStatut.EN_ATTENTE
+        );
+
+        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
+                .thenReturn(List.of());
+        when(paiementRepository.save(paiement)).thenReturn(paiement);
+
+        PaiementDTO result = paiementService.confirmerPaiement(100);
+
+        assertEquals(PaiementStatut.VALIDE, result.statut());
+        assertEquals(ReservationStatus.VALIDEE, data.reservation.getStatut());
+        verify(paiementRepository).save(paiement);
+    }
+
+    @Test
+    void rembourserPaiementsReservation_ignoreReservationNull() {
+        paiementService.rembourserPaiementsReservation(null);
+
+        verify(paiementRepository, never())
+                .findByReservation_IdAndStatut(any(), any());
+    }
+
+    @Test
+    void rembourserPaiementsReservation_ignoreReservationSansId() {
+        ReservationEntity reservation = new ReservationEntity();
+
+        paiementService.rembourserPaiementsReservation(reservation);
+
+        verify(paiementRepository, never())
+                .findByReservation_IdAndStatut(any(), any());
+    }
+
+    @Test
+    void rembourserPaiementsMatch_ignoreMatchIdNull() {
+        paiementService.rembourserPaiementsMatch(null);
+
+        verify(paiementRepository, never())
+                .findByParticipation_Match_IdAndStatut(any(), any());
+    }
+
+    @Test
+    void rembourserPaiementsParticipation_ignoreParticipationIdNull() {
+        paiementService.rembourserPaiementsParticipation(null);
+
+        verify(paiementRepository, never())
+                .findByParticipation_IdAndStatut(any(), any());
+    }
+
+    @Test
+    void createDebt_ignoreSiMembreNull() {
+        TestData data = buildData();
+
+        paiementService.createDebt(
+                null,
+                data.participation,
+                data.reservation,
+                1500,
+                DetteRaison.PARTICIPATION_IMPAYEE
+        );
+
+        verify(detteMembreRepository, never()).save(any());
+    }
+
+    @Test
+    void createDebt_metMontantZeroSiMontantNull() {
+        TestData data = buildData();
+
+        when(detteMembreRepository.existsByParticipation_IdAndStatut(10, DetteStatut.OUVERTE))
+                .thenReturn(false);
+
+        paiementService.createDebt(
+                data.membre,
+                data.participation,
+                data.reservation,
+                null,
+                DetteRaison.PARTICIPATION_IMPAYEE
+        );
+
+        ArgumentCaptor<DetteMembreEntity> captor =
+                ArgumentCaptor.forClass(DetteMembreEntity.class);
+
+        verify(detteMembreRepository).save(captor.capture());
+
+        assertEquals(0, captor.getValue().getMontantCentimes());
+    }
 }
