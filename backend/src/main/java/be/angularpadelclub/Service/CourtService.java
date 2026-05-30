@@ -7,7 +7,6 @@ import be.angularpadelclub.Entity.SiteEntity;
 import be.angularpadelclub.Mapper.CourtMapper;
 import be.angularpadelclub.Repository.CourtRepository;
 import be.angularpadelclub.Repository.ReservationRepository;
-import be.angularpadelclub.Repository.SiteRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,22 +19,22 @@ import java.util.List;
 public class CourtService {
 
     private final CourtRepository courtRepository;
-    private final SiteRepository siteRepository;
     private final ReservationRepository reservationRepository;
     private final ReservationCancellationService reservationCancellationService;
+    private final ReferenceLookupService referenceLookupService;
     private final CourtMapper courtMapper;
 
     public CourtService(
             CourtRepository courtRepository,
-            SiteRepository siteRepository,
             ReservationRepository reservationRepository,
             ReservationCancellationService reservationCancellationService,
+            ReferenceLookupService referenceLookupService,
             CourtMapper courtMapper
     ) {
         this.courtRepository = courtRepository;
-        this.siteRepository = siteRepository;
         this.reservationRepository = reservationRepository;
         this.reservationCancellationService = reservationCancellationService;
+        this.referenceLookupService = referenceLookupService;
         this.courtMapper = courtMapper;
     }
 
@@ -47,51 +46,41 @@ public class CourtService {
     }
 
     public CourtDTO getCourtById(int id) {
-        CourtEntity court = findCourtOrThrow(id);
-
-        return courtMapper.toDTO(court);
+        return courtMapper.toDTO(
+                referenceLookupService.findCourtOrThrow(id)
+        );
     }
 
     @Transactional
     public CourtDTO createCourt(CourtDTO dto) {
-        SiteEntity site = findSiteOrThrow(dto.siteId());
+        SiteEntity site = referenceLookupService.findSiteOrThrow(dto.siteId());
 
-        if (!site.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Impossible d'ajouter un terrain à un site désactivé."
-            );
-        }
+        ensureSiteIsActiveForCourtManagement(site);
 
         CourtEntity court = courtMapper.toEntity(dto, site);
         court.setActif(true);
         court.setMaintenance(false);
 
-        CourtEntity savedCourt = courtRepository.save(court);
-
-        return courtMapper.toDTO(savedCourt);
+        return courtMapper.toDTO(
+                courtRepository.save(court)
+        );
     }
 
     @Transactional
     public CourtDTO updateCourt(int id, CourtDTO dto) {
-        CourtEntity court = findCourtOrThrow(id);
-        SiteEntity site = findSiteOrThrow(dto.siteId());
+        CourtEntity court = referenceLookupService.findCourtOrThrow(id);
+        SiteEntity site = referenceLookupService.findSiteOrThrow(dto.siteId());
 
-        if (!site.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Impossible d'affecter un terrain à un site désactivé."
-            );
-        }
+        ensureSiteIsActiveForCourtManagement(site);
 
         court.setNom(dto.name());
         court.setSite(site);
         court.setCouvert(dto.indoor());
         court.setActif(dto.active());
 
-        CourtEntity updatedCourt = courtRepository.save(court);
-
-        return courtMapper.toDTO(updatedCourt);
+        return courtMapper.toDTO(
+                courtRepository.save(court)
+        );
     }
 
     @Transactional
@@ -99,7 +88,7 @@ public class CourtService {
             int id,
             boolean maintenance
     ) {
-        CourtEntity court = findCourtOrThrow(id);
+        CourtEntity court = referenceLookupService.findCourtOrThrow(id);
 
         if (!court.isActif()) {
             throw new ResponseStatusException(
@@ -108,20 +97,16 @@ public class CourtService {
             );
         }
 
+        if (court.isMaintenance() == maintenance) {
+            return courtMapper.toDTO(court);
+        }
+
         court.setMaintenance(maintenance);
 
         CourtEntity savedCourt = courtRepository.save(court);
 
         if (maintenance) {
-            List<ReservationEntity> impactedReservations =
-                    reservationRepository.findByCourtIdAndDateGreaterThanEqual(
-                            id,
-                            LocalDate.now()
-                    );
-
-            reservationCancellationService.cancelReservationsForClubReason(
-                    impactedReservations
-            );
+            cancelFutureReservationsForCourt(id);
         }
 
         return courtMapper.toDTO(savedCourt);
@@ -129,7 +114,7 @@ public class CourtService {
 
     @Transactional
     public void deleteCourt(int id) {
-        CourtEntity court = findCourtOrThrow(id);
+        CourtEntity court = referenceLookupService.findCourtOrThrow(id);
 
         boolean hasFutureReservations =
                 reservationRepository.existsByCourtIdAndDateAfter(
@@ -150,19 +135,24 @@ public class CourtService {
         courtRepository.delete(court);
     }
 
-    private CourtEntity findCourtOrThrow(int id) {
-        return courtRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Terrain introuvable avec l'id : " + id
-                ));
+    private void ensureSiteIsActiveForCourtManagement(SiteEntity site) {
+        if (!site.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de gérer un terrain sur un site désactivé."
+            );
+        }
     }
 
-    private SiteEntity findSiteOrThrow(Integer siteId) {
-        return siteRepository.findById(siteId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Site introuvable avec l'id : " + siteId
-                ));
+    private void cancelFutureReservationsForCourt(int courtId) {
+        List<ReservationEntity> impactedReservations =
+                reservationRepository.findByCourtIdAndDateGreaterThanEqual(
+                        courtId,
+                        LocalDate.now()
+                );
+
+        reservationCancellationService.cancelReservationsForClubReason(
+                impactedReservations
+        );
     }
 }

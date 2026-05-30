@@ -5,9 +5,7 @@ import be.angularpadelclub.Entity.AdministrateurEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.SiteEntity;
 import be.angularpadelclub.Mapper.MembreMapper;
-import be.angularpadelclub.Repository.AdministrateurRepository;
 import be.angularpadelclub.Repository.MembreRepository;
-import be.angularpadelclub.Repository.SiteRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,20 +17,17 @@ import java.util.Optional;
 public class MembreService {
 
     private final MembreRepository membreRepository;
-    private final SiteRepository siteRepository;
     private final MembreMapper membreMapper;
-    private final AdministrateurRepository administrateurRepository;
+    private final ReferenceLookupService referenceLookupService;
 
     public MembreService(
             MembreRepository membreRepository,
-            SiteRepository siteRepository,
             MembreMapper membreMapper,
-            AdministrateurRepository administrateurRepository
+            ReferenceLookupService referenceLookupService
     ) {
         this.membreRepository = membreRepository;
-        this.siteRepository = siteRepository;
         this.membreMapper = membreMapper;
-        this.administrateurRepository = administrateurRepository;
+        this.referenceLookupService = referenceLookupService;
     }
 
     public List<MembreEntity> findAll() {
@@ -40,7 +35,10 @@ public class MembreService {
     }
 
     public List<MembreEntity> findVisibleByAdmin(String adminMatricule) {
-        AdministrateurEntity admin = findAdminOrThrow(adminMatricule);
+        AdministrateurEntity admin =
+                referenceLookupService.findAdministrateurByMatriculeOrThrow(
+                        adminMatricule
+                );
 
         if (isGlobalAdmin(admin)) {
             return membreRepository.findAll();
@@ -48,7 +46,6 @@ public class MembreService {
 
         if (isSiteAdmin(admin)) {
             SiteEntity adminSite = getAdminSiteOrThrow(admin);
-
             return membreRepository.findBySiteId(adminSite.getId());
         }
 
@@ -84,8 +81,10 @@ public class MembreService {
             );
         }
 
-        return membreRepository
-                .findByNomIgnoreCaseAndPrenomIgnoreCase(nom, prenom);
+        return membreRepository.findByNomIgnoreCaseAndPrenomIgnoreCase(
+                nom.trim(),
+                prenom.trim()
+        );
     }
 
     public void addMember(MembreDTO dto) {
@@ -106,8 +105,14 @@ public class MembreService {
         membreRepository.save(member);
     }
 
-    public void addMemberAsAdmin(String adminMatricule, MembreDTO dto) {
-        AdministrateurEntity admin = findAdminOrThrow(adminMatricule);
+    public void addMemberAsAdmin(
+            String adminMatricule,
+            MembreDTO dto
+    ) {
+        AdministrateurEntity admin =
+                referenceLookupService.findAdministrateurByMatriculeOrThrow(
+                        adminMatricule
+                );
 
         if (isGlobalAdmin(admin)) {
             addMember(dto);
@@ -140,13 +145,8 @@ public class MembreService {
         addMember(securedDto);
     }
 
-    /**
-     * On évite la suppression physique des membres.
-     * Un membre peut être lié à des réservations, participations, paiements ou dettes.
-     * Pour le désactiver, utiliser updateMemberActiveStatus(...).
-     */
     public void deleteMember(int id) {
-        MembreEntity membre = findMemberOrThrow(id);
+        MembreEntity membre = referenceLookupService.findMembreOrThrow(id);
 
         if (!membre.isActif()) {
             throw new ResponseStatusException(
@@ -181,6 +181,7 @@ public class MembreService {
                                 + prefix
                                 + " : "
                                 + lastMatricule
+                                + "."
                 );
             }
         }
@@ -188,7 +189,10 @@ public class MembreService {
         return prefix + String.format("%04d", nextNumber);
     }
 
-    public MembreEntity updateMemberActiveStatus(int id, Boolean active) {
+    public MembreEntity updateMemberActiveStatus(
+            int id,
+            Boolean active
+    ) {
         if (active == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -196,7 +200,7 @@ public class MembreService {
             );
         }
 
-        MembreEntity membre = findMemberOrThrow(id);
+        MembreEntity membre = referenceLookupService.findMembreOrThrow(id);
 
         if (membre.isActif() == active) {
             throw new ResponseStatusException(
@@ -220,7 +224,7 @@ public class MembreService {
     ) {
         validateOwnProfileUpdate(firstName, lastName, email);
 
-        MembreEntity membre = findMemberOrThrow(id);
+        MembreEntity membre = referenceLookupService.findMembreOrThrow(id);
 
         if (!membre.isActif()) {
             throw new ResponseStatusException(
@@ -268,29 +272,6 @@ public class MembreService {
                     "L'email doit être valide."
             );
         }
-    }
-
-    private MembreEntity findMemberOrThrow(int id) {
-        return membreRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Membre introuvable avec l'id " + id
-                ));
-    }
-
-    private AdministrateurEntity findAdminOrThrow(String adminMatricule) {
-        if (adminMatricule == null || adminMatricule.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Le matricule administrateur est obligatoire."
-            );
-        }
-
-        return administrateurRepository.findByMatricule(adminMatricule)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Administrateur introuvable avec le matricule : " + adminMatricule
-                ));
     }
 
     private SiteEntity getAdminSiteOrThrow(AdministrateurEntity admin) {
@@ -390,7 +371,8 @@ public class MembreService {
             );
         }
 
-        if (dto.matricule() != null && !dto.matricule().isBlank()
+        if (dto.matricule() != null
+                && !dto.matricule().isBlank()
                 && !dto.matricule().toUpperCase().startsWith("S")) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -400,8 +382,8 @@ public class MembreService {
     }
 
     private void validateMatriculeMatchesType(MembreDTO dto) {
-        String matricule = dto.matricule().toUpperCase();
-        String typeCode = dto.type().getCode().toUpperCase();
+        String matricule = dto.matricule().trim().toUpperCase();
+        String typeCode = dto.type().getCode().trim().toUpperCase();
 
         if (!matricule.startsWith("G")
                 && !matricule.startsWith("S")
@@ -435,7 +417,7 @@ public class MembreService {
     }
 
     private void validateSiteMatchesType(MembreDTO dto) {
-        String typeCode = dto.type().getCode().toUpperCase();
+        String typeCode = dto.type().getCode().trim().toUpperCase();
 
         if ("SITE".equals(typeCode) && dto.siteId() == null) {
             throw new ResponseStatusException(
@@ -464,11 +446,7 @@ public class MembreService {
             return null;
         }
 
-        SiteEntity site = siteRepository.findById(dto.siteId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Création impossible : site introuvable avec l'id " + dto.siteId()
-                ));
+        SiteEntity site = referenceLookupService.findSiteOrThrow(dto.siteId());
 
         if (!site.isActif()) {
             throw new ResponseStatusException(
@@ -479,6 +457,7 @@ public class MembreService {
 
         return site;
     }
+
     private String getPrefixForTypeCode(String typeCode) {
         if (typeCode == null || typeCode.isBlank()) {
             throw new ResponseStatusException(
@@ -487,7 +466,7 @@ public class MembreService {
             );
         }
 
-        return switch (typeCode.toUpperCase()) {
+        return switch (typeCode.trim().toUpperCase()) {
             case "GLOBAL" -> "G";
             case "SITE" -> "S";
             case "LIBRE" -> "L";

@@ -29,9 +29,17 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MatchSchedulerServiceTest {
@@ -88,8 +96,10 @@ class MatchSchedulerServiceTest {
                     participation(3, membre(3), ParticipationStatut.EN_ATTENTE_PAIEMENT, match)
             ));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             when(penaliteRepository.existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
                     eq(organisateur.getId()),
@@ -139,8 +149,10 @@ class MatchSchedulerServiceTest {
                     participation(4, membre(4), ParticipationStatut.EN_ATTENTE_PAIEMENT, match)
             ));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             matchSchedulerService.convertirMatchsPrivesIncompletsEnPublics();
 
@@ -171,8 +183,10 @@ class MatchSchedulerServiceTest {
                     participation(3, membre(3), ParticipationStatut.PAYEE, match)
             ));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             matchSchedulerService.convertirMatchsPrivesIncompletsEnPublics();
 
@@ -204,8 +218,10 @@ class MatchSchedulerServiceTest {
                     participation(4, membre(4), ParticipationStatut.LIBEREE, match)
             ));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             when(penaliteRepository.existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
                     eq(organisateur.getId()),
@@ -239,8 +255,10 @@ class MatchSchedulerServiceTest {
                     participation(3, membre(3), ParticipationStatut.PAYEE, match)
             ));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             matchSchedulerService.convertirMatchsPrivesIncompletsEnPublics();
 
@@ -271,8 +289,10 @@ class MatchSchedulerServiceTest {
                     participation(3, membre(3), ParticipationStatut.PAYEE, match)
             ));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             when(penaliteRepository.existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
                     eq(organisateur.getId()),
@@ -298,8 +318,10 @@ class MatchSchedulerServiceTest {
             match.setHeureDebut(LocalTime.now());
             match.setOrganisateur(membre(1));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             matchSchedulerService.convertirMatchsPrivesIncompletsEnPublics();
 
@@ -317,8 +339,10 @@ class MatchSchedulerServiceTest {
             match.setDateMatch(LocalDate.now());
             match.setOrganisateur(membre(1));
 
-            when(matchRepository.findByTypeMatchAndStatut(MatchType.PRIVE, MatchStatus.PLANIFIE))
-                    .thenReturn(List.of(match));
+            when(matchRepository.findByTypeMatchAndStatut(
+                    MatchType.PRIVE,
+                    MatchStatus.PLANIFIE
+            )).thenReturn(List.of(match));
 
             matchSchedulerService.convertirMatchsPrivesIncompletsEnPublics();
 
@@ -591,7 +615,8 @@ class MatchSchedulerServiceTest {
 
             matchSchedulerService.facturerSoldesOrganisateursMatchsPublicsIncomplets();
 
-            verify(matchBillingService, never()).facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
+            verify(matchBillingService, never())
+                    .facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
         }
 
         @Test
@@ -614,7 +639,8 @@ class MatchSchedulerServiceTest {
 
             matchSchedulerService.facturerSoldesOrganisateursMatchsPublicsIncomplets();
 
-            verify(matchBillingService, never()).facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
+            verify(matchBillingService, never())
+                    .facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
         }
 
         @Test
@@ -637,7 +663,8 @@ class MatchSchedulerServiceTest {
 
             matchSchedulerService.facturerSoldesOrganisateursMatchsPublicsIncomplets();
 
-            verify(matchBillingService, never()).facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
+            verify(matchBillingService, never())
+                    .facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
         }
 
         @Test
@@ -654,7 +681,8 @@ class MatchSchedulerServiceTest {
 
             matchSchedulerService.facturerSoldesOrganisateursMatchsPublicsIncomplets();
 
-            verify(matchBillingService, never()).facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
+            verify(matchBillingService, never())
+                    .facturerSoldeOrganisateurSiNecessaire(any(MatchEntity.class));
         }
     }
 
@@ -670,13 +698,17 @@ class MatchSchedulerServiceTest {
             penalite.setActive(true);
             penalite.setDateFin(LocalDate.now());
 
+            List<PenaliteEntity> penalitesExpirees = List.of(penalite);
+
             when(penaliteRepository.findByActiveTrueAndDateFinLessThanEqual(any(LocalDate.class)))
-                    .thenReturn(List.of(penalite));
+                    .thenReturn(penalitesExpirees);
 
             matchSchedulerService.desactiverPenalitesExpirees();
 
             assertFalse(penalite.isActive());
-            verify(penaliteRepository).save(penalite);
+
+            verify(penaliteRepository).saveAll(penalitesExpirees);
+            verify(penaliteRepository, never()).save(any(PenaliteEntity.class));
         }
 
         @Test
@@ -692,26 +724,30 @@ class MatchSchedulerServiceTest {
             penalite2.setActive(true);
             penalite2.setDateFin(LocalDate.now().minusDays(1));
 
+            List<PenaliteEntity> penalitesExpirees =
+                    List.of(penalite1, penalite2);
+
             when(penaliteRepository.findByActiveTrueAndDateFinLessThanEqual(any(LocalDate.class)))
-                    .thenReturn(List.of(penalite1, penalite2));
+                    .thenReturn(penalitesExpirees);
 
             matchSchedulerService.desactiverPenalitesExpirees();
 
             assertFalse(penalite1.isActive());
             assertFalse(penalite2.isActive());
 
-            verify(penaliteRepository).save(penalite1);
-            verify(penaliteRepository).save(penalite2);
+            verify(penaliteRepository).saveAll(penalitesExpirees);
+            verify(penaliteRepository, never()).save(any(PenaliteEntity.class));
         }
 
         @Test
-        @DisplayName("Ne fait rien si aucune pénalité n'est expirée")
+        @DisplayName("Ne sauvegarde rien si aucune pénalité n'est expirée")
         void shouldDoNothing_whenNoExpiredPenalty() {
             when(penaliteRepository.findByActiveTrueAndDateFinLessThanEqual(any(LocalDate.class)))
                     .thenReturn(List.of());
 
             matchSchedulerService.desactiverPenalitesExpirees();
 
+            verify(penaliteRepository).saveAll(List.of());
             verify(penaliteRepository, never()).save(any(PenaliteEntity.class));
         }
     }

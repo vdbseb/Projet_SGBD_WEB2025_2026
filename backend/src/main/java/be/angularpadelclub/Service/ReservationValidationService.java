@@ -69,21 +69,29 @@ public class ReservationValidationService {
     public void validateParticipants(List<String> participants) {
         List<String> safeParticipants = participants == null
                 ? List.of()
-                : participants;
+                : participants.stream()
+                .filter(matricule -> matricule != null && !matricule.isBlank())
+                .map(matricule -> matricule.trim().toUpperCase())
+                .toList();
 
         int nombreJoueurs = 1 + safeParticipants.size();
 
-        if (nombreJoueurs > 4) {
+        if (nombreJoueurs > ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Un match ne peut pas avoir plus de 4 joueurs."
+                    "Un match ne peut pas avoir plus de "
+                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
+                            + " joueurs."
             );
         }
 
-        if (!safeParticipants.isEmpty() && nombreJoueurs != 4) {
+        if (!safeParticipants.isEmpty()
+                && nombreJoueurs != ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Un match privé doit avoir exactement 4 joueurs."
+                    "Un match privé doit avoir exactement "
+                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
+                            + " joueurs."
             );
         }
 
@@ -231,25 +239,27 @@ public class ReservationValidationService {
             );
         }
 
-        if (matricule.startsWith("G")) {
+        String normalizedMatricule = matricule.trim().toUpperCase();
+
+        if (normalizedMatricule.startsWith("G")) {
             validateGlobalMemberDelay(date, today);
             return;
         }
 
-        if (matricule.startsWith("S")) {
+        if (normalizedMatricule.startsWith("S")) {
             validateSiteMemberCanReserveOnCourt(member, court);
             validateSiteMemberDelay(date, today);
             return;
         }
 
-        if (matricule.startsWith("L")) {
+        if (normalizedMatricule.startsWith("L")) {
             validateFreeMemberDelay(date, today);
             return;
         }
 
         throw new ResponseStatusException(
                 HttpStatus.CONFLICT,
-                "Type de membre inconnu pour le matricule : " + matricule
+                "Type de membre inconnu pour le matricule : " + matricule + "."
         );
     }
 
@@ -257,10 +267,14 @@ public class ReservationValidationService {
             LocalDate date,
             LocalDate today
     ) {
-        if (date.isAfter(today.plusWeeks(3))) {
+        if (date.isAfter(today.plusWeeks(
+                ClubBusinessRules.GLOBAL_MEMBER_RESERVATION_WEEKS
+        ))) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Un membre global ne peut réserver que 3 semaines à l'avance."
+                    "Un membre global ne peut réserver que "
+                            + ClubBusinessRules.GLOBAL_MEMBER_RESERVATION_WEEKS
+                            + " semaines à l'avance."
             );
         }
     }
@@ -288,10 +302,14 @@ public class ReservationValidationService {
             LocalDate date,
             LocalDate today
     ) {
-        if (date.isAfter(today.plusWeeks(2))) {
+        if (date.isAfter(today.plusWeeks(
+                ClubBusinessRules.SITE_MEMBER_RESERVATION_WEEKS
+        ))) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Un membre de site ne peut réserver que 2 semaines à l'avance."
+                    "Un membre de site ne peut réserver que "
+                            + ClubBusinessRules.SITE_MEMBER_RESERVATION_WEEKS
+                            + " semaines à l'avance."
             );
         }
     }
@@ -300,10 +318,14 @@ public class ReservationValidationService {
             LocalDate date,
             LocalDate today
     ) {
-        if (date.isAfter(today.plusDays(5))) {
+        if (date.isAfter(today.plusDays(
+                ClubBusinessRules.FREE_MEMBER_RESERVATION_DAYS
+        ))) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Un membre libre ne peut réserver que 5 jours à l'avance."
+                    "Un membre libre ne peut réserver que "
+                            + ClubBusinessRules.FREE_MEMBER_RESERVATION_DAYS
+                            + " jours à l'avance."
             );
         }
     }
@@ -380,7 +402,9 @@ public class ReservationValidationService {
 
     private boolean canIgnoreExistingReservation(ReservationEntity existing) {
         return existing.getStatut() == ReservationStatus.ANNULEE
-                || existing.getMatch() != null
-                && existing.getMatch().getStatut() == MatchStatus.ANNULE;
+                || (
+                existing.getMatch() != null
+                        && existing.getMatch().getStatut() == MatchStatus.ANNULE
+        );
     }
 }

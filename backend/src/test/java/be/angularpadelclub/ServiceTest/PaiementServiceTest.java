@@ -2,18 +2,35 @@ package be.angularpadelclub.ServiceTest;
 
 import be.angularpadelclub.DTO.MemberWalletDTO;
 import be.angularpadelclub.DTO.PaiementDTO;
-import be.angularpadelclub.Entity.*;
-import be.angularpadelclub.Enum.*;
+import be.angularpadelclub.Entity.DetteMembreEntity;
+import be.angularpadelclub.Entity.MatchEntity;
+import be.angularpadelclub.Entity.MembreEntity;
+import be.angularpadelclub.Entity.PaiementEntity;
+import be.angularpadelclub.Entity.ParticipationEntity;
+import be.angularpadelclub.Entity.ReservationEntity;
+import be.angularpadelclub.Enum.DetteRaison;
+import be.angularpadelclub.Enum.DetteStatut;
+import be.angularpadelclub.Enum.MatchStatus;
+import be.angularpadelclub.Enum.MatchType;
+import be.angularpadelclub.Enum.PaiementMethode;
+import be.angularpadelclub.Enum.PaiementProvider;
+import be.angularpadelclub.Enum.PaiementStatut;
+import be.angularpadelclub.Enum.ParticipationStatut;
+import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.DetteMembreMapper;
 import be.angularpadelclub.Mapper.PaiementMapper;
-import be.angularpadelclub.Repository.*;
+import be.angularpadelclub.Repository.DetteMembreRepository;
+import be.angularpadelclub.Repository.PaiementRepository;
+import be.angularpadelclub.Repository.ParticipationRepository;
 import be.angularpadelclub.Service.PaiementService;
+import be.angularpadelclub.Service.ReferenceLookupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -23,10 +40,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaiementServiceTest {
@@ -35,16 +58,13 @@ class PaiementServiceTest {
     private PaiementRepository paiementRepository;
 
     @Mock
-    private ReservationRepository reservationRepository;
-
-    @Mock
     private ParticipationRepository participationRepository;
 
     @Mock
     private DetteMembreRepository detteMembreRepository;
 
     @Mock
-    private MembreRepository membreRepository;
+    private ReferenceLookupService referenceLookupService;
 
     private PaiementService paiementService;
 
@@ -52,12 +72,11 @@ class PaiementServiceTest {
     void setUp() {
         paiementService = new PaiementService(
                 paiementRepository,
-                reservationRepository,
                 participationRepository,
                 detteMembreRepository,
-                membreRepository,
                 new PaiementMapper(),
-                new DetteMembreMapper()
+                new DetteMembreMapper(),
+                referenceLookupService
         );
     }
 
@@ -65,12 +84,22 @@ class PaiementServiceTest {
     void initierPaiementPourParticipation_creeUnPaiementUniquementAvecLaPartMembreMemeSiDetteOuverte() {
         TestData data = buildData();
 
-        DetteMembreEntity dette = buildDette(data.membre, data.participation, data.reservation, 3000);
+        DetteMembreEntity dette = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                3000
+        );
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
-        when(paiementRepository.existsByParticipation_IdAndStatut(10, PaiementStatut.EN_ATTENTE))
-                .thenReturn(false);
-        when(paiementRepository.save(any(PaiementEntity.class)))
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
+
+        when(paiementRepository.existsByParticipation_IdAndStatut(
+                10,
+                PaiementStatut.EN_ATTENTE
+        )).thenReturn(false);
+
+        when(paiementRepository.saveAndFlush(any(PaiementEntity.class)))
                 .thenAnswer(invocation -> {
                     PaiementEntity paiement = invocation.getArgument(0);
                     paiement.setId(100);
@@ -87,7 +116,7 @@ class PaiementServiceTest {
 
         assertEquals(DetteStatut.OUVERTE, dette.getStatut());
 
-        verify(paiementRepository).save(argThat(paiement ->
+        verify(paiementRepository).saveAndFlush(argThat(paiement ->
                 paiement.getMontantCentimes() == 1500
                         && paiement.getParticipation() == data.participation
                         && paiement.getReservation() == data.reservation
@@ -103,7 +132,8 @@ class PaiementServiceTest {
         TestData data = buildData();
         data.participation.setStatut(ParticipationStatut.PAYEE);
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -111,16 +141,20 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
     void initierPaiementPourParticipation_refuseSiPaiementDejaEnAttente() {
         TestData data = buildData();
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
-        when(paiementRepository.existsByParticipation_IdAndStatut(10, PaiementStatut.EN_ATTENTE))
-                .thenReturn(true);
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
+
+        when(paiementRepository.existsByParticipation_IdAndStatut(
+                10,
+                PaiementStatut.EN_ATTENTE
+        )).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -128,7 +162,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -136,7 +170,8 @@ class PaiementServiceTest {
         TestData dataLiberee = buildData();
         dataLiberee.participation.setStatut(ParticipationStatut.LIBEREE);
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(dataLiberee.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(dataLiberee.participation);
 
         ResponseStatusException exLiberee = assertThrows(
                 ResponseStatusException.class,
@@ -144,14 +179,15 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, exLiberee.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
 
-        reset(participationRepository, paiementRepository);
+        reset(referenceLookupService, paiementRepository);
 
         TestData dataAnnulee = buildData();
         dataAnnulee.participation.setStatut(ParticipationStatut.ANNULEE);
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(dataAnnulee.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(dataAnnulee.participation);
 
         ResponseStatusException exAnnulee = assertThrows(
                 ResponseStatusException.class,
@@ -159,7 +195,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, exAnnulee.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -167,7 +203,8 @@ class PaiementServiceTest {
         TestData data = buildData();
         data.participation.setMembre(null);
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -175,7 +212,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -183,7 +220,8 @@ class PaiementServiceTest {
         TestData data = buildData();
         data.participation.setMatch(null);
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -191,7 +229,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -199,7 +237,8 @@ class PaiementServiceTest {
         TestData data = buildData();
         data.match.setReservation(null);
 
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -207,12 +246,16 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
     void initierPaiement_refuseSiReservationInexistante() {
-        when(reservationRepository.findById(999)).thenReturn(Optional.empty());
+        when(referenceLookupService.findReservationOrThrow(999))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Réservation introuvable avec l'id : 999"
+                ));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -221,15 +264,18 @@ class PaiementServiceTest {
 
         assertEquals(404, ex.getStatusCode().value());
         verify(participationRepository, never()).findByMatch_IdAndMembre_Id(any(), any());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
     void initierPaiement_refuseSiParticipationOrganisateurIntrouvable() {
         TestData data = buildData();
 
-        when(reservationRepository.findById(20)).thenReturn(Optional.of(data.reservation));
-        when(participationRepository.findByMatch_IdAndMembre_Id(5, 1)).thenReturn(Optional.empty());
+        when(referenceLookupService.findReservationOrThrow(20))
+                .thenReturn(data.reservation);
+
+        when(participationRepository.findByMatch_IdAndMembre_Id(5, 1))
+                .thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -237,20 +283,28 @@ class PaiementServiceTest {
         );
 
         assertEquals(404, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
     void initierPaiement_appellePaiementParticipationOrganisateur() {
         TestData data = buildData();
 
-        when(reservationRepository.findById(20)).thenReturn(Optional.of(data.reservation));
+        when(referenceLookupService.findReservationOrThrow(20))
+                .thenReturn(data.reservation);
+
         when(participationRepository.findByMatch_IdAndMembre_Id(5, 1))
                 .thenReturn(Optional.of(data.participation));
-        when(participationRepository.findById(10)).thenReturn(Optional.of(data.participation));
-        when(paiementRepository.existsByParticipation_IdAndStatut(10, PaiementStatut.EN_ATTENTE))
-                .thenReturn(false);
-        when(paiementRepository.save(any(PaiementEntity.class)))
+
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
+
+        when(paiementRepository.existsByParticipation_IdAndStatut(
+                10,
+                PaiementStatut.EN_ATTENTE
+        )).thenReturn(false);
+
+        when(paiementRepository.saveAndFlush(any(PaiementEntity.class)))
                 .thenAnswer(invocation -> {
                     PaiementEntity paiement = invocation.getArgument(0);
                     paiement.setId(100);
@@ -268,19 +322,46 @@ class PaiementServiceTest {
     void initierPaiementDettesMembre_creeUnPaiementAvecLaSommeDesDettesOuvertes() {
         TestData data = buildData();
 
-        DetteMembreEntity dette1 = buildDette(data.membre, data.participation, data.reservation, 3000);
+        DetteMembreEntity dette1 = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                3000
+        );
         dette1.setId(201);
 
-        DetteMembreEntity dette2 = buildDette(data.membre, data.participation, data.reservation, 1500);
+        DetteMembreEntity dette2 = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                1500
+        );
         dette2.setId(202);
 
-        when(membreRepository.findById(1)).thenReturn(Optional.of(data.membre));
+        when(referenceLookupService.findMembreOrThrow(1))
+                .thenReturn(data.membre);
+
         when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
                 .thenReturn(List.of(dette1, dette2));
-        when(paiementRepository.save(any(PaiementEntity.class)))
+
+        when(paiementRepository.saveAndFlush(any(PaiementEntity.class)))
                 .thenAnswer(invocation -> {
                     PaiementEntity paiement = invocation.getArgument(0);
                     paiement.setId(100);
+                    return paiement;
+                });
+
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenAnswer(invocation -> {
+                    PaiementEntity paiement = new PaiementEntity();
+                    paiement.setId(100);
+                    paiement.setMembre(data.membre);
+                    paiement.setMontantCentimes(4500);
+                    paiement.setDevise("EUR");
+                    paiement.setProvider(PaiementProvider.MOCK);
+                    paiement.setMethode(PaiementMethode.CARTE);
+                    paiement.setStatut(PaiementStatut.EN_ATTENTE);
+                    paiement.setDateCreation(LocalDateTime.now());
                     return paiement;
                 });
 
@@ -292,7 +373,7 @@ class PaiementServiceTest {
         assertNull(result.participationId());
         assertEquals(PaiementStatut.EN_ATTENTE, result.statut());
 
-        verify(paiementRepository).save(argThat(paiement ->
+        verify(paiementRepository).saveAndFlush(argThat(paiement ->
                 paiement.getMembre() == data.membre
                         && paiement.getReservation() == null
                         && paiement.getParticipation() == null
@@ -302,7 +383,11 @@ class PaiementServiceTest {
 
     @Test
     void initierPaiementDettesMembre_refuseSiMembreInexistant() {
-        when(membreRepository.findById(999)).thenReturn(Optional.empty());
+        when(referenceLookupService.findMembreOrThrow(999))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Membre introuvable avec l'id : 999"
+                ));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -310,14 +395,16 @@ class PaiementServiceTest {
         );
 
         assertEquals(404, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
     void initierPaiementDettesMembre_refuseSiAucuneDetteOuverte() {
         TestData data = buildData();
 
-        when(membreRepository.findById(1)).thenReturn(Optional.of(data.membre));
+        when(referenceLookupService.findMembreOrThrow(1))
+                .thenReturn(data.membre);
+
         when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
                 .thenReturn(List.of());
 
@@ -327,15 +414,23 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
     void initierPaiementDettesMembre_refuseSiMontantTotalNonPositif() {
         TestData data = buildData();
-        DetteMembreEntity dette = buildDette(data.membre, data.participation, data.reservation, 0);
 
-        when(membreRepository.findById(1)).thenReturn(Optional.of(data.membre));
+        DetteMembreEntity dette = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                0
+        );
+
+        when(referenceLookupService.findMembreOrThrow(1))
+                .thenReturn(data.membre);
+
         when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
                 .thenReturn(List.of(dette));
 
@@ -345,7 +440,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -361,10 +456,18 @@ class PaiementServiceTest {
                 PaiementStatut.EN_ATTENTE
         );
 
-        DetteMembreEntity dette = buildDette(data.membre, data.participation, data.reservation, 3000);
+        DetteMembreEntity dette = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                3000
+        );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.confirmerPaiement(100);
 
@@ -384,10 +487,20 @@ class PaiementServiceTest {
     void confirmerPaiement_paiementDettesFermeLesDettesOuvertes() {
         TestData data = buildData();
 
-        DetteMembreEntity dette1 = buildDette(data.membre, data.participation, data.reservation, 3000);
+        DetteMembreEntity dette1 = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                3000
+        );
         dette1.setId(201);
 
-        DetteMembreEntity dette2 = buildDette(data.membre, data.participation, data.reservation, 1500);
+        DetteMembreEntity dette2 = buildDette(
+                data.membre,
+                data.participation,
+                data.reservation,
+                1500
+        );
         dette2.setId(202);
 
         PaiementEntity paiement = buildPaiement(
@@ -399,10 +512,14 @@ class PaiementServiceTest {
                 PaiementStatut.EN_ATTENTE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
         when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
                 .thenReturn(List.of(dette1, dette2));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.confirmerPaiement(100);
 
@@ -430,7 +547,8 @@ class PaiementServiceTest {
                 PaiementStatut.REFUSE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -438,7 +556,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -457,14 +575,15 @@ class PaiementServiceTest {
         LocalDateTime datePaiement = LocalDateTime.of(2026, 5, 29, 10, 30);
         paiement.setDatePaiement(datePaiement);
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.confirmerPaiement(100);
 
         assertEquals(PaiementStatut.VALIDE, result.statut());
         assertEquals(datePaiement, result.datePaiement());
 
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
         verify(detteMembreRepository, never()).findByMembre_IdAndStatut(any(), any());
     }
 
@@ -481,15 +600,18 @@ class PaiementServiceTest {
                 PaiementStatut.EN_ATTENTE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.confirmerPaiement(100);
 
         assertEquals(PaiementStatut.VALIDE, result.statut());
         assertEquals(ParticipationStatut.PAYEE, data.participation.getStatut());
 
-        verify(paiementRepository).save(paiement);
+        verify(paiementRepository).saveAndFlush(paiement);
         verify(detteMembreRepository, never()).findByMembre_IdAndStatut(any(), any());
     }
 
@@ -506,15 +628,18 @@ class PaiementServiceTest {
                 PaiementStatut.EN_ATTENTE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.confirmerPaiement(100);
 
         assertEquals(PaiementStatut.VALIDE, result.statut());
         assertEquals(ReservationStatus.EN_ATTENTE_PAIEMENT, data.reservation.getStatut());
 
-        verify(paiementRepository).save(paiement);
+        verify(paiementRepository).saveAndFlush(paiement);
         verify(detteMembreRepository, never()).findByMembre_IdAndStatut(any(), any());
     }
 
@@ -533,15 +658,18 @@ class PaiementServiceTest {
 
         paiement.setDateExpiration(LocalDateTime.now().plusMinutes(15));
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.refuserPaiement(100);
 
         assertEquals(PaiementStatut.REFUSE, result.statut());
         assertNull(paiement.getDateExpiration());
 
-        verify(paiementRepository).save(paiement);
+        verify(paiementRepository).saveAndFlush(paiement);
     }
 
     @Test
@@ -559,15 +687,18 @@ class PaiementServiceTest {
 
         paiement.setDateExpiration(LocalDateTime.now().plusMinutes(15));
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.annulerPaiement(100);
 
         assertEquals(PaiementStatut.ANNULE, result.statut());
         assertNull(paiement.getDateExpiration());
 
-        verify(paiementRepository).save(paiement);
+        verify(paiementRepository).saveAndFlush(paiement);
     }
 
     @Test
@@ -583,15 +714,18 @@ class PaiementServiceTest {
                 PaiementStatut.VALIDE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
-        when(paiementRepository.save(paiement)).thenReturn(paiement);
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
+
+        when(paiementRepository.saveAndFlush(paiement))
+                .thenReturn(paiement);
 
         PaiementDTO result = paiementService.rembourserPaiement(100);
 
         assertEquals(PaiementStatut.REMBOURSE, result.statut());
         assertEquals(ParticipationStatut.ANNULEE, data.participation.getStatut());
 
-        verify(paiementRepository).save(paiement);
+        verify(paiementRepository).saveAndFlush(paiement);
     }
 
     @Test
@@ -607,7 +741,8 @@ class PaiementServiceTest {
                 PaiementStatut.VALIDE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -617,7 +752,7 @@ class PaiementServiceTest {
         assertEquals(409, ex.getStatusCode().value());
         assertEquals(PaiementStatut.VALIDE, paiement.getStatut());
 
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -633,7 +768,8 @@ class PaiementServiceTest {
                 PaiementStatut.EN_ATTENTE
         );
 
-        when(paiementRepository.findById(100)).thenReturn(Optional.of(paiement));
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -641,7 +777,7 @@ class PaiementServiceTest {
         );
 
         assertEquals(409, ex.getStatusCode().value());
-        verify(paiementRepository, never()).save(any());
+        verify(paiementRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -683,7 +819,7 @@ class PaiementServiceTest {
         assertEquals(ParticipationStatut.ANNULEE, data.participation.getStatut());
         assertEquals(ParticipationStatut.ANNULEE, autreParticipation.getStatut());
 
-        verify(paiementRepository).saveAll(List.of(paiement1, paiement2));
+        verify(paiementRepository).saveAllAndFlush(List.of(paiement1, paiement2));
     }
 
     @Test
@@ -733,8 +869,10 @@ class PaiementServiceTest {
                 PaiementStatut.VALIDE
         );
 
-        when(paiementRepository.findByParticipation_Match_IdAndStatut(5, PaiementStatut.VALIDE))
-                .thenReturn(List.of(paiement1, paiement2));
+        when(paiementRepository.findByParticipation_Match_IdAndStatut(
+                5,
+                PaiementStatut.VALIDE
+        )).thenReturn(List.of(paiement1, paiement2));
 
         paiementService.rembourserPaiementsMatch(5);
 
@@ -743,7 +881,7 @@ class PaiementServiceTest {
         assertEquals(ParticipationStatut.ANNULEE, data.participation.getStatut());
         assertEquals(ParticipationStatut.ANNULEE, autreParticipation.getStatut());
 
-        verify(paiementRepository).saveAll(List.of(paiement1, paiement2));
+        verify(paiementRepository).saveAllAndFlush(List.of(paiement1, paiement2));
     }
 
     @Test
@@ -778,10 +916,15 @@ class PaiementServiceTest {
 
         paiementEnAttente.setDateExpiration(LocalDateTime.now().plusMinutes(15));
 
-        when(paiementRepository.findByParticipation_IdAndStatut(10, PaiementStatut.VALIDE))
-                .thenReturn(List.of(paiementValide));
-        when(paiementRepository.findByParticipation_IdAndStatut(10, PaiementStatut.EN_ATTENTE))
-                .thenReturn(List.of(paiementEnAttente));
+        when(paiementRepository.findByParticipation_IdAndStatut(
+                10,
+                PaiementStatut.VALIDE
+        )).thenReturn(List.of(paiementValide));
+
+        when(paiementRepository.findByParticipation_IdAndStatut(
+                10,
+                PaiementStatut.EN_ATTENTE
+        )).thenReturn(List.of(paiementEnAttente));
 
         paiementService.rembourserPaiementsParticipation(10);
 
@@ -790,8 +933,8 @@ class PaiementServiceTest {
         assertEquals(PaiementStatut.ANNULE, paiementEnAttente.getStatut());
         assertNull(paiementEnAttente.getDateExpiration());
 
-        verify(paiementRepository).saveAll(List.of(paiementValide));
-        verify(paiementRepository).saveAll(List.of(paiementEnAttente));
+        verify(paiementRepository).saveAllAndFlush(List.of(paiementValide));
+        verify(paiementRepository).saveAllAndFlush(List.of(paiementEnAttente));
     }
 
     @Test
@@ -806,8 +949,10 @@ class PaiementServiceTest {
     void createDebt_creeDetteOuverte() {
         TestData data = buildData();
 
-        when(detteMembreRepository.existsByParticipation_IdAndStatut(10, DetteStatut.OUVERTE))
-                .thenReturn(false);
+        when(detteMembreRepository.existsByParticipation_IdAndStatut(
+                10,
+                DetteStatut.OUVERTE
+        )).thenReturn(false);
 
         paiementService.createDebt(
                 data.membre,
@@ -837,8 +982,10 @@ class PaiementServiceTest {
     void createDebt_neCreePasDeDetteSiDetteOuverteExisteDeja() {
         TestData data = buildData();
 
-        when(detteMembreRepository.existsByParticipation_IdAndStatut(10, DetteStatut.OUVERTE))
-                .thenReturn(true);
+        when(detteMembreRepository.existsByParticipation_IdAndStatut(
+                10,
+                DetteStatut.OUVERTE
+        )).thenReturn(true);
 
         paiementService.createDebt(
                 data.membre,
@@ -870,8 +1017,10 @@ class PaiementServiceTest {
     void createDebt_metMontantZeroSiMontantNull() {
         TestData data = buildData();
 
-        when(detteMembreRepository.existsByParticipation_IdAndStatut(10, DetteStatut.OUVERTE))
-                .thenReturn(false);
+        when(detteMembreRepository.existsByParticipation_IdAndStatut(
+                10,
+                DetteStatut.OUVERTE
+        )).thenReturn(false);
 
         paiementService.createDebt(
                 data.membre,
@@ -956,11 +1105,18 @@ class PaiementServiceTest {
                 PaiementStatut.REMBOURSE
         );
 
-        when(membreRepository.findById(1)).thenReturn(Optional.of(data.membre));
+        when(referenceLookupService.findMembreOrThrow(1))
+                .thenReturn(data.membre);
+
         when(detteMembreRepository.findByMembre_IdAndStatut(1, DetteStatut.OUVERTE))
                 .thenReturn(List.of(dette));
+
         when(paiementRepository.findByMembre_Id(1))
-                .thenReturn(List.of(paiementEnAttente, paiementValide, paiementRembourse));
+                .thenReturn(List.of(
+                        paiementEnAttente,
+                        paiementValide,
+                        paiementRembourse
+                ));
 
         MemberWalletDTO result = paiementService.getWallet(1);
 
@@ -983,15 +1139,18 @@ class PaiementServiceTest {
                 3000
         );
 
-        AtomicReference<PaiementEntity> paiementSauve = new AtomicReference<>();
+        AtomicReference<PaiementEntity> paiementSauve =
+                new AtomicReference<>();
 
-        when(participationRepository.findById(10))
-                .thenReturn(Optional.of(data.participation));
+        when(referenceLookupService.findParticipationOrThrow(10))
+                .thenReturn(data.participation);
 
-        when(paiementRepository.existsByParticipation_IdAndStatut(10, PaiementStatut.EN_ATTENTE))
-                .thenReturn(false);
+        when(paiementRepository.existsByParticipation_IdAndStatut(
+                10,
+                PaiementStatut.EN_ATTENTE
+        )).thenReturn(false);
 
-        when(paiementRepository.save(any(PaiementEntity.class)))
+        when(paiementRepository.saveAndFlush(any(PaiementEntity.class)))
                 .thenAnswer(invocation -> {
                     PaiementEntity paiement = invocation.getArgument(0);
 
@@ -1003,7 +1162,8 @@ class PaiementServiceTest {
                     return paiement;
                 });
 
-        PaiementDTO paiementCree = paiementService.initierPaiementPourParticipation(10);
+        PaiementDTO paiementCree =
+                paiementService.initierPaiementPourParticipation(10);
 
         assertEquals(1500, paiementCree.montantCentimes());
         assertEquals(PaiementStatut.EN_ATTENTE, paiementCree.statut());
@@ -1012,10 +1172,11 @@ class PaiementServiceTest {
 
         PaiementEntity paiement = paiementSauve.get();
 
-        when(paiementRepository.findById(100))
-                .thenReturn(Optional.of(paiement));
+        when(referenceLookupService.findPaiementOrThrow(100))
+                .thenReturn(paiement);
 
-        PaiementDTO paiementConfirme = paiementService.confirmerPaiement(100);
+        PaiementDTO paiementConfirme =
+                paiementService.confirmerPaiement(100);
 
         assertEquals(PaiementStatut.VALIDE, paiementConfirme.statut());
         assertEquals(1500, paiementConfirme.montantCentimes());
@@ -1025,7 +1186,8 @@ class PaiementServiceTest {
         assertEquals(DetteStatut.OUVERTE, detteExistante.getStatut());
         assertNull(detteExistante.getDateResolution());
 
-        PaiementDTO paiementRembourse = paiementService.rembourserPaiement(100);
+        PaiementDTO paiementRembourse =
+                paiementService.rembourserPaiement(100);
 
         assertEquals(PaiementStatut.REMBOURSE, paiementRembourse.statut());
         assertEquals(1500, paiementRembourse.montantCentimes());
@@ -1040,7 +1202,11 @@ class PaiementServiceTest {
 
     @Test
     void getWallet_refuseSiMembreInexistant() {
-        when(membreRepository.findById(999)).thenReturn(Optional.empty());
+        when(referenceLookupService.findMembreOrThrow(999))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Membre introuvable avec l'id : 999"
+                ));
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
@@ -1052,6 +1218,7 @@ class PaiementServiceTest {
 
     private TestData buildData() {
         MembreEntity membre = new MembreEntity();
+
         membre.setId(1);
         membre.setMatricule("G0001");
         membre.setPrenom("Sebastien");
@@ -1060,6 +1227,7 @@ class PaiementServiceTest {
         membre.setActif(true);
 
         ReservationEntity reservation = new ReservationEntity();
+
         reservation.setId(20);
         reservation.setDate(LocalDate.of(2026, 6, 1));
         reservation.setStartTime(LocalTime.of(18, 0));
@@ -1068,6 +1236,7 @@ class PaiementServiceTest {
         reservation.setStatut(ReservationStatus.EN_ATTENTE_PAIEMENT);
 
         MatchEntity match = new MatchEntity();
+
         match.setId(5);
         match.setReservation(reservation);
         match.setOrganisateur(membre);
@@ -1076,7 +1245,8 @@ class PaiementServiceTest {
         match.setHeureFin(reservation.getEndTime());
         match.setTypeMatch(MatchType.PUBLIC);
         match.setStatut(MatchStatus.OUVERT);
-        match.setPrixTotal(6000);
+        match.setPrixTotal(60);
+
         reservation.setMatch(match);
 
         ParticipationEntity participation = buildParticipation(
@@ -1086,7 +1256,12 @@ class PaiementServiceTest {
                 ParticipationStatut.EN_ATTENTE_PAIEMENT
         );
 
-        return new TestData(membre, reservation, match, participation);
+        return new TestData(
+                membre,
+                reservation,
+                match,
+                participation
+        );
     }
 
     private ParticipationEntity buildParticipation(
@@ -1096,6 +1271,7 @@ class PaiementServiceTest {
             ParticipationStatut statut
     ) {
         ParticipationEntity participation = new ParticipationEntity();
+
         participation.setId(id);
         participation.setMembre(membre);
         participation.setMatch(match);
@@ -1115,6 +1291,7 @@ class PaiementServiceTest {
             PaiementStatut statut
     ) {
         PaiementEntity paiement = new PaiementEntity();
+
         paiement.setId(id);
         paiement.setMembre(membre);
         paiement.setReservation(reservation);
@@ -1138,6 +1315,7 @@ class PaiementServiceTest {
             Integer montantCentimes
     ) {
         DetteMembreEntity dette = new DetteMembreEntity();
+
         dette.setId(200);
         dette.setMembre(membre);
         dette.setParticipation(participation);

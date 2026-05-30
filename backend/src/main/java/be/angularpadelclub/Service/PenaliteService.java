@@ -2,11 +2,8 @@ package be.angularpadelclub.Service;
 
 import be.angularpadelclub.DTO.PenaliteDTO;
 import be.angularpadelclub.Entity.PenaliteEntity;
-import be.angularpadelclub.Repository.MembreRepository;
 import be.angularpadelclub.Repository.PenaliteRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -16,30 +13,18 @@ import java.util.List;
 public class PenaliteService {
 
     private final PenaliteRepository penaliteRepository;
-    private final MembreRepository membreRepository;
+    private final ReferenceLookupService referenceLookupService;
 
     public PenaliteService(
             PenaliteRepository penaliteRepository,
-            MembreRepository membreRepository
+            ReferenceLookupService referenceLookupService
     ) {
         this.penaliteRepository = penaliteRepository;
-        this.membreRepository = membreRepository;
+        this.referenceLookupService = referenceLookupService;
     }
 
     public List<PenaliteDTO> findActivePenaltiesForMember(Integer memberId) {
-        if (memberId == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "L'identifiant du membre est obligatoire."
-            );
-        }
-
-        if (!membreRepository.existsById(memberId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Membre introuvable avec l'id " + memberId
-            );
-        }
+        referenceLookupService.findMembreOrThrow(memberId);
 
         LocalDate today = LocalDate.now();
 
@@ -53,8 +38,14 @@ public class PenaliteService {
                 .toList();
     }
 
-    private PenaliteDTO toDTO(PenaliteEntity penalite, LocalDate today) {
-        long joursRestants = ChronoUnit.DAYS.between(today, penalite.getDateFin());
+    private PenaliteDTO toDTO(
+            PenaliteEntity penalite,
+            LocalDate today
+    ) {
+        long joursRestants = ChronoUnit.DAYS.between(
+                today,
+                penalite.getDateFin()
+        );
 
         var match = penalite.getMatch();
         var reservation = match != null ? match.getReservation() : null;

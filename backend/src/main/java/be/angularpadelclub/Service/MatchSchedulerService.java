@@ -11,6 +11,8 @@ import be.angularpadelclub.Repository.MatchRepository;
 import be.angularpadelclub.Repository.ParticipationRepository;
 import be.angularpadelclub.Repository.PenaliteRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +24,27 @@ import java.util.List;
 @Service
 public class MatchSchedulerService {
 
-    private static final int NOMBRE_JOUEURS_REQUIS = 4;
-    private static final int DUREE_PENALITE_JOURS = 7;
+    private static final Logger LOGGER =
+            LoggerFactory.getLogger(MatchSchedulerService.class);
+
+    private static final long SCHEDULER_FIXED_RATE_MS = 300_000L;
+
+    private static final List<ParticipationStatut> STATUTS_PARTICIPATION_ACTIVE = List.of(
+            ParticipationStatut.EN_ATTENTE_PAIEMENT,
+            ParticipationStatut.PAYEE
+    );
+
+    private static final List<MatchStatus> STATUTS_MATCH_RENDABLE_PUBLIC = List.of(
+            MatchStatus.PLANIFIE,
+            MatchStatus.OUVERT,
+            MatchStatus.COMPLET
+    );
+
+    private static final List<MatchStatus> STATUTS_MATCH_PUBLIC_FACTURABLE = List.of(
+            MatchStatus.PLANIFIE,
+            MatchStatus.OUVERT,
+            MatchStatus.COMPLET
+    );
 
     private final MatchRepository matchRepository;
     private final ParticipationRepository participationRepository;
@@ -45,10 +66,9 @@ public class MatchSchedulerService {
         this.matchBillingService = matchBillingService;
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = SCHEDULER_FIXED_RATE_MS)
     @Transactional
     public void convertirMatchsPrivesIncompletsEnPublics() {
-
         LocalDateTime limite = LocalDateTime.now().plusHours(24);
 
         List<MatchEntity> matchsPrivesPlanifies =
@@ -58,20 +78,15 @@ public class MatchSchedulerService {
                 );
 
         for (MatchEntity match : matchsPrivesPlanifies) {
-
             LocalDateTime dateHeureMatch = getDateHeureMatch(match);
 
-            if (dateHeureMatch == null) {
-                continue;
-            }
-
-            if (dateHeureMatch.isAfter(limite)) {
+            if (dateHeureMatch == null || dateHeureMatch.isAfter(limite)) {
                 continue;
             }
 
             long nombreJoueursActifs = compterJoueursActifs(match);
 
-            if (nombreJoueursActifs >= NOMBRE_JOUEURS_REQUIS) {
+            if (nombreJoueursActifs >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
                 continue;
             }
 
@@ -86,23 +101,21 @@ public class MatchSchedulerService {
                     "Match privé incomplet la veille : "
                             + nombreJoueursActifs
                             + "/"
-                            + NOMBRE_JOUEURS_REQUIS
+                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
                             + " joueurs actifs."
             );
 
-            System.out.println(
-                    "Match privé incomplet converti en public : matchId="
-                            + match.getId()
-                            + ", joueursActifs="
-                            + nombreJoueursActifs
+            LOGGER.info(
+                    "Match privé incomplet converti en public : matchId={}, joueursActifs={}",
+                    match.getId(),
+                    nombreJoueursActifs
             );
         }
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = SCHEDULER_FIXED_RATE_MS)
     @Transactional
     public void libererPlacesNonPayees() {
-
         List<ParticipationEntity> participationsEnRetard =
                 participationRepository.findByStatutAndDateLimitePaiementBefore(
                         ParticipationStatut.EN_ATTENTE_PAIEMENT,
@@ -110,10 +123,13 @@ public class MatchSchedulerService {
                 );
 
         for (ParticipationEntity participation : participationsEnRetard) {
-
             MatchEntity match = participation.getMatch();
 
             if (match == null) {
+                LOGGER.warn(
+                        "Participation en retard ignorée car aucun match associé : participationId={}",
+                        participation.getId()
+                );
                 continue;
             }
 
@@ -134,42 +150,33 @@ public class MatchSchedulerService {
                         "Organisateur non payé avant la date limite."
                 );
 
-                System.out.println(
-                        "Organisateur non payé : participationId="
-                                + participation.getId()
-                                + ", matchId="
-                                + match.getId()
-                                + ", match passé public et pénalité créée"
+                LOGGER.info(
+                        "Organisateur non payé : participationId={}, matchId={}, match passé public et pénalité créée.",
+                        participation.getId(),
+                        match.getId()
                 );
             } else {
-                System.out.println(
-                        "Participation non payée libérée : participationId="
-                                + participation.getId()
-                                + ", matchId="
-                                + match.getId()
-                                + ", match passé public"
+                LOGGER.info(
+                        "Participation non payée libérée : participationId={}, matchId={}, match passé public.",
+                        participation.getId(),
+                        match.getId()
                 );
             }
         }
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = SCHEDULER_FIXED_RATE_MS)
     @Transactional
     public void facturerSoldesOrganisateursMatchsPublicsIncomplets() {
-
         LocalDateTime maintenant = LocalDateTime.now();
 
-        List<MatchEntity> matchsPublics = getMatchsPublicsPotentiellementFacturables();
+        List<MatchEntity> matchsPublics =
+                getMatchsPublicsPotentiellementFacturables();
 
         for (MatchEntity match : matchsPublics) {
-
             LocalDateTime dateHeureMatch = getDateHeureMatch(match);
 
-            if (dateHeureMatch == null) {
-                continue;
-            }
-
-            if (dateHeureMatch.isAfter(maintenant)) {
+            if (dateHeureMatch == null || dateHeureMatch.isAfter(maintenant)) {
                 continue;
             }
 
@@ -177,10 +184,9 @@ public class MatchSchedulerService {
         }
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = SCHEDULER_FIXED_RATE_MS)
     @Transactional
     public void desactiverPenalitesExpirees() {
-
         List<PenaliteEntity> penalitesExpirees =
                 penaliteRepository.findByActiveTrueAndDateFinLessThanEqual(
                         LocalDate.now()
@@ -188,46 +194,37 @@ public class MatchSchedulerService {
 
         for (PenaliteEntity penalite : penalitesExpirees) {
             penalite.setActive(false);
-            penaliteRepository.save(penalite);
+        }
 
-            System.out.println(
-                    "Pénalité expirée désactivée : penaliteId="
-                            + penalite.getId()
+        penaliteRepository.saveAll(penalitesExpirees);
+
+        if (!penalitesExpirees.isEmpty()) {
+            LOGGER.info(
+                    "{} pénalité(s) expirée(s) désactivée(s).",
+                    penalitesExpirees.size()
             );
         }
     }
 
     private List<MatchEntity> getMatchsPublicsPotentiellementFacturables() {
-
         List<MatchEntity> matchs = new ArrayList<>();
 
-        matchs.addAll(
-                matchRepository.findByTypeMatchAndStatut(
-                        MatchType.PUBLIC,
-                        MatchStatus.PLANIFIE
-                )
-        );
-
-        matchs.addAll(
-                matchRepository.findByTypeMatchAndStatut(
-                        MatchType.PUBLIC,
-                        MatchStatus.OUVERT
-                )
-        );
-
-        matchs.addAll(
-                matchRepository.findByTypeMatchAndStatut(
-                        MatchType.PUBLIC,
-                        MatchStatus.COMPLET
-                )
-        );
+        for (MatchStatus statut : STATUTS_MATCH_PUBLIC_FACTURABLE) {
+            matchs.addAll(
+                    matchRepository.findByTypeMatchAndStatut(
+                            MatchType.PUBLIC,
+                            statut
+                    )
+            );
+        }
 
         return matchs;
     }
 
     private LocalDateTime getDateHeureMatch(MatchEntity match) {
-
-        if (match.getDateMatch() == null || match.getHeureDebut() == null) {
+        if (match == null
+                || match.getDateMatch() == null
+                || match.getHeureDebut() == null) {
             return null;
         }
 
@@ -238,8 +235,7 @@ public class MatchSchedulerService {
     }
 
     private long compterJoueursActifs(MatchEntity match) {
-
-        if (match.getParticipations() == null) {
+        if (match == null || match.getParticipations() == null) {
             return 0;
         }
 
@@ -249,20 +245,32 @@ public class MatchSchedulerService {
                 .count();
     }
 
-    private boolean estParticipationActive(ParticipationEntity participation) {
-        return participation.getStatut() == ParticipationStatut.EN_ATTENTE_PAIEMENT
-                || participation.getStatut() == ParticipationStatut.PAYEE;
+    private boolean estParticipationActive(
+            ParticipationEntity participation
+    ) {
+        return participation != null
+                && participation.getStatut() != null
+                && STATUTS_PARTICIPATION_ACTIVE.contains(
+                participation.getStatut()
+        );
     }
 
     private boolean peutEtreRenduPublic(MatchEntity match) {
-        return match.getStatut() == MatchStatus.PLANIFIE
-                || match.getStatut() == MatchStatus.OUVERT
-                || match.getStatut() == MatchStatus.COMPLET;
+        return match != null
+                && match.getStatut() != null
+                && STATUTS_MATCH_RENDABLE_PUBLIC.contains(
+                match.getStatut()
+        );
     }
 
     private void convertirEnMatchPublic(MatchEntity match) {
+        if (match == null) {
+            return;
+        }
+
         match.setTypeMatch(MatchType.PUBLIC);
         match.setStatut(MatchStatus.OUVERT);
+
         matchRepository.save(match);
     }
 
@@ -270,7 +278,7 @@ public class MatchSchedulerService {
             MatchEntity match,
             String raison
     ) {
-        if (match.getOrganisateur() == null) {
+        if (match == null || match.getOrganisateur() == null) {
             return;
         }
 
@@ -285,9 +293,12 @@ public class MatchSchedulerService {
         }
 
         LocalDate dateDebut = LocalDate.now();
-        LocalDate dateFin = dateDebut.plusDays(DUREE_PENALITE_JOURS);
+        LocalDate dateFin = dateDebut.plusDays(
+                ClubBusinessRules.PENALTY_DURATION_DAYS
+        );
 
         PenaliteEntity penalite = new PenaliteEntity();
+
         penalite.setMembre(match.getOrganisateur());
         penalite.setMatch(match);
         penalite.setDateDebut(dateDebut);
@@ -297,13 +308,11 @@ public class MatchSchedulerService {
 
         penaliteRepository.save(penalite);
 
-        System.out.println(
-                "Pénalité créée : membreId="
-                        + match.getOrganisateur().getId()
-                        + ", matchId="
-                        + match.getId()
-                        + ", dateFin="
-                        + dateFin
+        LOGGER.info(
+                "Pénalité créée : membreId={}, matchId={}, dateFin={}",
+                match.getOrganisateur().getId(),
+                match.getId(),
+                dateFin
         );
     }
 
@@ -311,10 +320,26 @@ public class MatchSchedulerService {
             ParticipationEntity participation,
             MatchEntity match
     ) {
+        if (participation == null || participation.getMembre() == null) {
+            LOGGER.warn(
+                    "Dette non créée : participation invalide ou membre absent."
+            );
+            return;
+        }
+
+        if (participation.getMontantDuCentimes() == null
+                || participation.getMontantDuCentimes() <= 0) {
+            LOGGER.warn(
+                    "Dette non créée : montant invalide pour participationId={}.",
+                    participation.getId()
+            );
+            return;
+        }
+
         paiementService.createDebt(
                 participation.getMembre(),
                 participation,
-                match.getReservation(),
+                match != null ? match.getReservation() : null,
                 participation.getMontantDuCentimes(),
                 DetteRaison.PARTICIPATION_IMPAYEE
         );
@@ -324,7 +349,9 @@ public class MatchSchedulerService {
             MatchEntity match,
             ParticipationEntity participation
     ) {
-        return match.getOrganisateur() != null
+        return match != null
+                && participation != null
+                && match.getOrganisateur() != null
                 && participation.getMembre() != null
                 && match.getOrganisateur().getId().equals(
                 participation.getMembre().getId()

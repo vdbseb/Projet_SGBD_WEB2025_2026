@@ -3,7 +3,6 @@ package be.angularpadelclub.Mapper;
 import be.angularpadelclub.DTO.MembreDTO;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.SiteEntity;
-import be.angularpadelclub.Entity.TypeMembreEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class MembreMapper {
                 entity.getMatricule(),
                 entity.getPrenom(),
                 entity.getNom(),
-                entity.getType() != null ? entity.getType().getCode() : null,
+                entity.getType(),
                 entity.getSite() != null ? entity.getSite().getId() : null,
                 entity.getSite() != null ? entity.getSite().getNom() : null
         );
@@ -31,7 +30,6 @@ public class MembreMapper {
 
     public MembreEntity toEntity(
             MembreDTO dto,
-            TypeMembreEntity type,
             SiteEntity site
     ) {
         if (dto == null) {
@@ -46,7 +44,7 @@ public class MembreMapper {
         entity.setMatricule(dto.matricule());
         entity.setPrenom(dto.firstName());
         entity.setNom(dto.lastName());
-        entity.setType(type);
+        entity.setType(dto.type());
         entity.setSite(site);
 
         return entity;
