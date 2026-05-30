@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,17 +29,20 @@ public class MatchSchedulerService {
     private final ParticipationRepository participationRepository;
     private final PenaliteRepository penaliteRepository;
     private final PaiementService paiementService;
+    private final MatchBillingService matchBillingService;
 
     public MatchSchedulerService(
             MatchRepository matchRepository,
             ParticipationRepository participationRepository,
             PenaliteRepository penaliteRepository,
-            PaiementService paiementService
+            PaiementService paiementService,
+            MatchBillingService matchBillingService
     ) {
         this.matchRepository = matchRepository;
         this.participationRepository = participationRepository;
         this.penaliteRepository = penaliteRepository;
         this.paiementService = paiementService;
+        this.matchBillingService = matchBillingService;
     }
 
     @Scheduled(fixedRate = 300000)
@@ -151,6 +155,30 @@ public class MatchSchedulerService {
 
     @Scheduled(fixedRate = 300000)
     @Transactional
+    public void facturerSoldesOrganisateursMatchsPublicsIncomplets() {
+
+        LocalDateTime maintenant = LocalDateTime.now();
+
+        List<MatchEntity> matchsPublics = getMatchsPublicsPotentiellementFacturables();
+
+        for (MatchEntity match : matchsPublics) {
+
+            LocalDateTime dateHeureMatch = getDateHeureMatch(match);
+
+            if (dateHeureMatch == null) {
+                continue;
+            }
+
+            if (dateHeureMatch.isAfter(maintenant)) {
+                continue;
+            }
+
+            matchBillingService.facturerSoldeOrganisateurSiNecessaire(match);
+        }
+    }
+
+    @Scheduled(fixedRate = 300000)
+    @Transactional
     public void desactiverPenalitesExpirees() {
 
         List<PenaliteEntity> penalitesExpirees =
@@ -167,6 +195,34 @@ public class MatchSchedulerService {
                             + penalite.getId()
             );
         }
+    }
+
+    private List<MatchEntity> getMatchsPublicsPotentiellementFacturables() {
+
+        List<MatchEntity> matchs = new ArrayList<>();
+
+        matchs.addAll(
+                matchRepository.findByTypeMatchAndStatut(
+                        MatchType.PUBLIC,
+                        MatchStatus.PLANIFIE
+                )
+        );
+
+        matchs.addAll(
+                matchRepository.findByTypeMatchAndStatut(
+                        MatchType.PUBLIC,
+                        MatchStatus.OUVERT
+                )
+        );
+
+        matchs.addAll(
+                matchRepository.findByTypeMatchAndStatut(
+                        MatchType.PUBLIC,
+                        MatchStatus.COMPLET
+                )
+        );
+
+        return matchs;
     }
 
     private LocalDateTime getDateHeureMatch(MatchEntity match) {
