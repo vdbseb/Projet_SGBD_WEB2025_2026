@@ -24,6 +24,20 @@ export const routes: Routes = [
         .then(m => m.MyReservations)
   },
 
+
+  {
+    path: 'mon-espace',
+    loadComponent: () =>
+      import('./views/member/member-dashboard/member-dashboard')
+        .then(m => m.MemberDashboard)
+  },
+
+  {
+    path: 'member/dashboard',
+    redirectTo: 'mon-espace',
+    pathMatch: 'full'
+  },
+
   {
     path: 'matches-publics',
     loadComponent: () =>

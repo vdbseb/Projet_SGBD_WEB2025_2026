@@ -20,5 +20,6 @@ public record ReservationDTO(
         ReservationStatus reservationStatus,
         MatchType matchType,
         MatchStatus matchStatus,
-        List<String> participantMatricules
+        List<String> participantMatricules,
+        List<ParticipantReservationDTO> participants
 ) {}

@@ -30,12 +30,10 @@ public class PaiementController {
             path = "/{id}",
             produces = "application/json"
     )
-    public ResponseEntity<PaiementDTO> findById(
+    public PaiementDTO findById(
             @PathVariable("id") Integer id
     ) {
-        return ResponseEntity.of(
-                paiementService.findById(id)
-        );
+        return paiementService.findByIdOrThrow(id);
     }
 
     @GetMapping(
@@ -85,6 +83,16 @@ public class PaiementController {
                 .initierPaiementPourParticipation(
                         participationId
                 );
+    }
+
+    @PostMapping(
+            path = "/member/{memberId}/dettes/initier",
+            produces = "application/json"
+    )
+    public PaiementDTO initierPaiementDettesMembre(
+            @PathVariable("memberId") Integer memberId
+    ) {
+        return paiementService.initierPaiementDettesMembre(memberId);
     }
 
     @PatchMapping(

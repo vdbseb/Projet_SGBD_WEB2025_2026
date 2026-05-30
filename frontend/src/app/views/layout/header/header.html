@@ -20,29 +20,35 @@
     </a>
 
     @if (authService.isLoggedIn()) {
-      <a
-        routerLink="/mes-reservations"
-        class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
-      >
-        Mes Réservations
-      </a>
-      @if (authService.isLoggedIn()) {
-        <a
-          routerLink="/matches-publics"
-          class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
-        >
-          Matchs publics
-        </a>
-      }
+    <a
+      routerLink="/mon-espace"
+      class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
+    >
+      Mon espace
+    </a>
+
+    <a
+      routerLink="/mes-reservations"
+      class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
+    >
+      Mes Réservations
+    </a>
+
+    <a
+      routerLink="/matches-publics"
+      class="hover:text-slate-900 transition-colors cursor-pointer no-underline"
+    >
+      Matchs publics
+    </a>
     }
 
     @if (authService.isAdminLoggedIn()) {
-      <a
-        routerLink="/admin"
-        class="hover:text-violet-700 transition-colors cursor-pointer no-underline"
-      >
-        Administration
-      </a>
+    <a
+      routerLink="/admin"
+      class="hover:text-violet-700 transition-colors cursor-pointer no-underline"
+    >
+      Administration
+    </a>
     }
 
     <div class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">

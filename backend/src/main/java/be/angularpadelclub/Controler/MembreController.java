@@ -93,6 +93,25 @@ public class MembreController {
         );
     }
 
+    @PatchMapping(
+            value = "/{id}/profile",
+            consumes = "application/json",
+            produces = "application/json"
+    )
+    public MembreDTO updateOwnProfile(
+            @PathVariable("id") int id,
+            @RequestBody MemberProfileUpdateRequest request
+    ) {
+        return membreMapper.toDTO(
+                membreService.updateOwnProfile(
+                        id,
+                        request.firstName(),
+                        request.lastName(),
+                        request.email()
+                )
+        );
+    }
+
     @DeleteMapping("/{id}")
     public void deleteMember(@PathVariable("id") int id) {
         membreService.deleteMember(id);
@@ -100,6 +119,13 @@ public class MembreController {
 
     public record MemberActiveStatusRequest(
             Boolean active
+    ) {
+    }
+
+    public record MemberProfileUpdateRequest(
+            String firstName,
+            String lastName,
+            String email
     ) {
     }
 }

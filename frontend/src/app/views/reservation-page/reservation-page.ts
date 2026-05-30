@@ -114,11 +114,83 @@ export class ReservationPage implements OnInit {
     });
   }
 
+  getMaxReservationDate(): Date {
+    const today = this.resetDate(new Date());
+    const member = this.authService.currentMember();
+    const typeCode = this.getMemberTypeCode(member);
+
+    const maxDate = new Date(today);
+
+    if (typeCode === 'GLOBAL') {
+      maxDate.setDate(maxDate.getDate() + 21);
+      return maxDate;
+    }
+
+    if (typeCode === 'SITE') {
+      maxDate.setDate(maxDate.getDate() + 14);
+      return maxDate;
+    }
+
+    maxDate.setDate(maxDate.getDate() + 5);
+    return maxDate;
+  }
+
+  getReservationRuleLabel(): string {
+    const member = this.authService.currentMember();
+    const typeCode = this.getMemberTypeCode(member);
+
+    if (typeCode === 'GLOBAL') {
+      return 'Ton abonnement permet de réserver jusqu’à 3 semaines à l’avance.';
+    }
+
+    if (typeCode === 'SITE') {
+      return 'Ton abonnement permet de réserver jusqu’à 2 semaines à l’avance, uniquement sur ton site.';
+    }
+
+    return 'Ton abonnement permet de réserver jusqu’à 5 jours à l’avance.';
+  }
+
+  getSiteMemberRestrictionMessage(): string | null {
+    const member = this.authService.currentMember();
+    const typeCode = this.getMemberTypeCode(member);
+    const site = this.site();
+
+    if (typeCode !== 'SITE' || !site) {
+      return null;
+    }
+
+    const memberSiteId = member?.siteId ?? member?.site?.id;
+
+    if (!memberSiteId || Number(memberSiteId) !== Number(site.id)) {
+      return 'Ton abonnement est rattaché à un autre centre. Tu ne peux réserver que sur ton site.';
+    }
+
+    return null;
+  }
+
+  canSelectCourt(court: PadelCourt): boolean {
+    if (!court.active || court.maintenance) {
+      return false;
+    }
+
+    return !this.getSiteMemberRestrictionMessage();
+  }
+
   onTimeSelected(time: string) {
     this.selectedTime.set(time);
   }
 
   onDateSelected(date: Date) {
+    if (date > this.getMaxReservationDate()) {
+      this.snackBar.open(this.getReservationRuleLabel(), 'OK', {
+        duration: 5000
+      });
+      this.selectedDate.set(null);
+      this.selectedTime.set(null);
+      this.reservedTimes.set([]);
+      return;
+    }
+
     const formattedDate = this.formatLocalDate(date);
 
     const closingDay = this.closedDays().find(day =>
@@ -146,6 +218,13 @@ export class ReservationPage implements OnInit {
   }
 
   selectCourt(court: PadelCourt) {
+    if (this.getSiteMemberRestrictionMessage()) {
+      this.snackBar.open(this.getSiteMemberRestrictionMessage() ?? '', 'OK', {
+        duration: 5000
+      });
+      return;
+    }
+
     if (!court.active) {
       this.snackBar.open('Ce terrain est actuellement indisponible.', 'OK', {
         duration: 4000
@@ -224,6 +303,20 @@ export class ReservationPage implements OnInit {
       return;
     }
 
+    if (date > this.getMaxReservationDate()) {
+      this.snackBar.open(this.getReservationRuleLabel(), 'OK', {
+        duration: 5000
+      });
+      return;
+    }
+
+    if (this.getSiteMemberRestrictionMessage()) {
+      this.snackBar.open(this.getSiteMemberRestrictionMessage() ?? '', 'OK', {
+        duration: 5000
+      });
+      return;
+    }
+
     if (!court.active || court.maintenance) {
       this.snackBar.open('Ce terrain n’est pas disponible à la réservation.', 'OK', {
         duration: 4000
@@ -233,12 +326,16 @@ export class ReservationPage implements OnInit {
 
     const startTime = `${time}:00`;
 
-    const [hour, minute] = time.split(':').map(Number);
+    const slotDateTime = this.buildSlotDateTime(date, time);
 
-    const startDateTime = new Date();
-    startDateTime.setHours(hour, minute, 0, 0);
+    if (slotDateTime <= new Date()) {
+      this.snackBar.open('Ce créneau est déjà passé.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
 
-    const endDateTime = new Date(startDateTime);
+    const endDateTime = new Date(slotDateTime);
     endDateTime.setMinutes(endDateTime.getMinutes() + this.matchDurationMinutes());
 
     const endTime = `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime
@@ -272,6 +369,7 @@ export class ReservationPage implements OnInit {
         const message =
           error?.error?.detail ??
           error?.error?.message ??
+          error?.error?.error ??
           'Erreur lors de la réservation. Veuillez réessayer.';
 
         this.snackBar.open(message, 'OK', {
@@ -279,5 +377,30 @@ export class ReservationPage implements OnInit {
         });
       }
     });
+  }
+
+  private getMemberTypeCode(member: any): string {
+    return (
+      member?.type?.code
+      ?? member?.typeCode
+      ?? member?.type
+      ?? member?.matricule?.substring(0, 1)
+      ?? ''
+    ).toString().toUpperCase();
+  }
+
+  private resetDate(date: Date): Date {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  private buildSlotDateTime(date: Date, time: string): Date {
+    const [hour, minute] = time.split(':').map(Number);
+    const slotDateTime = new Date(date);
+
+    slotDateTime.setHours(hour, minute, 0, 0);
+
+    return slotDateTime;
   }
 }
