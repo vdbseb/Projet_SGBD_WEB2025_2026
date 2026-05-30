@@ -9,11 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class PlayerWalletCard {
 
-  balance = input<number>(0);
-
-  credit = input<number>(0);
-
   amountDue = input<number>(0);
+
+  amountPending = input<number>(0);
+
+  amountPaid = input<number>(0);
 
   amountRefunded = input<number>(0);
 

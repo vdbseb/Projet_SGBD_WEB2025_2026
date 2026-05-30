@@ -280,6 +280,13 @@ getActiveMemberPenalties(memberId: number) {
     );
   }
 
+initierPaiementPourParticipation(participationId: number) {
+  return this.httpClient.post<any>(
+    `${this.apiBaseUrl}/paiements/participation/${participationId}/initier`,
+    {}
+  );
+}
+
   // =========================
   // MAPPERS FRONT
   // =========================

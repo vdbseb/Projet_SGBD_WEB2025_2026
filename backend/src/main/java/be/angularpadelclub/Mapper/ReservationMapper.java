@@ -26,10 +26,13 @@ public class ReservationMapper {
                             MembreEntity membre = participation.getMembre();
 
                             return new ParticipantReservationDTO(
+                                    participation.getId(),
                                     membre.getId(),
                                     membre.getMatricule(),
                                     membre.getPrenom(),
-                                    membre.getNom()
+                                    membre.getNom(),
+                                    participation.getStatut() != null ? participation.getStatut().name() : null,
+                                    participation.getMontantDuCentimes()
                             );
                         })
                         .toList()

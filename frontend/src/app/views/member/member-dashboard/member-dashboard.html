@@ -1,0 +1,436 @@
+<section class="min-h-screen bg-slate-50">
+  <div class="max-w-7xl mx-auto px-6 lg:px-10 py-10">
+
+    @if (!currentMember()) {
+    <div class="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-900 text-white flex items-center justify-center mb-5">
+        <mat-icon>lock</mat-icon>
+      </div>
+
+      <h1 class="text-2xl font-black text-slate-900 mb-3">
+        Connecte-toi pour accéder à ton espace membre
+      </h1>
+
+      <p class="text-slate-500 mb-6">
+        L’espace membre regroupe ton profil, tes dettes, tes paiements et tes prochaines réservations.
+      </p>
+
+      <a
+        routerLink="/"
+        class="inline-flex items-center justify-center bg-slate-900 text-white rounded-2xl px-6 py-3 font-black uppercase tracking-widest text-xs no-underline"
+      >
+        Retour à l’accueil
+      </a>
+    </div>
+    } @else {
+    @let member = currentMember();
+
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-8">
+      <div>
+        <p class="text-[11px] uppercase tracking-[0.25em] font-black text-slate-400 mb-2">
+          Mon espace
+        </p>
+
+        <h1 class="text-4xl lg:text-5xl font-black tracking-tight text-slate-950 mb-3">
+          Bonjour {{ member.firstName }}
+        </h1>
+
+        <p class="text-slate-500 max-w-2xl">
+          Retrouve ici ton profil, tes réservations, ton solde dû et l’historique de tes paiements.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        @if (hasActivePenalty()) {
+        <button
+          type="button"
+          (click)="showMainPenaltyMessage()"
+          class="inline-flex items-center gap-2 rounded-2xl bg-red-100 border border-red-200 px-5 py-3 text-sm font-black text-red-700 cursor-not-allowed"
+        >
+          <mat-icon>block</mat-icon>
+          Réservation bloquée
+        </button>
+        } @else {
+        <a
+          routerLink="/"
+          class="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-5 py-3 text-sm font-black text-slate-700 no-underline hover:bg-slate-100 transition-all"
+        >
+          <mat-icon>add_circle</mat-icon>
+          Réserver
+        </a>
+        }
+
+        <a
+          routerLink="/matches-publics"
+          class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white no-underline hover:bg-slate-800 transition-all"
+        >
+          <mat-icon>groups</mat-icon>
+          Matchs publics
+        </a>
+      </div>
+    </div>
+
+    @if (hasActivePenalty()) {
+    <div class="mb-6 rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center text-xl font-black shrink-0">
+          !
+        </div>
+
+        <div class="flex-1">
+          <p class="text-[10px] uppercase tracking-widest font-black text-red-500 mb-2">
+            Pénalité active
+          </p>
+
+          <h2 class="text-xl font-black text-red-950 mb-2">
+            Réservation temporairement bloquée
+          </h2>
+
+          @if (getMainPenalty(); as penalty) {
+          <p class="text-sm text-red-800 font-semibold mb-4">
+            {{ getPenaltySummary(penalty) }}
+          </p>
+          }
+
+          <div class="grid md:grid-cols-2 gap-3">
+            @for (penalty of activePenalties(); track penalty.id) {
+            <div class="rounded-2xl bg-white border border-red-100 p-4">
+              <div class="flex flex-col gap-3">
+                <div>
+                  <p class="text-[10px] uppercase tracking-widest font-black text-red-400 mb-1">
+                    Raison
+                  </p>
+
+                  <p class="font-black text-red-950">
+                    {{ getPenaltyReason(penalty) }}
+                  </p>
+                </div>
+
+                <div>
+                  <p class="text-[10px] uppercase tracking-widest font-black text-red-400 mb-1">
+                    Période
+                  </p>
+
+                  <p class="text-sm font-bold text-red-800">
+                    {{ getPenaltyPeriod(penalty) }}
+                  </p>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+              <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
+                {{ getPenaltyRemainingLabel(penalty) }}
+              </span>
+
+                  @if (getPenaltyMatchLabel(penalty)) {
+                  <div class="rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
+                    <p class="text-[10px] uppercase tracking-widest font-black text-red-400 mb-1">
+                      Match concerné
+                    </p>
+                    <p class="text-sm font-bold text-red-800">
+                      {{ getPenaltyMatchLabel(penalty) }}
+                    </p>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    }
+
+    <div class="grid xl:grid-cols-[1.35fr_0.65fr] gap-6 mb-6">
+      <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-6">
+          <div>
+            <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2">
+              Profil membre
+            </p>
+
+            <h2 class="text-2xl font-black text-slate-900">
+              {{ member.firstName }} {{ member.lastName }}
+            </h2>
+
+            <p class="font-mono text-slate-400 mt-1">
+              {{ member.matricule }}
+            </p>
+          </div>
+
+          @if (!profileEditMode()) {
+          <button
+            type="button"
+            (click)="startProfileEdit()"
+            class="rounded-2xl bg-slate-900 text-white px-5 py-3 text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+          >
+            Modifier mes infos
+          </button>
+          }
+        </div>
+
+        @if (!profileEditMode()) {
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs uppercase font-black text-slate-400 mb-1">Email</p>
+            <p class="font-bold text-slate-900">{{ member.email }}</p>
+          </div>
+
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs uppercase font-black text-slate-400 mb-1">Abonnement</p>
+            <p class="font-bold text-slate-900">{{ getTypeLabel(member) }}</p>
+          </div>
+
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs uppercase font-black text-slate-400 mb-1">Site rattaché</p>
+            <p class="font-bold text-slate-900">{{ member.siteName || 'Tous les sites' }}</p>
+          </div>
+
+          <div class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-xs uppercase font-black text-slate-400 mb-1">Statut</p>
+            <p class="font-bold" [class]="member.active ? 'text-emerald-700' : 'text-red-700'">
+              {{ member.active ? 'Actif' : 'Suspendu' }}
+            </p>
+          </div>
+        </div>
+        } @else {
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="grid gap-4">
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-xs uppercase font-black text-slate-400">Prénom</span>
+              <input
+                formControlName="firstName"
+                class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-900"
+                type="text"
+              />
+            </label>
+
+            <label class="block">
+              <span class="text-xs uppercase font-black text-slate-400">Nom</span>
+              <input
+                formControlName="lastName"
+                class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-900"
+                type="text"
+              />
+            </label>
+          </div>
+
+          <label class="block">
+            <span class="text-xs uppercase font-black text-slate-400">Email</span>
+            <input
+              formControlName="email"
+              class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-900"
+              type="email"
+            />
+          </label>
+
+          <div class="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-sm text-amber-800">
+            Tu peux modifier uniquement tes coordonnées. Si tu souhaites modifier autre chose, prends contact avec ton administrateur de site.
+          </div>
+
+          <div class="flex gap-3 flex-wrap">
+            <button
+              type="submit"
+              [disabled]="savingProfile()"
+              class="rounded-2xl bg-emerald-600 text-white px-5 py-3 text-xs font-black uppercase tracking-widest disabled:opacity-50"
+            >
+              {{ savingProfile() ? 'Enregistrement...' : 'Enregistrer' }}
+            </button>
+
+            <button
+              type="button"
+              (click)="cancelProfileEdit()"
+              class="rounded-2xl bg-slate-100 text-slate-700 px-5 py-3 text-xs font-black uppercase tracking-widest"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+        }
+      </div>
+
+      <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-sm">
+        <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-2">
+          Prochain match
+        </p>
+
+        @if (nextReservation(); as reservation) {
+        <h2 class="text-2xl font-black mb-4">
+          {{ getReservationLabel(reservation) }}
+        </h2>
+
+        <div class="space-y-3 text-slate-200">
+          <p class="flex items-center gap-2">
+            <mat-icon>calendar_month</mat-icon>
+            {{ reservation.date | date:'dd/MM/yyyy' }}
+          </p>
+
+          <p class="flex items-center gap-2">
+            <mat-icon>schedule</mat-icon>
+            {{ reservation.startTime }} - {{ reservation.endTime }}
+          </p>
+        </div>
+
+        <div class="mt-8">
+          <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-3">
+            Joueurs
+          </p>
+
+          @if (getParticipants(reservation).length > 0) {
+          <div class="flex flex-wrap gap-2">
+            @for (participant of getParticipants(reservation); track participant.id || participant.matricule) {
+            <span
+              class="inline-flex items-center rounded-full px-3 py-2 text-xs font-black border"
+              [class]="isCurrentMember(participant)
+                        ? 'bg-blue-500/30 text-white border-blue-200/60'
+                        : 'bg-white/10 text-white border-white/15'"
+            >
+              {{ isCurrentMember(participant) ? 'Moi' : getParticipantDisplayName(participant) }}
+            </span>
+            }
+
+            @for (place of [].constructor(getNombrePlacesLibres(reservation)); track $index) {
+            <span class="inline-flex items-center rounded-full px-3 py-2 text-xs font-black border border-dashed border-slate-500 text-slate-400 bg-slate-800/70">
+              Place libre
+            </span>
+            }
+          </div>
+          } @else {
+          <p class="text-sm text-slate-400">
+            Aucun joueur inscrit pour le moment.
+          </p>
+          }
+        </div>
+        } @else {
+        <h2 class="text-2xl font-black mb-4">Aucune réservation à venir</h2>
+        <p class="text-slate-300 mb-5">
+          Réserve un terrain ou rejoins un match public pour remplir ton planning.
+        </p>
+        @if (hasActivePenalty()) {
+        <button
+          type="button"
+          (click)="showMainPenaltyMessage()"
+          class="inline-block bg-red-100 text-red-700 rounded-2xl px-5 py-3 font-black text-xs uppercase tracking-widest border border-red-200 cursor-not-allowed"
+        >
+          Réservation bloquée
+        </button>
+        } @else {
+        <a routerLink="/" class="inline-block bg-white text-slate-900 rounded-2xl px-5 py-3 font-black text-xs uppercase tracking-widest no-underline">
+          Réserver maintenant
+        </a>
+        }
+        }
+      </div>
+    </div>
+
+    <app-player-wallet-card
+      [amountDue]="amountDue()"
+      [amountPending]="amountPending()"
+      [amountPaid]="amountPaid()"
+      [amountRefunded]="amountRefunded()">
+    </app-player-wallet-card>
+
+    <div class="grid md:grid-cols-5 gap-4 mb-6">
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+        <p class="text-xs uppercase font-black text-slate-400 mb-2">À venir</p>
+        <p class="text-3xl font-black text-slate-900">{{ upcomingReservations().length }}</p>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+        <p class="text-xs uppercase font-black text-slate-400 mb-2">Passées</p>
+        <p class="text-3xl font-black text-slate-900">{{ pastReservations().length }}</p>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+        <p class="text-xs uppercase font-black text-slate-400 mb-2">Payé</p>
+        <p class="text-3xl font-black text-emerald-700">{{ amountPaid() }}€</p>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+        <p class="text-xs uppercase font-black text-slate-400 mb-2">En attente</p>
+        <p class="text-3xl font-black text-amber-700">{{ amountPending() }}€</p>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
+        <p class="text-xs uppercase font-black text-slate-400 mb-2">Dettes ouvertes</p>
+        <p class="text-3xl font-black text-red-700">{{ openDebts().length }}</p>
+      </div>
+    </div>
+
+    <div class="grid xl:grid-cols-2 gap-6">
+      <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-4 mb-5">
+          <div>
+            <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Dettes</p>
+            <h2 class="text-2xl font-black text-slate-900">Solde à régler</h2>
+          </div>
+
+          @if (amountDue() > 0) {
+          <button
+            type="button"
+            (click)="payAllDebts()"
+            [disabled]="payingDebts() || amountDue() <= 0"
+            class="rounded-2xl bg-red-600 text-white px-5 py-3 text-xs font-black uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {{ payingDebts() ? 'Paiement...' : 'Tout payer' }}
+          </button>
+          }
+        </div>
+
+        @if (openDebts().length === 0) {
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-5 text-emerald-800 font-bold">
+          Aucune dette ouverte. Ton compte est en ordre.
+        </div>
+        } @else {
+        <div class="space-y-3">
+          @for (debt of openDebts(); track debt.id) {
+          <div class="rounded-2xl border border-red-100 bg-red-50 p-4 flex items-center justify-between gap-4">
+            <div>
+              <p class="font-black text-red-900">{{ toEuros(debt.montantCentimes) }}€ à payer</p>
+              <p class="text-sm text-red-700">{{ debt.raison }} — réservation #{{ debt.reservationId || 'n/a' }}</p>
+            </div>
+            <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-red-700 uppercase">
+              {{ debt.statut }}
+            </span>
+          </div>
+          }
+        </div>
+        }
+      </div>
+
+      <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-4 mb-5">
+          <div>
+            <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">Paiements</p>
+            <h2 class="text-2xl font-black text-slate-900">Derniers mouvements</h2>
+          </div>
+        </div>
+
+        @if (payments().length === 0) {
+        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-5 text-slate-500 font-bold">
+          Aucun paiement enregistré pour l’instant.
+        </div>
+        } @else {
+        <div class="space-y-3 max-h-[420px] overflow-auto pr-1">
+          @for (payment of payments().slice(0, 8); track payment.id) {
+          <div class="rounded-2xl border border-slate-100 p-4 flex items-center justify-between gap-4">
+            <div>
+              <p class="font-black text-slate-900">{{ toEuros(payment.montantCentimes) }}€</p>
+              <p class="text-sm text-slate-500">
+                {{ payment.datePaiement || payment.dateCreation | date:'dd/MM/yyyy HH:mm' }}
+              </p>
+            </div>
+
+            <span class="rounded-full px-3 py-1 text-xs font-black uppercase" [class]="getPaymentStatusClass(payment.statut)">
+              {{ payment.statut }}
+            </span>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+</section>

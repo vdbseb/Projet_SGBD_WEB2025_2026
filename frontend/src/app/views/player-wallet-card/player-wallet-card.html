@@ -1,0 +1,51 @@
+<div class="mb-8 bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+
+  <p class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-4">
+    Compte joueur
+  </p>
+
+  <div class="grid md:grid-cols-4 gap-4">
+
+    <div class="rounded-2xl bg-red-50 p-4">
+      <p class="text-xs uppercase font-black text-red-600 mb-2">
+        À payer
+      </p>
+
+      <p class="text-3xl font-black text-red-700">
+        {{ amountDue() }}€
+      </p>
+    </div>
+
+    <div class="rounded-2xl bg-amber-50 p-4">
+      <p class="text-xs uppercase font-black text-amber-600 mb-2">
+        En attente
+      </p>
+
+      <p class="text-2xl font-black text-amber-700">
+        {{ amountPending() }}€
+      </p>
+    </div>
+
+    <div class="rounded-2xl bg-emerald-50 p-4">
+      <p class="text-xs uppercase font-black text-emerald-600 mb-2">
+        Déjà payé
+      </p>
+
+      <p class="text-2xl font-black text-emerald-700">
+        {{ amountPaid() }}€
+      </p>
+    </div>
+
+    <div class="rounded-2xl bg-violet-50 p-4">
+      <p class="text-xs uppercase font-black text-violet-600 mb-2">
+        Remboursé
+      </p>
+
+      <p class="text-2xl font-black text-violet-700">
+        {{ amountRefunded() }}€
+      </p>
+    </div>
+
+  </div>
+
+</div>

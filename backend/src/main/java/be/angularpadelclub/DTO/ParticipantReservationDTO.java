@@ -1,8 +1,12 @@
 package be.angularpadelclub.DTO;
 
 public record ParticipantReservationDTO(
-        Integer id,
+        Integer participationId,
+        Integer membreId,
         String matricule,
         String prenom,
-        String nom
-) {}
+        String nom,
+        String statut,
+        Integer montantDuCentimes
+) {
+}
