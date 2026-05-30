@@ -218,7 +218,7 @@ export class MyReservations implements OnInit {
   }
 
   getParticipantsLabel(reservation: any): string {
-    const participants = this.getParticipants(reservation);
+    const participants = this.getActiveParticipants(reservation);
 
     if (participants.length > 0) {
       return participants
@@ -226,7 +226,12 @@ export class MyReservations implements OnInit {
         .join(', ');
     }
 
-    return reservation.playerMatricule || 'Participants non disponibles';
+    if (this.isOrganizer(reservation)) {
+      const member = this.authService.currentMember();
+      return member?.matricule || 'Organisateur';
+    }
+
+    return 'Participants non disponibles';
   }
 
   getReservationsToPay(): any[] {
@@ -334,11 +339,83 @@ export class MyReservations implements OnInit {
     }
   }
 
-  cancelReservation(reservationId: number) {
+  cancelReservation(reservation: any) {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return;
+    }
+
+    if (this.canLeavePublicMatch(reservation)) {
+      this.leavePublicMatch(reservation, member);
+      return;
+    }
+
+    if (this.canCancelWholeReservation(reservation)) {
+      this.cancelWholeReservation(reservation);
+      return;
+    }
+
+    this.snackBar.open('Action impossible pour cette réservation.', 'OK', {
+      duration: 4000
+    });
+  }
+
+  private leavePublicMatch(reservation: any, member: any) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Annuler la réservation',
-        message: 'Voulez-vous vraiment annuler cette réservation ?',
+        title: 'Quitter le match',
+        message: 'Tu vas quitter ce match public. Si ta participation était payée, le remboursement sera pris en compte. Continuer ?',
+        confirmLabel: 'Quitter le match',
+        cancelLabel: 'Retour'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.padelService.leavePublicMatch(reservation.matchId, member.id).subscribe({
+        next: () => {
+          this.snackBar.open('Tu as quitté le match.', 'OK', {
+            duration: 3500
+          });
+
+          this.refreshMemberData(member);
+        },
+        error: (error: any) => {
+          const message =
+            error?.error?.error
+            ?? error?.error?.message
+            ?? error?.error?.detail
+            ?? 'Impossible de quitter le match.';
+
+          this.snackBar.open(message, 'OK', {
+            duration: 5000
+          });
+
+          this.refreshMemberData(member);
+        }
+      });
+    });
+  }
+
+  private cancelWholeReservation(reservation: any) {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: this.isPublicMatch(reservation)
+          ? 'Annuler le match'
+          : 'Annuler la réservation',
+        message: this.isPublicMatch(reservation)
+          ? 'Tu es organisateur de ce match public. Cette action annule le match pour tout le monde. Continuer ?'
+          : 'Voulez-vous vraiment annuler cette réservation ?',
         confirmLabel: 'Oui, annuler',
         cancelLabel: 'Retour'
       }
@@ -349,34 +426,38 @@ export class MyReservations implements OnInit {
         return;
       }
 
-      const member = this.authService.currentMember();
-
-      this.padelService.deleteReservation(reservationId).subscribe({
+      this.padelService.deleteReservation(reservation.id, member.id).subscribe({
         next: () => {
           this.reservations.update(reservations =>
-            reservations.map(reservation =>
-              reservation.id === reservationId
+            reservations.map(item =>
+              item.id === reservation.id
                 ? {
-                    ...reservation,
+                    ...item,
                     reservationStatus: 'ANNULEE',
                     matchStatus: 'ANNULE'
                   }
-                : reservation
+                : item
             )
           );
 
-          if (member) {
-            this.loadWallet(member.id);
-          }
+          this.loadWallet(member.id);
 
           this.snackBar.open('Réservation annulée.', 'OK', {
             duration: 3000
           });
         },
-        error: () => {
-          this.snackBar.open('Impossible d’annuler la réservation.', 'OK', {
-            duration: 4000
+        error: (error: any) => {
+          const message =
+            error?.error?.error
+            ?? error?.error?.message
+            ?? error?.error?.detail
+            ?? 'Impossible d’annuler la réservation.';
+
+          this.snackBar.open(message, 'OK', {
+            duration: 5000
           });
+
+          this.refreshMemberData(member);
         }
       });
     });
@@ -389,9 +470,10 @@ export class MyReservations implements OnInit {
       return null;
     }
 
-    return this.getParticipants(reservation).find((participant: any) =>
+    return this.getActiveParticipants(reservation).find((participant: any) =>
       participant.membreId === member.id
       || participant.memberId === member.id
+      || participant.id === member.id
       || participant.matricule === member.matricule
     ) ?? null;
   }
@@ -562,6 +644,67 @@ export class MyReservations implements OnInit {
     return `${this.toEuros(this.getParticipationAmountCentimes(reservation))} €`;
   }
 
+  isPublicMatch(reservation: any): boolean {
+    return reservation.matchType === 'PUBLIC';
+  }
+
+  isOrganizer(reservation: any): boolean {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return false;
+    }
+
+    return reservation.memberId === member.id
+      || reservation.membreId === member.id
+      || reservation.organisateurId === member.id
+      || reservation.playerMatricule === member.matricule;
+  }
+
+  isCurrentMemberActiveParticipant(reservation: any): boolean {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return false;
+    }
+
+    return this.getActiveParticipants(reservation).some((participant: any) =>
+      participant.membreId === member.id
+      || participant.memberId === member.id
+      || participant.id === member.id
+      || participant.matricule === member.matricule
+    );
+  }
+
+  canLeavePublicMatch(reservation: any): boolean {
+    return this.isPublicMatch(reservation)
+      && !this.isOrganizer(reservation)
+      && this.isCurrentMemberActiveParticipant(reservation)
+      && !!reservation.matchId
+      && !this.isCancelledReservation(reservation)
+      && this.getReservationStatus(reservation) !== 'past';
+  }
+
+  canCancelWholeReservation(reservation: any): boolean {
+    return this.isOrganizer(reservation)
+      && !this.isCancelledReservation(reservation)
+      && this.getReservationStatus(reservation) !== 'past';
+  }
+
+  getCancelActionLabel(reservation: any): string {
+    if (this.canLeavePublicMatch(reservation)) {
+      return 'Quitter le match';
+    }
+
+    if (this.canCancelWholeReservation(reservation)) {
+      return this.isPublicMatch(reservation)
+        ? 'Annuler le match'
+        : 'Annuler la réservation';
+    }
+
+    return '';
+  }
+
   private getParticipationAmountCentimes(reservation: any): number {
     const participation = this.getCurrentMemberParticipation(reservation);
 
@@ -601,14 +744,7 @@ export class MyReservations implements OnInit {
       || reservation.membreId === member.id
       || reservation.organisateurId === member.id
       || reservation.playerMatricule === member.matricule
-      || reservation.participantMatricules?.includes(member.matricule)
-      || reservation.members?.some((participant: any) =>
-        participant.id === member.id
-        || participant.memberId === member.id
-        || participant.membreId === member.id
-        || participant.matricule === member.matricule
-      )
-      || reservation.participants?.some((participant: any) =>
+      || this.getActiveParticipants(reservation).some((participant: any) =>
         participant.id === member.id
         || participant.memberId === member.id
         || participant.membreId === member.id
@@ -617,22 +753,10 @@ export class MyReservations implements OnInit {
   }
 
   private findCurrentMemberParticipationId(reservation: any, member: any): number | null {
-    const directParticipationId =
-      reservation?.participationId
-      ?? reservation?.participationMatchId
-      ?? reservation?.idParticipation
-      ?? reservation?.currentMemberParticipationId
-      ?? reservation?.maParticipationId;
-
-    if (directParticipationId) {
-      return Number(directParticipationId);
-    }
-
-    const participants = this.getParticipants(reservation);
-
-    const participant = participants.find((item: any) =>
+    const participant = this.getActiveParticipants(reservation).find((item: any) =>
       item.membreId === member.id
       || item.memberId === member.id
+      || item.id === member.id
       || item.matricule === member.matricule
     );
 
@@ -654,13 +778,50 @@ export class MyReservations implements OnInit {
       return reservation.members;
     }
 
-    if (Array.isArray(reservation?.participantMatricules)) {
-      return reservation.participantMatricules.map((matricule: string) => ({
-        matricule
-      }));
-    }
-
     return [];
+  }
+
+  private getActiveParticipants(reservation: any): any[] {
+    return this.getParticipants(reservation)
+      .filter((participant: any) => this.isActiveParticipation(participant));
+  }
+
+  private isActiveParticipation(participant: any): boolean {
+    return !this.isInactiveParticipation(participant);
+  }
+
+  private isInactiveParticipation(participant: any): boolean {
+    const status = this.getParticipationStatus(participant);
+
+    return [
+      'ANNULEE',
+      'ANNULE',
+      'CANCELLED',
+      'DESINSCRIT',
+      'DESINSCRITE',
+      'REMBOURSEE',
+      'REMBOURSE',
+      'REFUSEE',
+      'REFUSE',
+      'SUPPRIMEE',
+      'SUPPRIME',
+      'LIBEREE',
+      'LIBERE'
+    ].includes(status);
+  }
+
+  private getParticipationStatus(participant: any): string {
+    return (
+      participant?.statut
+      ?? participant?.status
+      ?? participant?.participationStatus
+      ?? participant?.statutParticipation
+      ?? participant?.etat
+      ?? ''
+    )
+      .toString()
+      .trim()
+      .toUpperCase();
   }
 
   private getParticipantDisplayName(participant: any): string {

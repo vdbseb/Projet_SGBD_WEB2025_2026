@@ -109,10 +109,12 @@ setCourtMaintenance(courtId: number, maintenance: boolean) {
     );
   }
 
-  deleteReservation(id: number) {
-    return this.httpClient.delete<void>(
-      `${this.apiBaseUrl}/reservations/${id}`
-    );
+  deleteReservation(id: number, memberId?: number) {
+    const url = memberId
+      ? `${this.apiBaseUrl}/reservations/${id}?memberId=${memberId}`
+      : `${this.apiBaseUrl}/reservations/${id}`;
+
+    return this.httpClient.delete<void>(url);
   }
 
   // =========================
@@ -215,7 +217,7 @@ getActiveMemberPenalties(memberId: number) {
   }
 
   joinPublicMatch(matchId: number, memberId: number) {
-    return this.httpClient.post<void>(
+    return this.httpClient.post<any>(
       `${this.apiBaseUrl}/matches/${matchId}/join/${memberId}`,
       null
     );

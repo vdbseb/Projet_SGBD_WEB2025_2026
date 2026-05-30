@@ -174,8 +174,24 @@ public class ReservationService {
     }
 
     @Transactional
-    public void cancelReservation(int id) {
+    public void cancelReservation(
+            int id,
+            int requestingMemberId
+    ) {
+        ReservationEntity reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Réservation introuvable avec l'id " + id
+                ));
 
+        validateManualCancellationAllowed(reservation);
+        validateRequesterCanCancelWholeReservation(reservation, requestingMemberId);
+
+        reservationCancellationService.cancelReservationByMember(reservation);
+    }
+
+    @Transactional
+    public void cancelReservationByAdmin(int id) {
         ReservationEntity reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -224,5 +240,44 @@ public class ReservationService {
                     "Impossible d'annuler une réservation terminée."
             );
         }
+    }
+
+    private void validateRequesterCanCancelWholeReservation(
+            ReservationEntity reservation,
+            int requestingMemberId
+    ) {
+        Integer reservationOwnerId = reservation.getMember() != null
+                ? reservation.getMember().getId()
+                : null;
+
+        Integer matchOrganizerId = reservation.getMatch() != null
+                && reservation.getMatch().getOrganisateur() != null
+                ? reservation.getMatch().getOrganisateur().getId()
+                : null;
+
+        boolean isReservationOwner =
+                reservationOwnerId != null
+                        && reservationOwnerId.equals(requestingMemberId);
+
+        boolean isMatchOrganizer =
+                matchOrganizerId != null
+                        && matchOrganizerId.equals(requestingMemberId);
+
+        if (isReservationOwner || isMatchOrganizer) {
+            return;
+        }
+
+        if (reservation.getMatch() != null
+                && reservation.getMatch().getTypeMatch() == MatchType.PUBLIC) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Seul l'organisateur peut annuler le match complet. Un participant doit quitter le match public."
+            );
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Seul l'organisateur peut annuler cette réservation."
+        );
     }
 }

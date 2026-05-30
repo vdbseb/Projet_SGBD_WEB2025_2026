@@ -1,12 +1,13 @@
 package be.angularpadelclub.Controler;
 
 import be.angularpadelclub.DTO.MatchDTO;
+import be.angularpadelclub.Entity.ParticipationEntity;
 import be.angularpadelclub.Mapper.MatchMapper;
 import be.angularpadelclub.Service.MatchService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/matches")
@@ -45,21 +46,28 @@ public class MatchController {
         );
     }
 
-    @PostMapping("/{matchId}/join/{memberId}")
-    public ResponseEntity<Void> joinMatch(
+    @PostMapping(
+            path = "/{matchId}/join/{memberId}",
+            produces = "application/json"
+    )
+    public Map<String, Integer> joinMatch(
             @PathVariable("matchId") Integer matchId,
             @PathVariable("memberId") Integer memberId
     ) {
-        matchService.joinPublicMatch(
-                matchId,
-                memberId
-        );
+        ParticipationEntity participation =
+                matchService.joinPublicMatch(
+                        matchId,
+                        memberId
+                );
 
-        return ResponseEntity.ok().build();
+        return Map.of(
+                "participationId",
+                participation.getId()
+        );
     }
 
     @DeleteMapping("/{matchId}/leave/{memberId}")
-    public ResponseEntity<Void> leaveMatch(
+    public void leaveMatch(
             @PathVariable("matchId") Integer matchId,
             @PathVariable("memberId") Integer memberId
     ) {
@@ -67,7 +75,5 @@ public class MatchController {
                 matchId,
                 memberId
         );
-
-        return ResponseEntity.noContent().build();
     }
 }

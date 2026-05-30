@@ -55,9 +55,18 @@ public class ReservationController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancelReservation(
-            @PathVariable("id") int id
+            @PathVariable("id") int id,
+            @RequestParam(value = "memberId", required = false) Integer memberId
     ) {
-        reservationService.cancelReservation(id);
+        if (memberId == null) {
+            reservationService.cancelReservationByAdmin(id);
+        } else {
+            reservationService.cancelReservation(
+                    id,
+                    memberId
+            );
+        }
+
         return ResponseEntity.noContent().build();
     }
 }

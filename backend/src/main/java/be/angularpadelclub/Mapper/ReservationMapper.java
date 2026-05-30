@@ -14,6 +14,11 @@ import java.util.List;
 @Component
 public class ReservationMapper {
 
+    private static final List<String> ACTIVE_PARTICIPATION_STATUSES = List.of(
+            "EN_ATTENTE_PAIEMENT",
+            "PAYEE"
+    );
+
     public ReservationDTO toDTO(ReservationEntity entity) {
         MatchEntity match = entity.getMatch();
 
@@ -31,7 +36,9 @@ public class ReservationMapper {
                                     membre.getMatricule(),
                                     membre.getPrenom(),
                                     membre.getNom(),
-                                    participation.getStatut() != null ? participation.getStatut().name() : null,
+                                    participation.getStatut() != null
+                                            ? participation.getStatut().name()
+                                            : null,
                                     participation.getMontantDuCentimes()
                             );
                         })
@@ -39,6 +46,7 @@ public class ReservationMapper {
                         : List.of();
 
         List<String> participantMatricules = participants.stream()
+                .filter(participant -> isActiveParticipationStatus(participant.statut()))
                 .map(ParticipantReservationDTO::matricule)
                 .toList();
 
@@ -85,5 +93,15 @@ public class ReservationMapper {
         return entities.stream()
                 .map(this::toDTO)
                 .toList();
+    }
+
+    private boolean isActiveParticipationStatus(String status) {
+        if (status == null) {
+            return false;
+        }
+
+        return ACTIVE_PARTICIPATION_STATUSES.contains(
+                status.trim().toUpperCase()
+        );
     }
 }

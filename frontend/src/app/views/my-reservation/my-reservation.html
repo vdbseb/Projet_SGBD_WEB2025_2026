@@ -153,7 +153,7 @@
       <div class="flex items-center gap-2 mb-1 pr-24">
         <mat-icon class="text-slate-700">sports_tennis</mat-icon>
         <p class="font-bold text-lg m-0">
-          {{ reservation.courtName }}
+          {{ reservation.courtName || 'Terrain' }}
         </p>
       </div>
 
@@ -202,13 +202,15 @@
         </span>
         }
 
+        @if (getCancelActionLabel(reservation)) {
         <button
           type="button"
-          (click)="cancelReservation(reservation.id)"
+          (click)="cancelReservation(reservation)"
           class="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-xs uppercase tracking-widest hover:bg-red-100 transition-all"
         >
-          Annuler
+          {{ getCancelActionLabel(reservation) }}
         </button>
+        }
       </div>
       }
 

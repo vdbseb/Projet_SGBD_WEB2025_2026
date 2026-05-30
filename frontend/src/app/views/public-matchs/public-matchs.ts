@@ -58,12 +58,12 @@ export class PublicMatchs implements OnInit {
 
   ngOnInit() {
     this.padelService.getCourts().subscribe({
-      next: courts => this.courts.set(courts ?? []),
+      next: (courts: any[]) => this.courts.set(courts ?? []),
       error: () => this.courts.set([])
     });
 
     this.padelService.getSites().subscribe({
-      next: sites => this.sites.set(sites ?? []),
+      next: (sites: any[]) => this.sites.set(sites ?? []),
       error: () => this.sites.set([])
     });
 
@@ -72,9 +72,10 @@ export class PublicMatchs implements OnInit {
 
   loadReservations() {
     this.padelService.getAllReservations().subscribe({
-      next: reservations => this.reservations.set(reservations ?? []),
+      next: (reservations: any[]) => this.reservations.set(reservations ?? []),
       error: () => {
         this.reservations.set([]);
+
         this.snackBar.open('Impossible de charger les matchs publics.', 'OK', {
           duration: 4000
         });
@@ -219,19 +220,7 @@ export class PublicMatchs implements OnInit {
   }
 
   getParticipantsCount(reservation: any): number {
-    const participants = this.getParticipants(reservation);
-
-    if (participants.length > 0) {
-      return Math.min(4, participants.length);
-    }
-
-    const matricules = reservation.participantMatricules ?? [];
-
-    const organizerCount = reservation.memberId || reservation.membreId || reservation.organisateurId
-      ? 1
-      : 0;
-
-    return Math.min(4, organizerCount + matricules.length);
+    return Math.min(4, this.getActiveParticipants(reservation).length);
   }
 
   getRemainingSpots(reservation: any): number {
@@ -239,9 +228,7 @@ export class PublicMatchs implements OnInit {
   }
 
   isFull(reservation: any): boolean {
-    return this.getRemainingSpots(reservation) <= 0
-      || this.getParticipantsCount(reservation) >= 4
-      || reservation.matchStatus === 'COMPLET';
+    return this.getParticipantsCount(reservation) >= 4;
   }
 
   isOrganizer(reservation: any): boolean {
@@ -263,13 +250,12 @@ export class PublicMatchs implements OnInit {
       return false;
     }
 
-    return reservation.participantMatricules?.includes(member.matricule)
-      || this.getParticipants(reservation).some((participant: any) =>
-        participant.membreId === member.id
-        || participant.memberId === member.id
-        || participant.id === member.id
-        || participant.matricule === member.matricule
-      );
+    return this.getActiveParticipants(reservation).some((participant: any) =>
+      participant.membreId === member.id
+      || participant.memberId === member.id
+      || participant.id === member.id
+      || participant.matricule === member.matricule
+    );
   }
 
   canJoinMatch(reservation: any): boolean {
@@ -281,22 +267,22 @@ export class PublicMatchs implements OnInit {
 
   getActionLabel(reservation: any): string {
     if (this.loadingMatchId() === reservation.id) {
-      return 'Traitement...';
-    }
-
-    if (this.isFull(reservation)) {
-      return 'Match complet';
-    }
-
-    if (this.isOrganizer(reservation)) {
-      return 'Organisateur';
+      return 'Paiement...';
     }
 
     if (this.isParticipant(reservation)) {
       return 'Quitter le match';
     }
 
-    return 'Rejoindre ce match';
+    if (this.isOrganizer(reservation)) {
+      return 'Organisateur';
+    }
+
+    if (this.isFull(reservation)) {
+      return 'Match complet';
+    }
+
+    return 'Payer 15€ et rejoindre';
   }
 
   getCourtName(reservation: any): string {
@@ -342,28 +328,28 @@ export class PublicMatchs implements OnInit {
   }
 
   getMatchStatusClass(reservation: any): string {
-    if (this.isFull(reservation)) {
-      return 'bg-red-100 text-red-700';
-    }
-
     if (this.isParticipant(reservation) || this.isOrganizer(reservation)) {
       return 'bg-violet-100 text-violet-700';
+    }
+
+    if (this.isFull(reservation)) {
+      return 'bg-red-100 text-red-700';
     }
 
     return 'bg-emerald-50 text-emerald-700';
   }
 
   getMatchStatusLabel(reservation: any): string {
-    if (this.isFull(reservation)) {
-      return 'Complet';
-    }
-
     if (this.isOrganizer(reservation)) {
       return 'Organisé par toi';
     }
 
     if (this.isParticipant(reservation)) {
       return 'Déjà rejoint';
+    }
+
+    if (this.isFull(reservation)) {
+      return 'Complet';
     }
 
     return `${this.getRemainingSpots(reservation)} place(s) libre(s)`;
@@ -410,7 +396,7 @@ export class PublicMatchs implements OnInit {
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Rejoindre le match',
+        title: 'Payer et rejoindre le match',
         message: `Confirmer le paiement de 15€ pour rejoindre ${this.getCourtName(reservation)} le ${this.getMatchDateLabel(reservation)} à ${reservation.startTime?.substring(0, 5) ?? ''} ?`,
         confirmLabel: 'Payer 15€',
         cancelLabel: 'Retour'
@@ -425,14 +411,23 @@ export class PublicMatchs implements OnInit {
       this.loadingMatchId.set(reservation.id);
 
       this.padelService.joinPublicMatch(matchId, member.id).subscribe({
-        next: () => {
-          this.loadingMatchId.set(null);
+        next: (joinResponse: any) => {
+          const participationId = Number(joinResponse?.participationId);
 
-          this.snackBar.open('Tu as rejoint le match.', 'OK', {
-            duration: 3000
-          });
+          if (!participationId) {
+            this.loadingMatchId.set(null);
 
-          this.loadReservations();
+            this.snackBar.open(
+              'Tu as rejoint le match, mais la participation à payer est introuvable.',
+              'OK',
+              { duration: 6000 }
+            );
+
+            this.loadReservations();
+            return;
+          }
+
+          this.payJoinedParticipation(participationId);
         },
         error: (error: any) => {
           this.loadingMatchId.set(null);
@@ -450,6 +445,69 @@ export class PublicMatchs implements OnInit {
           this.loadReservations();
         }
       });
+    });
+  }
+
+  private payJoinedParticipation(participationId: number) {
+    this.padelService.initierPaiementPourParticipation(participationId).subscribe({
+      next: (payment: any) => {
+        const paymentId = payment?.id ?? payment?.paiementId;
+
+        if (!paymentId) {
+          this.loadingMatchId.set(null);
+
+          this.snackBar.open(
+            'Le paiement a été créé, mais son identifiant est introuvable.',
+            'OK',
+            { duration: 5000 }
+          );
+
+          this.loadReservations();
+          return;
+        }
+
+        this.padelService.confirmPayment(paymentId).subscribe({
+          next: () => {
+            this.loadingMatchId.set(null);
+
+            this.snackBar.open('Paiement confirmé. Tu as rejoint le match.', 'OK', {
+              duration: 3500
+            });
+
+            this.loadReservations();
+          },
+          error: (error: any) => {
+            this.loadingMatchId.set(null);
+
+            const message =
+              error?.error?.error
+              ?? error?.error?.message
+              ?? error?.error?.detail
+              ?? 'Tu as rejoint le match, mais la confirmation du paiement a échoué.';
+
+            this.snackBar.open(message, 'OK', {
+              duration: 6000
+            });
+
+            this.loadReservations();
+          }
+        });
+      },
+      error: (error: any) => {
+        this.loadingMatchId.set(null);
+
+        const message =
+          error?.error?.error
+          ?? error?.error?.message
+          ?? error?.error?.detail
+          ?? 'Tu as rejoint le match, mais le paiement n’a pas pu être lancé.';
+
+        this.snackBar.open(message, 'OK', {
+          duration: 6000
+        });
+
+        this.loadReservations();
+      }
     });
   }
 
@@ -489,9 +547,11 @@ export class PublicMatchs implements OnInit {
         next: () => {
           this.loadingMatchId.set(null);
 
-          this.snackBar.open('Tu as quitté le match.', 'OK', {
-            duration: 3000
-          });
+          this.snackBar.open(
+            'Tu as quitté le match. Si ta participation était payée, le remboursement est pris en compte.',
+            'OK',
+            { duration: 4500 }
+          );
 
           this.loadReservations();
         },
@@ -558,17 +618,50 @@ export class PublicMatchs implements OnInit {
       return reservation.participants;
     }
 
-    if (Array.isArray(reservation?.members)) {
-      return reservation.members;
-    }
-
-    if (Array.isArray(reservation?.participantMatricules)) {
-      return reservation.participantMatricules.map((matricule: string) => ({
-        matricule
-      }));
-    }
-
     return [];
+  }
+
+  private getActiveParticipants(reservation: any): any[] {
+    return this.getParticipants(reservation)
+      .filter((participant: any) => this.isActiveParticipation(participant));
+  }
+
+  private isActiveParticipation(participant: any): boolean {
+    return !this.isInactiveParticipation(participant);
+  }
+
+  private isInactiveParticipation(participant: any): boolean {
+    const status = this.getParticipationStatus(participant);
+
+    return [
+      'ANNULEE',
+      'ANNULE',
+      'CANCELLED',
+      'DESINSCRIT',
+      'DESINSCRITE',
+      'REMBOURSEE',
+      'REMBOURSE',
+      'REFUSEE',
+      'REFUSE',
+      'SUPPRIMEE',
+      'SUPPRIME',
+      'LIBEREE',
+      'LIBERE'
+    ].includes(status);
+  }
+
+  private getParticipationStatus(participant: any): string {
+    return (
+      participant?.statut
+      ?? participant?.status
+      ?? participant?.participationStatus
+      ?? participant?.statutParticipation
+      ?? participant?.etat
+      ?? ''
+    )
+      .toString()
+      .trim()
+      .toUpperCase();
   }
 
   private normalizeText(value: string): string {

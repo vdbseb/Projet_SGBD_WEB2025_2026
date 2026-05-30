@@ -281,7 +281,7 @@
 
         <div class="flex items-center gap-2">
           <mat-icon class="text-base">payments</mat-icon>
-          <span>15€ pour rejoindre ce match</span>
+          <span>15€ à payer maintenant pour rejoindre ce match</span>
         </div>
 
         <div class="flex items-center gap-2">
@@ -294,7 +294,7 @@
         type="button"
         data-cy="join-public-match-button"
         (click)="handlePrimaryAction(reservation)"
-        [disabled]="loadingMatchId() === reservation.id || isFull(reservation) || isOrganizer(reservation)"
+        [disabled]="loadingMatchId() === reservation.id || (isFull(reservation) && !isParticipant(reservation)) || isOrganizer(reservation)"
         class="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         [class]="isParticipant(reservation)
           ? 'bg-red-50 text-red-600 hover:bg-red-100'
@@ -353,7 +353,7 @@
         <button
           type="button"
           (click)="handlePrimaryAction(reservation)"
-          [disabled]="loadingMatchId() === reservation.id || isFull(reservation) || isOrganizer(reservation)"
+          [disabled]="loadingMatchId() === reservation.id || (isFull(reservation) && !isParticipant(reservation)) || isOrganizer(reservation)"
           class="w-full md:w-auto px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           [class]="isParticipant(reservation)
             ? 'bg-red-50 text-red-600 hover:bg-red-100'
