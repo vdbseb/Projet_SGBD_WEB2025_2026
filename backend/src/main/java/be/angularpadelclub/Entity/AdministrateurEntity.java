@@ -24,13 +24,13 @@ public class AdministrateurEntity {
     @Column(nullable = false, length = 100)
     private String prenom;
 
-    @Column(nullable = false, length = 150, unique = true)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(name = "type_admin", nullable = false, length = 20)
     private String typeAdmin;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id")
     private SiteEntity site;
 }

@@ -17,11 +17,11 @@ public class PenaliteEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
     private MembreEntity membre;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_id")
     private MatchEntity match;
 
@@ -31,9 +31,9 @@ public class PenaliteEntity {
     @Column(name = "date_fin", nullable = false)
     private LocalDate dateFin;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String raison;
 
     @Column(nullable = false)
-    private boolean active;
+    private boolean active = true;
 }

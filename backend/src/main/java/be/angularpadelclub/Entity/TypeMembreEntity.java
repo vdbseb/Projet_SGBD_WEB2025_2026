@@ -8,15 +8,22 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "type_membre")
+@Table(
+        name = "type_membre",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_type_membre_code",
+                        columnNames = "code"
+                )
+        }
+)
 public class TypeMembreEntity {
 
     @Id
-    @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true, length = 20)
     private String code; // GLOBAL, SITE, LIBRE
 
     @Column(nullable = false)

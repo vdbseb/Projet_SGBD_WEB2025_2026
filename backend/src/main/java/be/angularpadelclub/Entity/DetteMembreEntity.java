@@ -19,15 +19,15 @@ public class DetteMembreEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
     private MembreEntity membre;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "participation_id")
     private ParticipationEntity participation;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
     private ReservationEntity reservation;
 
@@ -35,11 +35,11 @@ public class DetteMembreEntity {
     private Integer montantCentimes;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private DetteStatut statut = DetteStatut.OUVERTE;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private DetteRaison raison = DetteRaison.PARTICIPATION_IMPAYEE;
 
     @Column(name = "date_creation", nullable = false)
@@ -47,4 +47,19 @@ public class DetteMembreEntity {
 
     @Column(name = "date_resolution")
     private LocalDateTime dateResolution;
+
+    @PrePersist
+    public void prePersist() {
+        if (dateCreation == null) {
+            dateCreation = LocalDateTime.now();
+        }
+
+        if (statut == null) {
+            statut = DetteStatut.OUVERTE;
+        }
+
+        if (raison == null) {
+            raison = DetteRaison.PARTICIPATION_IMPAYEE;
+        }
+    }
 }

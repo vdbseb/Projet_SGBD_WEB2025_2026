@@ -1156,7 +1156,27 @@ ALTER TABLE ONLY public.dette_membre
 ALTER TABLE ONLY public.dette_membre
     ADD CONSTRAINT fk_dette_membre_reservation FOREIGN KEY (reservation_id) REFERENCES public.reservation(id);
 
+ALTER TABLE ONLY public.membre
+    ADD CONSTRAINT membre_email_key UNIQUE (email);
 
+ALTER TABLE ONLY public.type_membre
+    ADD CONSTRAINT type_membre_code_key UNIQUE (code);
+
+ALTER TABLE ONLY public.reservation
+    ADD CONSTRAINT uk_reservation_court_date_start
+    UNIQUE (court_id, date, start_time);
+
+ALTER TABLE ONLY public.participation
+    ADD CONSTRAINT uk_participation_match_membre
+    UNIQUE (match_id, membre_id);
+
+ALTER TABLE ONLY public.horaire_site
+    ADD CONSTRAINT uk_horaire_site_annee
+    UNIQUE (site_id, annee);
+
+ALTER TABLE ONLY public.jour_fermeture
+    ADD CONSTRAINT uk_jour_fermeture_site_date
+    UNIQUE (site_id, date_fermeture);
 --
 -- TOC entry 3375 (class 2606 OID 24899)
 -- Name: terrain fk95rhv9d55dsl6gc4sabx4fimw; Type: FK CONSTRAINT; Schema: public; Owner: padel_app

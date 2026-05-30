@@ -4,21 +4,28 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalTime;
-import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "horaire_site")
+@Table(
+        name = "horaire_site",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_horaire_site_annee",
+                        columnNames = {"site_id", "annee"}
+                )
+        }
+)
 public class HoraireSiteEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "site_id", nullable = false)
     private SiteEntity site;
 

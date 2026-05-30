@@ -20,15 +20,15 @@ public class PaiementEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "reservation_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id")
     private ReservationEntity reservation;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
     private MembreEntity membre;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "participation_match_id")
     private ParticipationEntity participation;
 
@@ -39,13 +39,13 @@ public class PaiementEntity {
     private String devise = "EUR";
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private PaiementProvider provider = PaiementProvider.MOCK;
 
-    @Column(name = "provider_payment_id")
+    @Column(name = "provider_payment_id", length = 150)
     private String providerPaymentId;
 
-    @Column(name = "client_secret")
+    @Column(name = "client_secret", length = 255)
     private String clientSecret;
 
     @Column(name = "date_creation", nullable = false)
@@ -58,10 +58,33 @@ public class PaiementEntity {
     private LocalDateTime dateExpiration;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private PaiementMethode methode = PaiementMethode.CARTE;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private PaiementStatut statut = PaiementStatut.EN_ATTENTE;
+
+    @PrePersist
+    public void prePersist() {
+        if (dateCreation == null) {
+            dateCreation = LocalDateTime.now();
+        }
+
+        if (devise == null || devise.isBlank()) {
+            devise = "EUR";
+        }
+
+        if (provider == null) {
+            provider = PaiementProvider.MOCK;
+        }
+
+        if (methode == null) {
+            methode = PaiementMethode.CARTE;
+        }
+
+        if (statut == null) {
+            statut = PaiementStatut.EN_ATTENTE;
+        }
+    }
 }
