@@ -168,11 +168,31 @@ setCourtMaintenance(courtId: number, maintenance: boolean) {
     );
   }
 
+  updateOwnMemberProfile(memberId: number, profile: { firstName: string | null; lastName: string | null; email: string | null }) {
+    return this.httpClient.patch<any>(
+      `${this.apiBaseUrl}/members/${memberId}/profile`,
+      profile
+    );
+  }
+
   getMemberWallet(memberId: number) {
     return this.httpClient.get<any>(
       `${this.apiBaseUrl}/paiements/member/${memberId}/wallet`
     );
   }
+
+  initierMemberDebtsPayment(memberId: number) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/paiements/member/${memberId}/dettes/initier`,
+      null
+    );
+  }
+
+getActiveMemberPenalties(memberId: number) {
+  return this.httpClient.get<any[]>(
+    `${this.apiBaseUrl}/penalites/member/${memberId}/active`
+  );
+}
 
   // =========================
   // ADMINISTRATEURS

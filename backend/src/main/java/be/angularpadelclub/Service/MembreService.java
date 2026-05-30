@@ -212,6 +212,64 @@ public class MembreService {
         return membreRepository.save(membre);
     }
 
+    public MembreEntity updateOwnProfile(
+            int id,
+            String firstName,
+            String lastName,
+            String email
+    ) {
+        validateOwnProfileUpdate(firstName, lastName, email);
+
+        MembreEntity membre = findMemberOrThrow(id);
+
+        if (!membre.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Modification impossible : ce membre est suspendu."
+            );
+        }
+
+        membre.setPrenom(firstName.trim());
+        membre.setNom(lastName.trim());
+        membre.setEmail(email.trim());
+
+        return membreRepository.save(membre);
+    }
+
+    private void validateOwnProfileUpdate(
+            String firstName,
+            String lastName,
+            String email
+    ) {
+        if (firstName == null || firstName.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le prénom est obligatoire."
+            );
+        }
+
+        if (lastName == null || lastName.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le nom est obligatoire."
+            );
+        }
+
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "L'email est obligatoire."
+            );
+        }
+
+        if (!email.contains("@") || !email.contains(".")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "L'email doit être valide."
+            );
+        }
+    }
+
     private MembreEntity findMemberOrThrow(int id) {
         return membreRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(

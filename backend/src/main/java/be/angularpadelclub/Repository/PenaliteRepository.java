@@ -6,11 +6,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 import java.util.List;
 
-public interface PenaliteRepository
-        extends JpaRepository<PenaliteEntity, Integer> {
+public interface PenaliteRepository extends JpaRepository<PenaliteEntity, Integer> {
 
     boolean existsByMembre_IdAndActiveTrue(Integer membreId);
+
     boolean existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
+            Integer membreId,
+            LocalDate date
+    );
+
+    List<PenaliteEntity> findByMembre_IdAndActiveTrueAndDateFinGreaterThanEqualOrderByDateFinAsc(
             Integer membreId,
             LocalDate date
     );

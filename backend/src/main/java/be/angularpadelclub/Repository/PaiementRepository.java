@@ -27,6 +27,11 @@ public interface PaiementRepository extends JpaRepository<PaiementEntity, Intege
             Integer participationId,
             PaiementStatut statut
     );
+    List<PaiementEntity> findByMembre_IdAndParticipationIsNullAndReservationIsNullAndStatut(
+            Integer membreId,
+            PaiementStatut statut
+    );
+
 
     Optional<PaiementEntity> findFirstByReservation_IdOrderByDateCreationDesc(
             Integer reservationId
@@ -34,6 +39,10 @@ public interface PaiementRepository extends JpaRepository<PaiementEntity, Intege
 
     Optional<PaiementEntity> findFirstByParticipation_IdOrderByDateCreationDesc(
             Integer participationId
+    );
+    Optional<PaiementEntity> findFirstByMembre_IdAndParticipationIsNullAndReservationIsNullAndStatutOrderByDateCreationDesc(
+            Integer membreId,
+            PaiementStatut statut
     );
 
     boolean existsByReservation_IdAndStatut(

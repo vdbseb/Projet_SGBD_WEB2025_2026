@@ -54,8 +54,12 @@ export class ReservationPage implements OnInit {
   pauseMinutes = signal(15);
 
   closedDays = signal<any[]>([]);
+  activePenalties = signal<any[]>([]);
+  loadingPenalties = signal(false);
 
   ngOnInit() {
+    this.loadActivePenalties();
+
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
 
@@ -89,6 +93,28 @@ export class ReservationPage implements OnInit {
         this.snackBar.open('Impossible de charger le site.', 'OK', {
           duration: 4000
         });
+      }
+    });
+  }
+
+  private loadActivePenalties() {
+    const currentMember = this.authService.currentMember();
+
+    if (!currentMember?.id) {
+      this.activePenalties.set([]);
+      return;
+    }
+
+    this.loadingPenalties.set(true);
+
+    this.padelService.getActiveMemberPenalties(currentMember.id).subscribe({
+      next: penalties => {
+        this.activePenalties.set(penalties ?? []);
+        this.loadingPenalties.set(false);
+      },
+      error: () => {
+        this.activePenalties.set([]);
+        this.loadingPenalties.set(false);
       }
     });
   }
@@ -146,6 +172,13 @@ export class ReservationPage implements OnInit {
   }
 
   selectCourt(court: PadelCourt) {
+    if (this.hasActivePenalty()) {
+      this.snackBar.open(this.getPenaltyMessage(), 'OK', {
+        duration: 7000
+      });
+      return;
+    }
+
     if (!court.active) {
       this.snackBar.open('Ce terrain est actuellement indisponible.', 'OK', {
         duration: 4000
@@ -163,6 +196,99 @@ export class ReservationPage implements OnInit {
     this.selectedCourt.set(court);
     this.selectedTime.set(null);
     this.loadReservedTimes();
+  }
+
+  hasActivePenalty(): boolean {
+    return this.activePenalties().length > 0;
+  }
+
+  getMainPenalty(): any | null {
+    return this.activePenalties()[0] ?? null;
+  }
+
+  getPenaltyReason(penalty: any): string {
+    const rawReason = (penalty?.raison ?? penalty?.reason ?? '').trim();
+
+    switch (rawReason) {
+      case 'MATCH_PRIVE_INCOMPLET':
+        return 'Match privé incomplet';
+      case 'ORGANISATEUR_NON_PAYE':
+        return 'Organisateur non payé dans les délais';
+      case 'PARTICIPATION_IMPAYEE':
+        return 'Participation non payée dans les délais';
+      case 'SOLDE_ORGANISATEUR':
+        return 'Solde organisateur non réglé';
+      default:
+        return this.cleanSentence(rawReason || 'Pénalité de réservation');
+    }
+  }
+
+  getPenaltyEndDate(penalty: any): string {
+    if (!penalty?.dateFin) {
+      return 'date inconnue';
+    }
+
+    return new Date(penalty.dateFin).toLocaleDateString('fr-BE');
+  }
+
+  getPenaltyMessage(): string {
+    const penalty = this.getMainPenalty();
+
+    if (!penalty) {
+      return '';
+    }
+
+    return `Réservation impossible jusqu’au ${this.getPenaltyEndDate(penalty)}. Raison : ${this.getPenaltyReason(penalty)}.`;
+  }
+
+  getPenaltyRemainingLabel(penalty: any): string {
+    const days = Number(penalty?.joursRestants ?? 0);
+
+    if (days <= 0) {
+      return 'Dernier jour de blocage';
+    }
+
+    if (days === 1) {
+      return '1 jour restant';
+    }
+
+    return `${days} jours restants`;
+  }
+
+  getPenaltyMatchLabel(penalty: any): string {
+    if (!penalty) {
+      return '';
+    }
+
+    const court = penalty.courtName ?? '';
+    const site = penalty.siteName ?? '';
+    const date = penalty.matchDate
+      ? new Date(penalty.matchDate).toLocaleDateString('fr-BE')
+      : '';
+
+    const start = penalty.matchStartTime?.substring(0, 5) ?? '';
+    const end = penalty.matchEndTime?.substring(0, 5) ?? '';
+
+    const place = [court, site].filter(Boolean).join(' — ');
+    const time = date && start && end ? `${date} de ${start} à ${end}` : '';
+
+    if (place && time) {
+      return `${place} · ${time}`;
+    }
+
+    if (time) {
+      return `Match du ${time}`;
+    }
+
+    if (place) {
+      return place;
+    }
+
+    return penalty.matchId ? 'Match concerné' : '';
+  }
+
+  private cleanSentence(value: string): string {
+    return value.trim().replace(/[.。]+$/g, '');
   }
 
   private formatLocalDate(date: Date): string {
@@ -216,6 +342,13 @@ export class ReservationPage implements OnInit {
     const date = this.selectedDate();
     const time = this.selectedTime();
     const currentMember = this.authService.currentMember();
+
+    if (this.hasActivePenalty()) {
+      this.snackBar.open(this.getPenaltyMessage(), 'OK', {
+        duration: 7000
+      });
+      return;
+    }
 
     if (!court || !date || !time || !currentMember || !this.isMatchSelectionValid()) {
       this.snackBar.open('Veuillez compléter toutes les informations de réservation.', 'OK', {

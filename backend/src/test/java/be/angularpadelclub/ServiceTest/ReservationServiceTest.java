@@ -450,7 +450,8 @@ class ReservationServiceTest {
                 status,
                 null,
                 null,
-                participants
+                participants,
+                List.of()
         );
     }
 

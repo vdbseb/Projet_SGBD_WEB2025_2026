@@ -1,5 +1,6 @@
 package be.angularpadelclub.Mapper;
 
+import be.angularpadelclub.DTO.ParticipantReservationDTO;
 import be.angularpadelclub.DTO.ReservationDTO;
 import be.angularpadelclub.Entity.CourtEntity;
 import be.angularpadelclub.Entity.MatchEntity;
@@ -14,16 +15,29 @@ import java.util.List;
 public class ReservationMapper {
 
     public ReservationDTO toDTO(ReservationEntity entity) {
-
         MatchEntity match = entity.getMatch();
 
-        List<String> participantMatricules =
+        List<ParticipantReservationDTO> participants =
                 match != null && match.getParticipations() != null
                         ? match.getParticipations()
                         .stream()
-                        .map(p -> p.getMembre().getMatricule())
+                        .filter(participation -> participation.getMembre() != null)
+                        .map(participation -> {
+                            MembreEntity membre = participation.getMembre();
+
+                            return new ParticipantReservationDTO(
+                                    membre.getId(),
+                                    membre.getMatricule(),
+                                    membre.getPrenom(),
+                                    membre.getNom()
+                            );
+                        })
                         .toList()
                         : List.of();
+
+        List<String> participantMatricules = participants.stream()
+                .map(ParticipantReservationDTO::matricule)
+                .toList();
 
         return new ReservationDTO(
                 entity.getId(),
@@ -37,7 +51,8 @@ public class ReservationMapper {
                 entity.getStatut(),
                 match != null ? match.getTypeMatch() : null,
                 match != null ? match.getStatut() : null,
-                participantMatricules
+                participantMatricules,
+                participants
         );
     }
 
