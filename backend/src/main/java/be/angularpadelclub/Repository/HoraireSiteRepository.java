@@ -14,14 +14,12 @@ public interface HoraireSiteRepository
             int annee
     );
 
-    List<HoraireSiteEntity> findBySite_Id(Integer siteId);
+    List<HoraireSiteEntity> findBySite_Id(
+            Integer siteId
+    );
 
     boolean existsBySite_IdAndAnnee(
             Integer siteId,
             int annee
     );
-
-    List<HoraireSiteEntity> findBySiteId(Integer siteId);
-
-    boolean existsBySiteIdAndAnnee(Integer integer, int annee);
 }

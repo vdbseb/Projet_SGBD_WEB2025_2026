@@ -11,7 +11,13 @@ import java.util.List;
 @Component
 public class SiteMapper {
 
-    public SiteDTO toDTO(SiteEntity entity, HoraireSiteEntity horaire) {
+    public SiteDTO toDTO(
+            SiteEntity entity,
+            HoraireSiteEntity horaire
+    ) {
+        if (entity == null) {
+            return null;
+        }
 
         List<CourtDTO> courts = entity.getCourts() == null
                 ? List.of()
@@ -19,7 +25,7 @@ public class SiteMapper {
                 .map(court -> new CourtDTO(
                         court.getId(),
                         court.getNom(),
-                        court.getSite().getId(),
+                        court.getSite() != null ? court.getSite().getId() : null,
                         court.isCouvert(),
                         court.isActif(),
                         court.isMaintenance()
@@ -33,8 +39,8 @@ public class SiteMapper {
                 entity.getAdresse(),
                 entity.getCode_postal(),
                 entity.getDescription(),
-                horaire.getHeure_debut(),
-                horaire.getHeure_fin(),
+                horaire != null ? horaire.getHeure_debut() : null,
+                horaire != null ? horaire.getHeure_fin() : null,
                 entity.isActif(),
                 entity.getImage_url(),
                 courts
@@ -42,6 +48,10 @@ public class SiteMapper {
     }
 
     public SiteEntity toEntity(SiteDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
         SiteEntity entity = new SiteEntity();
 
         entity.setId(dto.id());

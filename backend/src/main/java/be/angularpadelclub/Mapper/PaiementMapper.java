@@ -16,15 +16,9 @@ public class PaiementMapper {
 
         return new PaiementDTO(
                 entity.getId(),
-                entity.getReservation() != null
-                        ? entity.getReservation().getId()
-                        : null,
-                entity.getParticipation() != null
-                        ? entity.getParticipation().getId()
-                        : null,
-                entity.getMembre() != null
-                        ? entity.getMembre().getId()
-                        : null,
+                entity.getReservation() != null ? entity.getReservation().getId() : null,
+                entity.getParticipation() != null ? entity.getParticipation().getId() : null,
+                entity.getMembre() != null ? entity.getMembre().getId() : null,
                 entity.getMontantCentimes(),
                 entity.getDevise(),
                 entity.getProvider(),
@@ -38,7 +32,9 @@ public class PaiementMapper {
         );
     }
 
-    public List<PaiementDTO> toDTOList(List<PaiementEntity> entities) {
+    public List<PaiementDTO> toDTOList(
+            List<PaiementEntity> entities
+    ) {
         if (entities == null) {
             return List.of();
         }

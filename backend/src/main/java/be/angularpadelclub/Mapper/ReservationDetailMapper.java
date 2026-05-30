@@ -29,11 +29,21 @@ public class ReservationDetailMapper {
             List<ParticipationEntity> participations,
             String currentMatricule
     ) {
-        List<MembreDTO> members = participations.stream()
+        if (match == null) {
+            return null;
+        }
+
+        List<ParticipationEntity> safeParticipations = participations == null
+                ? List.of()
+                : participations;
+
+        List<MembreDTO> members = safeParticipations.stream()
+                .filter(participation -> participation.getMembre() != null)
                 .map(participation -> membreMapper.toDTO(participation.getMembre()))
                 .toList();
 
-        String myPaymentStatus = participations.stream()
+        String myPaymentStatus = safeParticipations.stream()
+                .filter(participation -> participation.getMembre() != null)
                 .filter(participation -> participation.getMembre()
                         .getMatricule()
                         .equals(currentMatricule))
@@ -47,14 +57,22 @@ public class ReservationDetailMapper {
                 match.getHeureDebut(),
                 match.getHeureFin(),
 
-                match.getTerrain().getId(),
-                match.getTerrain().getNom(),
+                match.getTerrain() != null ? match.getTerrain().getId() : null,
+                match.getTerrain() != null ? match.getTerrain().getNom() : null,
 
-                match.getTerrain().getSite().getId(),
-                match.getTerrain().getSite().getNom(),
+                match.getTerrain() != null && match.getTerrain().getSite() != null
+                        ? match.getTerrain().getSite().getId()
+                        : null,
+                match.getTerrain() != null && match.getTerrain().getSite() != null
+                        ? match.getTerrain().getSite().getNom()
+                        : null,
 
-                match.getOrganisateur().getMatricule(),
-                match.getOrganisateur().getPrenom() + " " + match.getOrganisateur().getNom(),
+                match.getOrganisateur() != null
+                        ? match.getOrganisateur().getMatricule()
+                        : null,
+                match.getOrganisateur() != null
+                        ? match.getOrganisateur().getPrenom() + " " + match.getOrganisateur().getNom()
+                        : null,
 
                 members,
                 myPaymentStatus
