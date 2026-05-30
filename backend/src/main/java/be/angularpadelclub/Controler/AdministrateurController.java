@@ -19,10 +19,8 @@ public class AdministrateurController {
             AdministrateurService administrateurService,
             AdministrateurMapper administrateurMapper
     ) {
-        this.administrateurService =
-                administrateurService;
-        this.administrateurMapper =
-                administrateurMapper;
+        this.administrateurService = administrateurService;
+        this.administrateurMapper = administrateurMapper;
     }
 
     @GetMapping(produces = "application/json")
@@ -46,8 +44,7 @@ public class AdministrateurController {
             @PathVariable("matricule") String matricule
     ) {
         return administrateurMapper.toDTO(
-                administrateurService
-                        .findByMatricule(matricule)
+                administrateurService.findByMatricule(matricule)
         );
     }
 
@@ -56,8 +53,7 @@ public class AdministrateurController {
             @PathVariable("typeAdmin") String typeAdmin
     ) {
         return administrateurMapper.toDTOList(
-                administrateurService
-                        .findByTypeAdmin(typeAdmin)
+                administrateurService.findByTypeAdmin(typeAdmin)
         );
     }
 
@@ -66,8 +62,7 @@ public class AdministrateurController {
             @PathVariable("siteId") Integer siteId
     ) {
         return administrateurMapper.toDTOList(
-                administrateurService
-                        .findBySiteId(siteId)
+                administrateurService.findBySiteId(siteId)
         );
     }
 }

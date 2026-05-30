@@ -1,31 +1,22 @@
 package be.angularpadelclub.Service;
 
-import be.angularpadelclub.DTO.MatchDTO;
-import be.angularpadelclub.Entity.CourtEntity;
 import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ParticipationEntity;
-import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
 import be.angularpadelclub.Enum.ParticipationStatut;
-import be.angularpadelclub.Repository.CourtRepository;
 import be.angularpadelclub.Repository.MatchRepository;
-import be.angularpadelclub.Repository.MembreRepository;
 import be.angularpadelclub.Repository.ParticipationRepository;
-import be.angularpadelclub.Repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class MatchService {
-
-    private static final int PLAYER_SHARE_CENTS = 1500;
 
     private static final List<ParticipationStatut> ACTIVE_PARTICIPATION_STATUSES =
             List.of(
@@ -34,54 +25,27 @@ public class MatchService {
             );
 
     private final MatchRepository matchRepository;
-    private final CourtRepository courtRepository;
-    private final MembreRepository membreRepository;
     private final ParticipationRepository participationRepository;
-    private final ReservationRepository reservationRepository;
     private final PaiementService paiementService;
+    private final ReferenceLookupService referenceLookupService;
+    private final ParticipationService participationService;
 
     public MatchService(
             MatchRepository matchRepository,
-            CourtRepository courtRepository,
-            MembreRepository membreRepository,
             ParticipationRepository participationRepository,
-            ReservationRepository reservationRepository,
-            PaiementService paiementService
+            PaiementService paiementService,
+            ReferenceLookupService referenceLookupService,
+            ParticipationService participationService
     ) {
         this.matchRepository = matchRepository;
-        this.courtRepository = courtRepository;
-        this.membreRepository = membreRepository;
         this.participationRepository = participationRepository;
-        this.reservationRepository = reservationRepository;
         this.paiementService = paiementService;
+        this.referenceLookupService = referenceLookupService;
+        this.participationService = participationService;
     }
 
     public List<MatchEntity> findAll() {
         return matchRepository.findAll();
-    }
-
-    private void createParticipation(
-            MatchEntity match,
-            MembreEntity membre
-    ) {
-        ParticipationEntity participation =
-                new ParticipationEntity();
-
-        participation.setMatch(match);
-        participation.setMembre(membre);
-        participation.setDateInscription(
-                LocalDateTime.now()
-        );
-        participation.setStatut(ParticipationStatut.EN_ATTENTE_PAIEMENT);
-        participation.setMontantDuCentimes(PLAYER_SHARE_CENTS);
-        participation.setDateLimitePaiement(
-                LocalDateTime.of(
-                        match.getDateMatch().minusDays(1),
-                        match.getHeureDebut()
-                )
-        );
-
-        participationRepository.save(participation);
     }
 
     @Transactional
@@ -89,42 +53,42 @@ public class MatchService {
             Integer matchId,
             String matricule
     ) {
-        MatchEntity match =
-                matchRepository.findById(matchId)
-                        .orElseThrow(() ->
-                                new ResponseStatusException(
-                                        HttpStatus.NOT_FOUND,
-                                        "Match introuvable avec l'id " + matchId
-                                ));
+        MatchEntity match = referenceLookupService.findMatchOrThrow(matchId);
 
         if (match.getStatut() == MatchStatus.ANNULE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Ce match est déjà annulé"
+                    "Ce match est déjà annulé."
             );
         }
 
         if (match.getStatut() == MatchStatus.TERMINE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Impossible d'annuler un match terminé"
+                    "Impossible d'annuler un match terminé."
+            );
+        }
+
+        if (matricule == null || matricule.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le matricule de l'organisateur est obligatoire."
             );
         }
 
         boolean estOrganisateur =
                 match.getOrganisateur() != null
-                        && match.getOrganisateur()
-                        .getMatricule()
-                        .equals(matricule);
+                        && matricule.equals(match.getOrganisateur().getMatricule());
 
         if (!estOrganisateur) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Seul l'organisateur peut annuler ce match"
+                    "Seul l'organisateur peut annuler ce match."
             );
         }
 
         match.setStatut(MatchStatus.ANNULE);
+
         paiementService.rembourserPaiementsMatch(match.getId());
 
         return matchRepository.save(match);
@@ -135,12 +99,91 @@ public class MatchService {
             Integer matchId,
             Integer memberId
     ) {
-        MatchEntity match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Match introuvable avec l'id " + matchId
-                ));
+        MatchEntity match = referenceLookupService.findMatchOrThrow(matchId);
+        MembreEntity membre = referenceLookupService.findMembreOrThrow(memberId);
 
+        validateMatchCanBeJoined(match);
+        validateMemberCanJoin(membre);
+        validateMemberIsNotAlreadyRegistered(matchId, memberId);
+
+        int nombreParticipantsActifs =
+                participationRepository.countByMatch_IdAndStatutIn(
+                        matchId,
+                        ACTIVE_PARTICIPATION_STATUSES
+                );
+
+        if (nombreParticipantsActifs >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
+            match.setStatut(MatchStatus.COMPLET);
+            matchRepository.save(match);
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible de rejoindre ce match : il est déjà complet."
+            );
+        }
+
+        ParticipationEntity savedParticipation =
+                participationService.createPendingParticipation(match, membre);
+
+        updateMatchStatusAfterParticipantCount(
+                match,
+                nombreParticipantsActifs + 1
+        );
+
+        matchRepository.save(match);
+
+        return savedParticipation;
+    }
+
+    @Transactional
+    public void leaveMatch(
+            Integer matchId,
+            Integer memberId
+    ) {
+        MatchEntity match = referenceLookupService.findMatchOrThrow(matchId);
+        referenceLookupService.findMembreOrThrow(memberId);
+
+        validateMatchCanBeLeft(match);
+
+        ParticipationEntity participation =
+                participationRepository
+                        .findFirstByMatch_IdAndMembre_IdAndStatutIn(
+                                matchId,
+                                memberId,
+                                ACTIVE_PARTICIPATION_STATUSES
+                        )
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Participation active introuvable pour ce membre."
+                        ));
+
+        if (isOrganizer(match, memberId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "L'organisateur ne peut pas quitter son propre match. Il doit l'annuler."
+            );
+        }
+
+        paiementService.rembourserPaiementsParticipation(participation.getId());
+
+        participation.setStatut(ParticipationStatut.LIBEREE);
+        participationRepository.save(participation);
+
+        int nombreParticipantsActifs =
+                participationRepository.countByMatch_IdAndStatutIn(
+                        matchId,
+                        ACTIVE_PARTICIPATION_STATUSES
+                );
+
+        updateMatchStatusAfterParticipantCount(
+                match,
+                nombreParticipantsActifs
+        );
+
+        matchRepository.save(match);
+    }
+
+    private void validateMatchCanBeJoined(MatchEntity match) {
         if (match.getTypeMatch() != MatchType.PUBLIC) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -161,91 +204,9 @@ public class MatchService {
                     "Impossible de rejoindre un match terminé."
             );
         }
-
-        MembreEntity membre = membreRepository.findById(memberId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Membre introuvable avec l'id " + memberId
-                ));
-
-        if (!membre.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Inscription impossible : membre inactif."
-            );
-        }
-
-        boolean alreadyRegistered =
-                participationRepository.existsByMatch_IdAndMembre_IdAndStatutIn(
-                        matchId,
-                        memberId,
-                        ACTIVE_PARTICIPATION_STATUSES
-                );
-
-        if (alreadyRegistered) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Ce membre est déjà inscrit à ce match."
-            );
-        }
-
-        int nombreParticipantsActifs =
-                participationRepository.countByMatch_IdAndStatutIn(
-                        matchId,
-                        ACTIVE_PARTICIPATION_STATUSES
-                );
-
-        if (nombreParticipantsActifs >= 4) {
-            match.setStatut(MatchStatus.COMPLET);
-            matchRepository.save(match);
-
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Impossible de rejoindre ce match : il est déjà complet."
-            );
-        }
-
-        ParticipationEntity participation = new ParticipationEntity();
-        participation.setMatch(match);
-        participation.setMembre(membre);
-        participation.setDateInscription(LocalDateTime.now());
-        participation.setStatut(ParticipationStatut.EN_ATTENTE_PAIEMENT);
-        participation.setMontantDuCentimes(PLAYER_SHARE_CENTS);
-        participation.setDateLimitePaiement(
-                LocalDateTime.of(
-                        match.getDateMatch().minusDays(1),
-                        match.getHeureDebut()
-                )
-        );
-
-        ParticipationEntity savedParticipation =
-                participationRepository.save(participation);
-
-        int nombreParticipantsApresInscription =
-                nombreParticipantsActifs + 1;
-
-        if (nombreParticipantsApresInscription >= 4) {
-            match.setStatut(MatchStatus.COMPLET);
-        } else {
-            match.setStatut(MatchStatus.OUVERT);
-        }
-
-        matchRepository.save(match);
-
-        return savedParticipation;
     }
 
-    @Transactional
-    public void leaveMatch(
-            Integer matchId,
-            Integer memberId
-    ) {
-        MatchEntity match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Match introuvable avec l'id " + matchId
-                ));
-
+    private void validateMatchCanBeLeft(MatchEntity match) {
         if (match.getStatut() == MatchStatus.ANNULE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -259,52 +220,58 @@ public class MatchService {
                     "Impossible de quitter un match terminé."
             );
         }
+    }
 
-        ParticipationEntity participation =
-                participationRepository
-                        .findFirstByMatch_IdAndMembre_IdAndStatutIn(
-                                matchId,
-                                memberId,
-                                ACTIVE_PARTICIPATION_STATUSES
-                        )
-                        .orElseThrow(() ->
-                                new ResponseStatusException(
-                                        HttpStatus.NOT_FOUND,
-                                        "Participation active introuvable pour ce membre."
-                                ));
-
-        boolean estOrganisateur =
-                match.getOrganisateur() != null
-                        && match.getOrganisateur()
-                        .getId()
-                        .equals(memberId);
-
-        if (estOrganisateur) {
+    private void validateMemberCanJoin(MembreEntity membre) {
+        if (!membre.isActif()) {
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "L'organisateur ne peut pas quitter son propre match. Il doit l'annuler."
+                    HttpStatus.FORBIDDEN,
+                    "Inscription impossible : membre inactif."
             );
         }
+    }
 
-        paiementService.rembourserPaiementsParticipation(participation.getId());
-
-        participation.setStatut(ParticipationStatut.LIBEREE);
-        participationRepository.save(participation);
-
-        int nombreParticipantsActifs =
-                participationRepository.countByMatch_IdAndStatutIn(
+    private void validateMemberIsNotAlreadyRegistered(
+            Integer matchId,
+            Integer memberId
+    ) {
+        boolean alreadyRegistered =
+                participationRepository.existsByMatch_IdAndMembre_IdAndStatutIn(
                         matchId,
+                        memberId,
                         ACTIVE_PARTICIPATION_STATUSES
                 );
 
-        if (nombreParticipantsActifs >= 4) {
+        if (alreadyRegistered) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ce membre est déjà inscrit à ce match."
+            );
+        }
+    }
+
+    private void updateMatchStatusAfterParticipantCount(
+            MatchEntity match,
+            int nombreParticipantsActifs
+    ) {
+        if (nombreParticipantsActifs >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
             match.setStatut(MatchStatus.COMPLET);
-        } else if (match.getTypeMatch() == MatchType.PUBLIC) {
-            match.setStatut(MatchStatus.OUVERT);
-        } else {
-            match.setStatut(MatchStatus.PLANIFIE);
+            return;
         }
 
-        matchRepository.save(match);
+        if (match.getTypeMatch() == MatchType.PUBLIC) {
+            match.setStatut(MatchStatus.OUVERT);
+            return;
+        }
+
+        match.setStatut(MatchStatus.PLANIFIE);
+    }
+
+    private boolean isOrganizer(
+            MatchEntity match,
+            Integer memberId
+    ) {
+        return match.getOrganisateur() != null
+                && match.getOrganisateur().getId().equals(memberId);
     }
 }

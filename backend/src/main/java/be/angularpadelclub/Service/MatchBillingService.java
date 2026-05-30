@@ -15,18 +15,18 @@ import java.time.LocalDateTime;
 @Service
 public class MatchBillingService {
 
-    private static final int DEFAULT_MATCH_PRICE_EUROS = 60;
-    private static final int CENTS_PER_EURO = 100;
-
     private final DetteMembreRepository detteMembreRepository;
 
-    public MatchBillingService(DetteMembreRepository detteMembreRepository) {
+    public MatchBillingService(
+            DetteMembreRepository detteMembreRepository
+    ) {
         this.detteMembreRepository = detteMembreRepository;
     }
 
     @Transactional
-    public void facturerSoldeOrganisateurSiNecessaire(MatchEntity match) {
-
+    public void facturerSoldeOrganisateurSiNecessaire(
+            MatchEntity match
+    ) {
         if (match == null
                 || match.getOrganisateur() == null
                 || match.getReservation() == null) {
@@ -52,6 +52,7 @@ public class MatchBillingService {
         }
 
         DetteMembreEntity dette = new DetteMembreEntity();
+
         dette.setMembre(match.getOrganisateur());
         dette.setReservation(match.getReservation());
         dette.setMontantCentimes(soldeCentimes);
@@ -62,24 +63,29 @@ public class MatchBillingService {
         detteMembreRepository.save(dette);
     }
 
-    int calculerSoldeOrganisateurCentimes(MatchEntity match) {
-
+    int calculerSoldeOrganisateurCentimes(
+            MatchEntity match
+    ) {
         int prixTotalCentimes = getPrixTotalCentimes(match);
-        int montantDejaCouvertCentimes = getMontantCouvertParParticipationsPayees(match);
+        int montantDejaCouvertCentimes =
+                getMontantCouvertParParticipationsPayees(match);
 
         return Math.max(0, prixTotalCentimes - montantDejaCouvertCentimes);
     }
 
-    private int getPrixTotalCentimes(MatchEntity match) {
+    private int getPrixTotalCentimes(
+            MatchEntity match
+    ) {
         Integer prixTotalEuros = match.getPrixTotal() != null
                 ? match.getPrixTotal()
-                : DEFAULT_MATCH_PRICE_EUROS;
+                : ClubBusinessRules.DEFAULT_MATCH_PRICE_EUROS;
 
-        return prixTotalEuros * CENTS_PER_EURO;
+        return prixTotalEuros * ClubBusinessRules.CENTS_PER_EURO;
     }
 
-    private int getMontantCouvertParParticipationsPayees(MatchEntity match) {
-
+    private int getMontantCouvertParParticipationsPayees(
+            MatchEntity match
+    ) {
         if (match.getParticipations() == null) {
             return 0;
         }
@@ -92,7 +98,9 @@ public class MatchBillingService {
                 .sum();
     }
 
-    private boolean estParticipationPayee(ParticipationEntity participation) {
+    private boolean estParticipationPayee(
+            ParticipationEntity participation
+    ) {
         return participation != null
                 && participation.getStatut() == ParticipationStatut.PAYEE;
     }

@@ -22,11 +22,11 @@ public class MatchEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "terrain_id", nullable = false)
     private CourtEntity terrain;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "organisateur_id", nullable = false)
     private MembreEntity organisateur;
 
@@ -40,23 +40,34 @@ public class MatchEntity {
     private LocalTime heureFin;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type_match", nullable = false)
+    @Column(name = "type_match", nullable = false, length = 20)
     private MatchType typeMatch;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "statut", nullable = false)
+    @Column(name = "statut", nullable = false, length = 20)
     private MatchStatus statut;
 
     @Column(name = "prix_total", nullable = false)
     private Integer prixTotal;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL)
+    @OneToMany(
+            mappedBy = "match",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<ParticipationEntity> participations;
 
-    @OneToOne(optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "reservation_id", nullable = false, unique = true)
     private ReservationEntity reservation;
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

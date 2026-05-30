@@ -11,7 +11,12 @@ import java.util.Optional;
 public interface ParticipationRepository extends JpaRepository<ParticipationEntity, Integer> {
 
     List<ParticipationEntity> findByMatchId(Integer matchId);
-    boolean existsByMatch_IdAndMembre_Id(Integer matchId, Integer membreId);
+
+    boolean existsByMatch_IdAndMembre_Id(
+            Integer matchId,
+            Integer membreId
+    );
+
     boolean existsByMatch_IdAndMembre_IdAndStatutIn(
             Integer matchId,
             Integer membreId,
@@ -19,6 +24,7 @@ public interface ParticipationRepository extends JpaRepository<ParticipationEnti
     );
 
     int countByMatch_Id(Integer matchId);
+
     int countByMatch_IdAndStatutIn(
             Integer matchId,
             List<ParticipationStatut> statuts

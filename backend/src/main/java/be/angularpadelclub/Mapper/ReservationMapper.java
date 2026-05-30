@@ -20,6 +20,10 @@ public class ReservationMapper {
     );
 
     public ReservationDTO toDTO(ReservationEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
         MatchEntity match = entity.getMatch();
 
         List<ParticipantReservationDTO> participants =
@@ -56,9 +60,11 @@ public class ReservationMapper {
                 entity.getDate(),
                 entity.getEndTime(),
                 entity.getStartTime(),
-                entity.getCourt().getId(),
-                entity.getCourt().getSite().getNom(),
-                entity.getMember().getId(),
+                entity.getCourt() != null ? entity.getCourt().getId() : null,
+                entity.getCourt() != null && entity.getCourt().getSite() != null
+                        ? entity.getCourt().getSite().getNom()
+                        : null,
+                entity.getMember() != null ? entity.getMember().getId() : null,
                 entity.getStatut(),
                 match != null ? match.getTypeMatch() : null,
                 match != null ? match.getStatut() : null,
@@ -72,6 +78,10 @@ public class ReservationMapper {
             CourtEntity court,
             MembreEntity member
     ) {
+        if (dto == null) {
+            return null;
+        }
+
         ReservationEntity entity = new ReservationEntity();
 
         entity.setId(dto.id());
@@ -89,7 +99,13 @@ public class ReservationMapper {
         return entity;
     }
 
-    public List<ReservationDTO> toDTOList(List<ReservationEntity> entities) {
+    public List<ReservationDTO> toDTOList(
+            List<ReservationEntity> entities
+    ) {
+        if (entities == null) {
+            return List.of();
+        }
+
         return entities.stream()
                 .map(this::toDTO)
                 .toList();

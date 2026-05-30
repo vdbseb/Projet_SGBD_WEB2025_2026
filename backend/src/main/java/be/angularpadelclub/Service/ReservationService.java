@@ -5,17 +5,12 @@ import be.angularpadelclub.Entity.CourtEntity;
 import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.MembreEntity;
-import be.angularpadelclub.Entity.ParticipationEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
-import be.angularpadelclub.Enum.ParticipationStatut;
 import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.ReservationMapper;
-import be.angularpadelclub.Repository.CourtRepository;
 import be.angularpadelclub.Repository.MatchRepository;
-import be.angularpadelclub.Repository.MembreRepository;
-import be.angularpadelclub.Repository.ParticipationRepository;
 import be.angularpadelclub.Repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
@@ -31,36 +26,30 @@ import java.util.Optional;
 @Service
 public class ReservationService {
 
-    private static final int PLAYER_SHARE_CENTS = 1500;
-    private static final int MATCH_PRICE_EUROS = 60;
-
     private final ReservationRepository reservationRepository;
-    private final CourtRepository courtRepository;
-    private final MembreRepository membreRepository;
     private final ReservationMapper reservationMapper;
     private final MatchRepository matchRepository;
-    private final ParticipationRepository participationRepository;
     private final ReservationValidationService reservationValidationService;
     private final ReservationCancellationService reservationCancellationService;
+    private final ReferenceLookupService referenceLookupService;
+    private final ParticipationService participationService;
 
     public ReservationService(
             ReservationRepository reservationRepository,
-            CourtRepository courtRepository,
-            MembreRepository membreRepository,
             ReservationMapper reservationMapper,
             MatchRepository matchRepository,
-            ParticipationRepository participationRepository,
             ReservationValidationService reservationValidationService,
-            ReservationCancellationService reservationCancellationService
+            ReservationCancellationService reservationCancellationService,
+            ReferenceLookupService referenceLookupService,
+            ParticipationService participationService
     ) {
         this.reservationRepository = reservationRepository;
-        this.courtRepository = courtRepository;
-        this.membreRepository = membreRepository;
         this.reservationMapper = reservationMapper;
         this.matchRepository = matchRepository;
-        this.participationRepository = participationRepository;
         this.reservationValidationService = reservationValidationService;
         this.reservationCancellationService = reservationCancellationService;
+        this.referenceLookupService = referenceLookupService;
+        this.participationService = participationService;
     }
 
     public List<ReservationDTO> findAll() {
@@ -79,34 +68,53 @@ public class ReservationService {
             int courtId,
             LocalDate date
     ) {
+        referenceLookupService.findCourtOrThrow(courtId);
+
+        if (date == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La date de réservation est obligatoire."
+            );
+        }
+
         return reservationRepository.findByCourtIdAndDate(
                 courtId,
                 date
         );
     }
 
+    @Transactional
     public void deleteReservation(int id) {
-        reservationRepository.deleteById(id);
+        ReservationEntity reservation =
+                referenceLookupService.findReservationOrThrow(id);
+
+        validateManualCancellationAllowed(reservation);
+
+        reservationCancellationService.cancelReservationForClubReason(
+                reservation
+        );
     }
 
     @Transactional
     public void addReservation(ReservationDTO dto) {
+        validateReservationCreateRequest(dto);
 
-        CourtEntity court = courtRepository.findById(dto.courtId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Terrain introuvable avec l'id " + dto.courtId()
-                ));
+        CourtEntity court = referenceLookupService.findCourtOrThrow(
+                dto.courtId()
+        );
 
-        MembreEntity member = membreRepository.findById(dto.memberId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Membre introuvable avec l'id " + dto.memberId()
-                ));
+        MembreEntity member = referenceLookupService.findMembreOrThrow(
+                dto.memberId()
+        );
 
-        List<String> participants = dto.participantMatricules() == null
-                ? List.of()
-                : dto.participantMatricules();
+        List<String> participantMatricules = normalizeParticipants(
+                dto.participantMatricules()
+        );
+
+        validateOrganizerIsNotInParticipants(
+                member,
+                participantMatricules
+        );
 
         HoraireSiteEntity horaire =
                 reservationValidationService.validateReservationPossible(
@@ -116,15 +124,16 @@ public class ReservationService {
                         dto.startTime()
                 );
 
-        reservationValidationService.validateParticipants(participants);
+        reservationValidationService.validateParticipants(
+                participantMatricules
+        );
 
         LocalTime startTime = dto.startTime();
-
         LocalTime endTime = startTime.plusMinutes(
                 horaire.getDuree_match_minutes()
         );
 
-        MatchType matchType = participants.isEmpty()
+        MatchType matchType = participantMatricules.isEmpty()
                 ? MatchType.PUBLIC
                 : MatchType.PRIVE;
 
@@ -136,40 +145,31 @@ public class ReservationService {
 
         reservation.setId(null);
         reservation.setEndTime(endTime);
+        reservation.setStatut(ReservationStatus.EN_ATTENTE_PAIEMENT);
 
         ReservationEntity savedReservation =
                 reservationRepository.save(reservation);
 
-        MatchEntity match = new MatchEntity();
-
-        match.setTerrain(court);
-        match.setOrganisateur(member);
-        match.setDateMatch(dto.date());
-        match.setHeureDebut(startTime);
-        match.setHeureFin(endTime);
-        match.setPrixTotal(MATCH_PRICE_EUROS);
-        match.setCreatedAt(LocalDateTime.now());
-        match.setTypeMatch(matchType);
-        match.setStatut(
-                matchType == MatchType.PRIVE
-                        ? MatchStatus.COMPLET
-                        : MatchStatus.OUVERT
+        MatchEntity savedMatch = createMatchForReservation(
+                savedReservation,
+                court,
+                member,
+                dto.date(),
+                startTime,
+                endTime,
+                matchType,
+                participantMatricules.size() + 1
         );
 
-        match.setReservation(savedReservation);
+        participationService.createPendingParticipation(savedMatch, member);
 
-        MatchEntity savedMatch = matchRepository.save(match);
+        for (String matricule : participantMatricules) {
+            MembreEntity joueur =
+                    referenceLookupService.findMembreByMatriculeOrThrow(
+                            matricule
+                    );
 
-        createParticipation(savedMatch, member);
-
-        for (String matricule : participants) {
-            MembreEntity joueur = membreRepository.findByMatricule(matricule)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Joueur introuvable : " + matricule
-                    ));
-
-            createParticipation(savedMatch, joueur);
+            participationService.createPendingParticipation(savedMatch, joueur);
         }
     }
 
@@ -178,50 +178,142 @@ public class ReservationService {
             int id,
             int requestingMemberId
     ) {
-        ReservationEntity reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Réservation introuvable avec l'id " + id
-                ));
+        ReservationEntity reservation =
+                referenceLookupService.findReservationOrThrow(id);
+
+        referenceLookupService.findMembreOrThrow(requestingMemberId);
 
         validateManualCancellationAllowed(reservation);
-        validateRequesterCanCancelWholeReservation(reservation, requestingMemberId);
+        validateRequesterCanCancelWholeReservation(
+                reservation,
+                requestingMemberId
+        );
 
         reservationCancellationService.cancelReservationByMember(reservation);
     }
 
     @Transactional
     public void cancelReservationByAdmin(int id) {
-        ReservationEntity reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Réservation introuvable avec l'id " + id
-                ));
+        ReservationEntity reservation =
+                referenceLookupService.findReservationOrThrow(id);
 
         validateManualCancellationAllowed(reservation);
 
-        reservationCancellationService.cancelReservationByMember(reservation);
+        reservationCancellationService.cancelReservationForClubReason(
+                reservation
+        );
     }
 
-    private void createParticipation(
-            MatchEntity match,
-            MembreEntity membre
-    ) {
-        ParticipationEntity participation = new ParticipationEntity();
+    private void validateReservationCreateRequest(ReservationDTO dto) {
+        if (dto == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Les données de réservation sont obligatoires."
+            );
+        }
 
-        participation.setMatch(match);
-        participation.setMembre(membre);
-        participation.setDateInscription(LocalDateTime.now());
-        participation.setStatut(ParticipationStatut.EN_ATTENTE_PAIEMENT);
-        participation.setMontantDuCentimes(PLAYER_SHARE_CENTS);
-        participation.setDateLimitePaiement(
-                LocalDateTime.of(
-                        match.getDateMatch().minusDays(1),
-                        match.getHeureDebut()
-                )
+        if (dto.courtId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le terrain est obligatoire pour créer une réservation."
+            );
+        }
+
+        if (dto.memberId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Le membre organisateur est obligatoire pour créer une réservation."
+            );
+        }
+
+        if (dto.date() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La date de réservation est obligatoire."
+            );
+        }
+
+        if (dto.startTime() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "L'heure de début est obligatoire."
+            );
+        }
+    }
+
+    private List<String> normalizeParticipants(
+            List<String> participantMatricules
+    ) {
+        if (participantMatricules == null) {
+            return List.of();
+        }
+
+        return participantMatricules.stream()
+                .filter(matricule -> matricule != null && !matricule.isBlank())
+                .map(matricule -> matricule.trim().toUpperCase())
+                .distinct()
+                .toList();
+    }
+
+    private void validateOrganizerIsNotInParticipants(
+            MembreEntity organizer,
+            List<String> participantMatricules
+    ) {
+        if (organizer == null || organizer.getMatricule() == null) {
+            return;
+        }
+
+        boolean organizerAlsoParticipant = participantMatricules.contains(
+                organizer.getMatricule().trim().toUpperCase()
         );
 
-        participationRepository.save(participation);
+        if (organizerAlsoParticipant) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "L'organisateur ne doit pas être ajouté une seconde fois comme participant."
+            );
+        }
+    }
+
+    private MatchEntity createMatchForReservation(
+            ReservationEntity reservation,
+            CourtEntity court,
+            MembreEntity organizer,
+            LocalDate date,
+            LocalTime startTime,
+            LocalTime endTime,
+            MatchType matchType,
+            int totalPlayers
+    ) {
+        MatchEntity match = new MatchEntity();
+
+        match.setTerrain(court);
+        match.setOrganisateur(organizer);
+        match.setDateMatch(date);
+        match.setHeureDebut(startTime);
+        match.setHeureFin(endTime);
+        match.setPrixTotal(ClubBusinessRules.DEFAULT_MATCH_PRICE_EUROS);
+        match.setCreatedAt(LocalDateTime.now());
+        match.setTypeMatch(matchType);
+        match.setStatut(resolveInitialMatchStatus(matchType, totalPlayers));
+        match.setReservation(reservation);
+
+        return matchRepository.save(match);
+    }
+
+    private MatchStatus resolveInitialMatchStatus(
+            MatchType matchType,
+            int totalPlayers
+    ) {
+        if (matchType == MatchType.PRIVE) {
+            return totalPlayers >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH
+                    ? MatchStatus.COMPLET
+                    : MatchStatus.PLANIFIE;
+        }
+
+        return totalPlayers >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH
+                ? MatchStatus.COMPLET
+                : MatchStatus.OUVERT;
     }
 
     private void validateManualCancellationAllowed(

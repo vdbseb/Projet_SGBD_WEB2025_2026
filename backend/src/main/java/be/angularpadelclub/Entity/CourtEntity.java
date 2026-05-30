@@ -15,7 +15,7 @@ public class CourtEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String nom;
 
     @Column(nullable = false)
@@ -27,7 +27,7 @@ public class CourtEntity {
     @Column(nullable = false)
     private boolean maintenance = false;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "site_id", nullable = false)
     private SiteEntity site;
 }

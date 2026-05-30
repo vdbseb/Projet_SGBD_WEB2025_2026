@@ -16,8 +16,8 @@ public class HoraireSiteMapper {
 
         return new HoraireSiteDTO(
                 entity.getId(),
-                entity.getSite().getId(),
-                entity.getSite().getNom(),
+                entity.getSite() != null ? entity.getSite().getId() : null,
+                entity.getSite() != null ? entity.getSite().getNom() : null,
                 entity.getAnnee(),
                 entity.getHeure_debut(),
                 entity.getHeure_fin(),
@@ -26,7 +26,13 @@ public class HoraireSiteMapper {
         );
     }
 
-    public List<HoraireSiteDTO> toDTOList(List<HoraireSiteEntity> entities) {
+    public List<HoraireSiteDTO> toDTOList(
+            List<HoraireSiteEntity> entities
+    ) {
+        if (entities == null) {
+            return List.of();
+        }
+
         return entities.stream()
                 .map(this::toDTO)
                 .toList();

@@ -6,7 +6,6 @@ import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Entity.SiteEntity;
 import be.angularpadelclub.Repository.JourFermetureRepository;
 import be.angularpadelclub.Repository.ReservationRepository;
-import be.angularpadelclub.Repository.SiteRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,20 +18,20 @@ import java.util.List;
 public class JourFermetureService {
 
     private final JourFermetureRepository jourFermetureRepository;
-    private final SiteRepository siteRepository;
     private final ReservationRepository reservationRepository;
     private final ReservationCancellationService reservationCancellationService;
+    private final ReferenceLookupService referenceLookupService;
 
     public JourFermetureService(
             JourFermetureRepository jourFermetureRepository,
-            SiteRepository siteRepository,
             ReservationRepository reservationRepository,
-            ReservationCancellationService reservationCancellationService
+            ReservationCancellationService reservationCancellationService,
+            ReferenceLookupService referenceLookupService
     ) {
         this.jourFermetureRepository = jourFermetureRepository;
-        this.siteRepository = siteRepository;
         this.reservationRepository = reservationRepository;
         this.reservationCancellationService = reservationCancellationService;
+        this.referenceLookupService = referenceLookupService;
     }
 
     public List<JourFermetureEntity> findAll() {
@@ -40,14 +39,12 @@ public class JourFermetureService {
     }
 
     public JourFermetureEntity findById(Integer id) {
-        return jourFermetureRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Jour de fermeture introuvable avec l'id : " + id
-                ));
+        return referenceLookupService.findJourFermetureOrThrow(id);
     }
 
     public List<JourFermetureEntity> findBySiteId(Integer siteId) {
+        referenceLookupService.findSiteOrThrow(siteId);
+
         return jourFermetureRepository.findBySiteId(siteId);
     }
 
@@ -59,18 +56,25 @@ public class JourFermetureService {
     public JourFermetureEntity create(JourFermetureDTO dto) {
         validate(dto);
 
-        if (dto.global()) {
-            return createGlobalClosure(dto);
-        }
+        JourFermetureEntity fermeture = dto.global()
+                ? buildGlobalClosure(dto)
+                : buildSiteClosure(dto);
 
-        return createSiteClosure(dto);
+        JourFermetureEntity saved = jourFermetureRepository.save(fermeture);
+        cancelReservationsImpactedByClosure(saved);
+
+        return saved;
     }
 
     @Transactional
-    public JourFermetureEntity update(Integer id, JourFermetureDTO dto) {
+    public JourFermetureEntity update(
+            Integer id,
+            JourFermetureDTO dto
+    ) {
         validate(dto);
 
-        JourFermetureEntity fermeture = findById(id);
+        JourFermetureEntity fermeture =
+                referenceLookupService.findJourFermetureOrThrow(id);
 
         if (dto.global()) {
             validateNoDuplicateGlobalClosure(id, dto.dateFermeture());
@@ -78,7 +82,8 @@ public class JourFermetureService {
             fermeture.setSite(null);
             fermeture.setGlobal(true);
         } else {
-            SiteEntity site = findSiteOrThrow(dto.siteId());
+            SiteEntity site = referenceLookupService.findSiteOrThrow(dto.siteId());
+
             validateNoDuplicateSiteClosure(
                     id,
                     dto.siteId(),
@@ -98,21 +103,22 @@ public class JourFermetureService {
         return saved;
     }
 
+    @Transactional
     public void delete(Integer id) {
-        if (!jourFermetureRepository.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Jour de fermeture introuvable avec l'id : " + id
-            );
-        }
+        JourFermetureEntity fermeture =
+                referenceLookupService.findJourFermetureOrThrow(id);
 
-        jourFermetureRepository.deleteById(id);
+        jourFermetureRepository.delete(fermeture);
     }
 
     public boolean existsBySiteAndDate(
             Integer siteId,
             LocalDate date
     ) {
+        if (siteId == null || date == null) {
+            return false;
+        }
+
         return jourFermetureRepository
                 .existsBySiteIdAndDateFermeture(siteId, date);
     }
@@ -120,32 +126,41 @@ public class JourFermetureService {
     public boolean existsGlobalByDate(
             LocalDate date
     ) {
+        if (date == null) {
+            return false;
+        }
+
         return jourFermetureRepository
                 .existsByGlobalTrueAndDateFermeture(date);
     }
 
-    private JourFermetureEntity createGlobalClosure(JourFermetureDTO dto) {
-        if (jourFermetureRepository.existsByGlobalTrueAndDateFermeture(dto.dateFermeture())) {
+    private JourFermetureEntity buildGlobalClosure(
+            JourFermetureDTO dto
+    ) {
+        if (jourFermetureRepository.existsByGlobalTrueAndDateFermeture(
+                dto.dateFermeture()
+        )) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "Une fermeture globale existe déjà pour la date : " + dto.dateFermeture()
+                    "Une fermeture globale existe déjà pour la date : "
+                            + dto.dateFermeture() + "."
             );
         }
 
         JourFermetureEntity fermeture = new JourFermetureEntity();
+
         fermeture.setSite(null);
         fermeture.setDateFermeture(dto.dateFermeture());
         fermeture.setRaison(dto.raison());
         fermeture.setGlobal(true);
 
-        JourFermetureEntity saved = jourFermetureRepository.save(fermeture);
-        cancelReservationsImpactedByClosure(saved);
-
-        return saved;
+        return fermeture;
     }
 
-    private JourFermetureEntity createSiteClosure(JourFermetureDTO dto) {
-        SiteEntity site = findSiteOrThrow(dto.siteId());
+    private JourFermetureEntity buildSiteClosure(
+            JourFermetureDTO dto
+    ) {
+        SiteEntity site = referenceLookupService.findSiteOrThrow(dto.siteId());
 
         if (jourFermetureRepository.existsBySiteIdAndDateFermeture(
                 dto.siteId(),
@@ -157,19 +172,18 @@ public class JourFermetureService {
                             + dto.siteId()
                             + " à la date : "
                             + dto.dateFermeture()
+                            + "."
             );
         }
 
         JourFermetureEntity fermeture = new JourFermetureEntity();
+
         fermeture.setSite(site);
         fermeture.setDateFermeture(dto.dateFermeture());
         fermeture.setRaison(dto.raison());
         fermeture.setGlobal(false);
 
-        JourFermetureEntity saved = jourFermetureRepository.save(fermeture);
-        cancelReservationsImpactedByClosure(saved);
-
-        return saved;
+        return fermeture;
     }
 
     private void validateNoDuplicateGlobalClosure(
@@ -183,7 +197,7 @@ public class JourFermetureService {
                         throw new ResponseStatusException(
                                 HttpStatus.CONFLICT,
                                 "Une autre fermeture globale existe déjà pour la date : "
-                                        + dateFermeture
+                                        + dateFermeture + "."
                         );
                     }
                 });
@@ -207,6 +221,7 @@ public class JourFermetureService {
                                         + siteId
                                         + " à la date : "
                                         + dateFermeture
+                                        + "."
                         );
                     }
                 });
@@ -219,62 +234,64 @@ public class JourFermetureService {
             return;
         }
 
-        List<ReservationEntity> impactedReservations =
-                fermeture.isGlobal()
-                        ? reservationRepository.findByDate(
-                        fermeture.getDateFermeture()
-                )
-                        : reservationRepository.findByDateAndCourt_Site_Id(
-                        fermeture.getDateFermeture(),
-                        fermeture.getSite().getId()
+        List<ReservationEntity> impactedReservations;
+
+        if (fermeture.isGlobal()) {
+            impactedReservations = reservationRepository.findByDate(
+                    fermeture.getDateFermeture()
+            );
+        } else {
+            if (fermeture.getSite() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Fermeture de site invalide : aucun site n'est associé."
                 );
+            }
+
+            impactedReservations = reservationRepository.findByDateAndCourt_Site_Id(
+                    fermeture.getDateFermeture(),
+                    fermeture.getSite().getId()
+            );
+        }
 
         reservationCancellationService.cancelReservationsForClubReason(
                 impactedReservations
         );
     }
 
-    private SiteEntity findSiteOrThrow(Integer siteId) {
-        return siteRepository.findById(siteId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Site introuvable avec l'id : " + siteId
-                ));
-    }
-
     private void validate(JourFermetureDTO dto) {
         if (dto == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Le corps de la requête est obligatoire"
+                    "Le corps de la requête est obligatoire."
             );
         }
 
         if (dto.dateFermeture() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "La date de fermeture est obligatoire"
+                    "La date de fermeture est obligatoire."
             );
         }
 
         if (dto.global() && dto.siteId() != null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Une fermeture globale ne doit pas être liée à un site"
+                    "Une fermeture globale ne doit pas être liée à un site."
             );
         }
 
         if (!dto.global() && dto.siteId() == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Le site est obligatoire pour une fermeture non globale"
+                    "Le site est obligatoire pour une fermeture non globale."
             );
         }
 
         if (dto.raison() == null || dto.raison().isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "La raison de fermeture est obligatoire"
+                    "La raison de fermeture est obligatoire."
             );
         }
     }

@@ -17,21 +17,21 @@ import java.util.List;
 @Service
 public class SiteService {
 
-    private static final int DEFAULT_DUREE_MATCH_MINUTES = 90;
-    private static final int DEFAULT_PAUSE_MINUTES = 15;
-
     private final SiteRepository siteRepository;
     private final HoraireSiteRepository horaireSiteRepository;
     private final SiteMapper siteMapper;
+    private final ReferenceLookupService referenceLookupService;
 
     public SiteService(
             SiteRepository siteRepository,
             HoraireSiteRepository horaireSiteRepository,
-            SiteMapper siteMapper
+            SiteMapper siteMapper,
+            ReferenceLookupService referenceLookupService
     ) {
         this.siteRepository = siteRepository;
         this.horaireSiteRepository = horaireSiteRepository;
         this.siteMapper = siteMapper;
+        this.referenceLookupService = referenceLookupService;
     }
 
     public List<SiteDTO> getAllSites() {
@@ -52,7 +52,7 @@ public class SiteService {
     public SiteDTO getSiteById(int id) {
         int currentYear = LocalDate.now().getYear();
 
-        SiteEntity site = findSiteOrThrow(id);
+        SiteEntity site = referenceLookupService.findSiteOrThrow(id);
 
         HoraireSiteEntity horaire = horaireSiteRepository
                 .findBySite_IdAndAnnee(site.getId(), currentYear)
@@ -68,15 +68,16 @@ public class SiteService {
         SiteEntity entity = siteMapper.toEntity(dto);
         entity.setId(null);
 
+        if (dto.active() == null) {
+            entity.setActif(true);
+        }
+
         SiteEntity savedSite = siteRepository.save(entity);
 
-        HoraireSiteEntity horaire = new HoraireSiteEntity();
-        horaire.setSite(savedSite);
-        horaire.setAnnee(LocalDate.now().getYear());
-        horaire.setHeure_debut(dto.openingTime());
-        horaire.setHeure_fin(dto.closingTime());
-        horaire.setDuree_match_minutes(DEFAULT_DUREE_MATCH_MINUTES);
-        horaire.setPause_minutes(DEFAULT_PAUSE_MINUTES);
+        HoraireSiteEntity horaire = buildDefaultHoraireForSite(
+                savedSite,
+                dto
+        );
 
         HoraireSiteEntity savedHoraire =
                 horaireSiteRepository.save(horaire);
@@ -86,7 +87,14 @@ public class SiteService {
 
     @Transactional
     public SiteDTO updateSite(int id, SiteDTO dto) {
-        SiteEntity site = findSiteOrThrow(id);
+        if (dto == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Les données du site sont obligatoires."
+            );
+        }
+
+        SiteEntity site = referenceLookupService.findSiteOrThrow(id);
 
         if (dto.name() != null) {
             site.setNom(dto.name());
@@ -118,36 +126,17 @@ public class SiteService {
 
         SiteEntity updatedSite = siteRepository.save(site);
 
-        int currentYear = LocalDate.now().getYear();
-
-        HoraireSiteEntity horaire = horaireSiteRepository
-                .findBySite_IdAndAnnee(site.getId(), currentYear)
-                .orElseGet(() -> {
-                    HoraireSiteEntity h = new HoraireSiteEntity();
-                    h.setSite(site);
-                    h.setAnnee(currentYear);
-                    h.setDuree_match_minutes(DEFAULT_DUREE_MATCH_MINUTES);
-                    h.setPause_minutes(DEFAULT_PAUSE_MINUTES);
-                    return h;
-                });
-
-        if (dto.openingTime() != null) {
-            horaire.setHeure_debut(dto.openingTime());
-        }
-
-        if (dto.closingTime() != null) {
-            horaire.setHeure_fin(dto.closingTime());
-        }
-
-        HoraireSiteEntity updatedHoraire =
-                horaireSiteRepository.save(horaire);
+        HoraireSiteEntity updatedHoraire = updateCurrentYearHoraire(
+                updatedSite,
+                dto
+        );
 
         return siteMapper.toDTO(updatedSite, updatedHoraire);
     }
 
     @Transactional
     public void deleteSite(int id) {
-        SiteEntity site = findSiteOrThrow(id);
+        SiteEntity site = referenceLookupService.findSiteOrThrow(id);
 
         if (!site.isActif()) {
             throw new ResponseStatusException(
@@ -160,15 +149,101 @@ public class SiteService {
         siteRepository.save(site);
     }
 
-    private SiteEntity findSiteOrThrow(int id) {
-        return siteRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Site introuvable avec l'id " + id
-                ));
+    private HoraireSiteEntity buildDefaultHoraireForSite(
+            SiteEntity site,
+            SiteDTO dto
+    ) {
+        HoraireSiteEntity horaire = new HoraireSiteEntity();
+
+        horaire.setSite(site);
+        horaire.setAnnee(LocalDate.now().getYear());
+        horaire.setHeure_debut(dto.openingTime());
+        horaire.setHeure_fin(dto.closingTime());
+        horaire.setDuree_match_minutes(
+                ClubBusinessRules.DEFAULT_MATCH_DURATION_MINUTES
+        );
+        horaire.setPause_minutes(
+                ClubBusinessRules.DEFAULT_PAUSE_MINUTES
+        );
+
+        return horaire;
+    }
+
+    private HoraireSiteEntity updateCurrentYearHoraire(
+            SiteEntity site,
+            SiteDTO dto
+    ) {
+        int currentYear = LocalDate.now().getYear();
+
+        HoraireSiteEntity horaire = horaireSiteRepository
+                .findBySite_IdAndAnnee(site.getId(), currentYear)
+                .orElseGet(() -> createHoraireFromUpdateRequest(site, dto, currentYear));
+
+        if (dto.openingTime() != null) {
+            horaire.setHeure_debut(dto.openingTime());
+        }
+
+        if (dto.closingTime() != null) {
+            horaire.setHeure_fin(dto.closingTime());
+        }
+
+        validateHoraireIsComplete(horaire);
+
+        if (!horaire.getHeure_debut().isBefore(horaire.getHeure_fin())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "L'heure d'ouverture doit être avant l'heure de fermeture."
+            );
+        }
+
+        return horaireSiteRepository.save(horaire);
+    }
+
+    private HoraireSiteEntity createHoraireFromUpdateRequest(
+            SiteEntity site,
+            SiteDTO dto,
+            int currentYear
+    ) {
+        if (dto.openingTime() == null || dto.closingTime() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Impossible de créer l'horaire du site : les heures d'ouverture et de fermeture sont obligatoires."
+            );
+        }
+
+        HoraireSiteEntity horaire = new HoraireSiteEntity();
+
+        horaire.setSite(site);
+        horaire.setAnnee(currentYear);
+        horaire.setHeure_debut(dto.openingTime());
+        horaire.setHeure_fin(dto.closingTime());
+        horaire.setDuree_match_minutes(
+                ClubBusinessRules.DEFAULT_MATCH_DURATION_MINUTES
+        );
+        horaire.setPause_minutes(
+                ClubBusinessRules.DEFAULT_PAUSE_MINUTES
+        );
+
+        return horaire;
+    }
+
+    private void validateHoraireIsComplete(HoraireSiteEntity horaire) {
+        if (horaire.getHeure_debut() == null || horaire.getHeure_fin() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "L'horaire du site est incomplet : les heures d'ouverture et de fermeture sont obligatoires."
+            );
+        }
     }
 
     private void validateRequiredCreateFields(SiteDTO dto) {
+        if (dto == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Les données du site sont obligatoires."
+            );
+        }
+
         if (dto.name() == null || dto.name().isBlank()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

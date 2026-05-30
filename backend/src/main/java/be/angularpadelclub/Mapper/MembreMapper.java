@@ -11,6 +11,10 @@ import java.util.List;
 public class MembreMapper {
 
     public MembreDTO toDTO(MembreEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
         return new MembreDTO(
                 entity.getId(),
                 entity.isActif(),
@@ -24,7 +28,14 @@ public class MembreMapper {
         );
     }
 
-    public MembreEntity toEntity(MembreDTO dto, SiteEntity site) {
+    public MembreEntity toEntity(
+            MembreDTO dto,
+            SiteEntity site
+    ) {
+        if (dto == null) {
+            return null;
+        }
+
         MembreEntity entity = new MembreEntity();
 
         entity.setId(dto.id());
@@ -39,7 +50,13 @@ public class MembreMapper {
         return entity;
     }
 
-    public List<MembreDTO> toDTOList(List<MembreEntity> entities) {
+    public List<MembreDTO> toDTOList(
+            List<MembreEntity> entities
+    ) {
+        if (entities == null) {
+            return List.of();
+        }
+
         return entities.stream()
                 .map(this::toDTO)
                 .toList();

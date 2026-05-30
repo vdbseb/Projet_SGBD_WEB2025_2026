@@ -17,10 +17,8 @@ import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.DetteMembreMapper;
 import be.angularpadelclub.Mapper.PaiementMapper;
 import be.angularpadelclub.Repository.DetteMembreRepository;
-import be.angularpadelclub.Repository.MembreRepository;
 import be.angularpadelclub.Repository.PaiementRepository;
 import be.angularpadelclub.Repository.ParticipationRepository;
-import be.angularpadelclub.Repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,36 +31,36 @@ import java.util.Optional;
 @Service
 public class PaiementService {
 
-    private static final int DEFAULT_PLAYER_SHARE_CENTS = 1500;
+    private static final int PAYMENT_EXPIRATION_MINUTES = 15;
+    private static final String DEFAULT_CURRENCY = "EUR";
 
     private final PaiementRepository paiementRepository;
-    private final ReservationRepository reservationRepository;
     private final ParticipationRepository participationRepository;
     private final DetteMembreRepository detteMembreRepository;
-    private final MembreRepository membreRepository;
     private final PaiementMapper paiementMapper;
     private final DetteMembreMapper detteMembreMapper;
+    private final ReferenceLookupService referenceLookupService;
 
     public PaiementService(
             PaiementRepository paiementRepository,
-            ReservationRepository reservationRepository,
             ParticipationRepository participationRepository,
             DetteMembreRepository detteMembreRepository,
-            MembreRepository membreRepository,
             PaiementMapper paiementMapper,
-            DetteMembreMapper detteMembreMapper
+            DetteMembreMapper detteMembreMapper,
+            ReferenceLookupService referenceLookupService
     ) {
         this.paiementRepository = paiementRepository;
-        this.reservationRepository = reservationRepository;
         this.participationRepository = participationRepository;
         this.detteMembreRepository = detteMembreRepository;
-        this.membreRepository = membreRepository;
         this.paiementMapper = paiementMapper;
         this.detteMembreMapper = detteMembreMapper;
+        this.referenceLookupService = referenceLookupService;
     }
 
     public List<PaiementDTO> findAll() {
-        return paiementMapper.toDTOList(paiementRepository.findAll());
+        return paiementMapper.toDTOList(
+                paiementRepository.findAll()
+        );
     }
 
     public Optional<PaiementDTO> findById(Integer id) {
@@ -71,22 +69,21 @@ public class PaiementService {
     }
 
     public PaiementDTO findByIdOrThrow(Integer id) {
-        PaiementEntity paiement = findPaiementOrThrow(id);
-        return paiementMapper.toDTO(paiement);
+        return paiementMapper.toDTO(
+                referenceLookupService.findPaiementOrThrow(id)
+        );
     }
 
     public List<PaiementDTO> findByReservation(Integer reservationId) {
+        referenceLookupService.findReservationOrThrow(reservationId);
+
         return paiementMapper.toDTOList(
                 paiementRepository.findByReservation_Id(reservationId)
         );
     }
 
     public MemberWalletDTO getWallet(Integer memberId) {
-        MembreEntity member = membreRepository.findById(memberId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Membre introuvable avec l'id " + memberId
-                ));
+        MembreEntity member = referenceLookupService.findMembreOrThrow(memberId);
 
         List<DetteMembreEntity> openDebts =
                 detteMembreRepository.findByMembre_IdAndStatut(
@@ -102,17 +99,17 @@ public class PaiementService {
                 .sum();
 
         int pending = payments.stream()
-                .filter(p -> p.getStatut() == PaiementStatut.EN_ATTENTE)
+                .filter(paiement -> paiement.getStatut() == PaiementStatut.EN_ATTENTE)
                 .mapToInt(this::getMontantPaiementCentimes)
                 .sum();
 
         int paid = payments.stream()
-                .filter(p -> p.getStatut() == PaiementStatut.VALIDE)
+                .filter(paiement -> paiement.getStatut() == PaiementStatut.VALIDE)
                 .mapToInt(this::getMontantPaiementCentimes)
                 .sum();
 
         int refunded = payments.stream()
-                .filter(p -> p.getStatut() == PaiementStatut.REMBOURSE)
+                .filter(paiement -> paiement.getStatut() == PaiementStatut.REMBOURSE)
                 .mapToInt(this::getMontantPaiementCentimes)
                 .sum();
 
@@ -122,7 +119,7 @@ public class PaiementService {
                 member.getId(),
                 member.getMatricule(),
                 member.getPrenom() + " " + member.getNom(),
-                "EUR",
+                DEFAULT_CURRENCY,
                 due,
                 pending,
                 paid,
@@ -135,7 +132,8 @@ public class PaiementService {
 
     @Transactional
     public PaiementDTO initierPaiement(Integer reservationId) {
-        ReservationEntity reservation = findReservationOrThrow(reservationId);
+        ReservationEntity reservation =
+                referenceLookupService.findReservationOrThrow(reservationId);
 
         ParticipationEntity participation = findOrganizerParticipation(reservation)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -148,52 +146,36 @@ public class PaiementService {
 
     @Transactional
     public PaiementDTO initierPaiementPourParticipation(Integer participationId) {
-        ParticipationEntity participation = findParticipationOrThrow(participationId);
+        ParticipationEntity participation =
+                referenceLookupService.findParticipationOrThrow(participationId);
 
         validateParticipationPayable(participationId, participation);
 
-        MembreEntity member = participation.getMembre();
-
-        int participationAmount = participation.getMontantDuCentimes() != null
+        int amountCentimes = participation.getMontantDuCentimes() != null
                 ? participation.getMontantDuCentimes()
-                : DEFAULT_PLAYER_SHARE_CENTS;
+                : ClubBusinessRules.DEFAULT_PLAYER_SHARE_CENTS;
 
-        LocalDateTime now = LocalDateTime.now();
-        long uniqueSuffix = System.currentTimeMillis();
-
-        PaiementEntity paiement = new PaiementEntity();
-        paiement.setReservation(participation.getMatch().getReservation());
-        paiement.setParticipation(participation);
-        paiement.setMembre(member);
-        paiement.setMontantCentimes(participationAmount);
-        paiement.setDevise("EUR");
-        paiement.setProvider(PaiementProvider.MOCK);
-        paiement.setProviderPaymentId("mock_pi_part_" + participationId + "_" + uniqueSuffix);
-        paiement.setClientSecret("mock_secret_part_" + participationId + "_" + uniqueSuffix);
-        paiement.setMethode(PaiementMethode.CARTE);
-        paiement.setStatut(PaiementStatut.EN_ATTENTE);
-        paiement.setDateCreation(now);
-        paiement.setDateExpiration(now.plusMinutes(15));
+        PaiementEntity paiement = buildMockPaiement(
+                participation.getMembre(),
+                participation.getMatch().getReservation(),
+                participation,
+                amountCentimes,
+                "part_" + participationId
+        );
 
         PaiementEntity saved = paiementRepository.saveAndFlush(paiement);
 
-        if (saved.getId() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Le paiement de participation a été créé sans identifiant."
-            );
-        }
+        ensurePaiementHasId(
+                saved,
+                "Le paiement de participation a été créé sans identifiant."
+        );
 
         return paiementMapper.toDTO(saved);
     }
 
     @Transactional
     public PaiementDTO initierPaiementDettesMembre(Integer memberId) {
-        MembreEntity member = membreRepository.findById(memberId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Membre introuvable avec l'id " + memberId
-                ));
+        MembreEntity member = referenceLookupService.findMembreOrThrow(memberId);
 
         cancelOldPendingDebtPayments(memberId);
 
@@ -221,46 +203,31 @@ public class PaiementService {
             );
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        long uniqueSuffix = System.currentTimeMillis();
-
-        PaiementEntity paiement = new PaiementEntity();
-        paiement.setReservation(null);
-        paiement.setParticipation(null);
-        paiement.setMembre(member);
-        paiement.setMontantCentimes(totalDebtAmount);
-        paiement.setDevise("EUR");
-        paiement.setProvider(PaiementProvider.MOCK);
-        paiement.setProviderPaymentId("mock_pi_debts_" + memberId + "_" + uniqueSuffix);
-        paiement.setClientSecret("mock_secret_debts_" + memberId + "_" + uniqueSuffix);
-        paiement.setMethode(PaiementMethode.CARTE);
-        paiement.setStatut(PaiementStatut.EN_ATTENTE);
-        paiement.setDateCreation(now);
-        paiement.setDateExpiration(now.plusMinutes(15));
+        PaiementEntity paiement = buildMockPaiement(
+                member,
+                null,
+                null,
+                totalDebtAmount,
+                "debts_" + memberId
+        );
 
         PaiementEntity saved = paiementRepository.saveAndFlush(paiement);
 
-        if (saved.getId() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Le paiement de dettes a été créé sans identifiant."
-            );
-        }
+        ensurePaiementHasId(
+                saved,
+                "Le paiement de dettes a été créé sans identifiant."
+        );
 
-        PaiementEntity reloaded = paiementRepository.findById(saved.getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Le paiement de dettes a été créé avec l'id "
-                                + saved.getId()
-                                + ", mais il est introuvable immédiatement après sauvegarde."
-                ));
+        PaiementEntity reloaded =
+                referenceLookupService.findPaiementOrThrow(saved.getId());
 
         return paiementMapper.toDTO(reloaded);
     }
 
     @Transactional
     public PaiementDTO confirmerPaiement(Integer paiementId) {
-        PaiementEntity paiement = findPaiementOrThrow(paiementId);
+        PaiementEntity paiement =
+                referenceLookupService.findPaiementOrThrow(paiementId);
 
         if (paiement.getStatut() == PaiementStatut.VALIDE) {
             return paiementMapper.toDTO(paiement);
@@ -270,7 +237,7 @@ public class PaiementService {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Seul un paiement en attente peut être confirmé. Statut actuel : "
-                            + paiement.getStatut()
+                            + paiement.getStatut() + "."
             );
         }
 
@@ -287,57 +254,73 @@ public class PaiementService {
         }
 
         if (isPaiementDettes(paiement)) {
+            if (paiement.getMembre() == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Paiement de dettes invalide : aucun membre associé."
+                );
+            }
+
             closeOpenDebts(paiement.getMembre().getId());
         }
 
-        return paiementMapper.toDTO(paiementRepository.saveAndFlush(paiement));
+        return paiementMapper.toDTO(
+                paiementRepository.saveAndFlush(paiement)
+        );
     }
 
     @Transactional
     public PaiementDTO refuserPaiement(Integer paiementId) {
-        PaiementEntity paiement = findPaiementOrThrow(paiementId);
+        PaiementEntity paiement =
+                referenceLookupService.findPaiementOrThrow(paiementId);
 
         if (paiement.getStatut() != PaiementStatut.EN_ATTENTE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Seul un paiement en attente peut être refusé. Statut actuel : "
-                            + paiement.getStatut()
+                            + paiement.getStatut() + "."
             );
         }
 
         paiement.setStatut(PaiementStatut.REFUSE);
         paiement.setDateExpiration(null);
 
-        return paiementMapper.toDTO(paiementRepository.saveAndFlush(paiement));
+        return paiementMapper.toDTO(
+                paiementRepository.saveAndFlush(paiement)
+        );
     }
 
     @Transactional
     public PaiementDTO annulerPaiement(Integer paiementId) {
-        PaiementEntity paiement = findPaiementOrThrow(paiementId);
+        PaiementEntity paiement =
+                referenceLookupService.findPaiementOrThrow(paiementId);
 
         if (paiement.getStatut() != PaiementStatut.EN_ATTENTE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Seul un paiement en attente peut être annulé. Statut actuel : "
-                            + paiement.getStatut()
+                            + paiement.getStatut() + "."
             );
         }
 
         paiement.setStatut(PaiementStatut.ANNULE);
         paiement.setDateExpiration(null);
 
-        return paiementMapper.toDTO(paiementRepository.saveAndFlush(paiement));
+        return paiementMapper.toDTO(
+                paiementRepository.saveAndFlush(paiement)
+        );
     }
 
     @Transactional
     public PaiementDTO rembourserPaiement(Integer paiementId) {
-        PaiementEntity paiement = findPaiementOrThrow(paiementId);
+        PaiementEntity paiement =
+                referenceLookupService.findPaiementOrThrow(paiementId);
 
         if (paiement.getStatut() != PaiementStatut.VALIDE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "Seul un paiement valide peut être remboursé. Statut actuel : "
-                            + paiement.getStatut()
+                            + paiement.getStatut() + "."
             );
         }
 
@@ -350,7 +333,9 @@ public class PaiementService {
 
         rembourserPaiementValide(paiement);
 
-        return paiementMapper.toDTO(paiementRepository.saveAndFlush(paiement));
+        return paiementMapper.toDTO(
+                paiementRepository.saveAndFlush(paiement)
+        );
     }
 
     @Transactional
@@ -436,6 +421,7 @@ public class PaiementService {
         }
 
         if (participation != null
+                && participation.getId() != null
                 && detteMembreRepository.existsByParticipation_IdAndStatut(
                 participation.getId(),
                 DetteStatut.OUVERTE
@@ -444,15 +430,56 @@ public class PaiementService {
         }
 
         DetteMembreEntity debt = new DetteMembreEntity();
+
         debt.setMembre(member);
         debt.setParticipation(participation);
         debt.setReservation(reservation);
         debt.setMontantCentimes(amountCentimes != null ? amountCentimes : 0);
-        debt.setRaison(raison);
+        debt.setRaison(raison != null ? raison : DetteRaison.AJUSTEMENT);
         debt.setStatut(DetteStatut.OUVERTE);
         debt.setDateCreation(LocalDateTime.now());
 
         detteMembreRepository.save(debt);
+    }
+
+    private PaiementEntity buildMockPaiement(
+            MembreEntity membre,
+            ReservationEntity reservation,
+            ParticipationEntity participation,
+            Integer montantCentimes,
+            String providerSuffix
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+        long uniqueSuffix = System.currentTimeMillis();
+
+        PaiementEntity paiement = new PaiementEntity();
+
+        paiement.setReservation(reservation);
+        paiement.setParticipation(participation);
+        paiement.setMembre(membre);
+        paiement.setMontantCentimes(montantCentimes);
+        paiement.setDevise(DEFAULT_CURRENCY);
+        paiement.setProvider(PaiementProvider.MOCK);
+        paiement.setProviderPaymentId("mock_pi_" + providerSuffix + "_" + uniqueSuffix);
+        paiement.setClientSecret("mock_secret_" + providerSuffix + "_" + uniqueSuffix);
+        paiement.setMethode(PaiementMethode.CARTE);
+        paiement.setStatut(PaiementStatut.EN_ATTENTE);
+        paiement.setDateCreation(now);
+        paiement.setDateExpiration(now.plusMinutes(PAYMENT_EXPIRATION_MINUTES));
+
+        return paiement;
+    }
+
+    private void ensurePaiementHasId(
+            PaiementEntity paiement,
+            String errorMessage
+    ) {
+        if (paiement == null || paiement.getId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    errorMessage
+            );
+        }
     }
 
     private void cancelOldPendingDebtPayments(Integer memberId) {
@@ -580,30 +607,6 @@ public class PaiementService {
         return paiement.getMontantCentimes() != null
                 ? paiement.getMontantCentimes()
                 : 0;
-    }
-
-    private ReservationEntity findReservationOrThrow(Integer reservationId) {
-        return reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Réservation introuvable avec l'id " + reservationId
-                ));
-    }
-
-    private ParticipationEntity findParticipationOrThrow(Integer participationId) {
-        return participationRepository.findById(participationId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Participation introuvable avec l'id " + participationId
-                ));
-    }
-
-    private PaiementEntity findPaiementOrThrow(Integer paiementId) {
-        return paiementRepository.findById(paiementId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Paiement introuvable avec l'id " + paiementId
-                ));
     }
 
     private Optional<ParticipationEntity> findOrganizerParticipation(

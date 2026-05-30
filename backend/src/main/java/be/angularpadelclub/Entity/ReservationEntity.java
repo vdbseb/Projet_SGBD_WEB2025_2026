@@ -13,7 +13,15 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "reservation")
+@Table(
+        name = "reservation",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_reservation_court_date_start",
+                        columnNames = {"court_id", "date", "start_time"}
+                )
+        }
+)
 public class ReservationEntity {
 
     @Id
@@ -29,19 +37,26 @@ public class ReservationEntity {
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "court_id", nullable = false)
     private CourtEntity court;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "membre_id", nullable = false)
     private MembreEntity member;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "reservation")
+    @OneToOne(mappedBy = "reservation", fetch = FetchType.LAZY)
     private MatchEntity match;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ReservationStatus statut=ReservationStatus.EN_ATTENTE_PAIEMENT;
+    @Column(nullable = false, length = 30)
+    private ReservationStatus statut = ReservationStatus.EN_ATTENTE_PAIEMENT;
+
+    @PrePersist
+    public void prePersist() {
+        if (statut == null) {
+            statut = ReservationStatus.EN_ATTENTE_PAIEMENT;
+        }
+    }
 }

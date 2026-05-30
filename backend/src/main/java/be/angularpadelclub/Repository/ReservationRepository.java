@@ -40,6 +40,7 @@ public interface ReservationRepository extends JpaRepository<ReservationEntity, 
             LocalDate date,
             Integer siteId
     );
+
     List<ReservationEntity> findByCourtIdAndDateGreaterThanEqual(
             Integer courtId,
             LocalDate date

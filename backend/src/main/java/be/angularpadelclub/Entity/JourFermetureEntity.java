@@ -10,21 +10,29 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "jour_fermeture")
+@Table(
+        name = "jour_fermeture",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_jour_fermeture_site_date",
+                        columnNames = {"site_id", "date_fermeture"}
+                )
+        }
+)
 public class JourFermetureEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id")
     private SiteEntity site;
 
     @Column(name = "date_fermeture", nullable = false)
     private LocalDate dateFermeture;
 
-    @Column
+    @Column(length = 255)
     private String raison;
 
     @Column(nullable = false)
