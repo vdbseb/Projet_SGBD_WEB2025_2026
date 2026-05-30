@@ -249,6 +249,13 @@ getActiveMemberPenalties(memberId: number) {
     );
   }
 
+  updateSiteSchedule(scheduleId: number, schedule: any) {
+    return this.httpClient.put<any>(
+      `${this.apiBaseUrl}/horaires-sites/${scheduleId}`,
+      schedule
+    );
+  }
+
   // =========================
   // PAIEMENTS
   // =========================
