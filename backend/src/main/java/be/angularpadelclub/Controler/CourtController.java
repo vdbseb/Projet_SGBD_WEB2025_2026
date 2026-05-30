@@ -53,6 +53,17 @@ public class CourtController {
         return courtService.updateCourt(id, dto);
     }
 
+    @PatchMapping(
+            value = "/{id}/maintenance",
+            produces = "application/json"
+    )
+    public CourtDTO setMaintenance(
+            @PathVariable("id") int id,
+            @RequestParam("maintenance") boolean maintenance
+    ) {
+        return courtService.setMaintenance(id, maintenance);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCourt(

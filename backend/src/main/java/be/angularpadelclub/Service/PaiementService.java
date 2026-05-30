@@ -87,22 +87,22 @@ public class PaiementService {
                 ));
 
         int due = openDebts.stream()
-                .mapToInt(DetteMembreEntity::getMontantCentimes)
+                .mapToInt(this::getMontantDetteCentimes)
                 .sum();
 
         int pending = payments.stream()
                 .filter(p -> p.getStatut() == PaiementStatut.EN_ATTENTE)
-                .mapToInt(PaiementEntity::getMontantCentimes)
+                .mapToInt(this::getMontantPaiementCentimes)
                 .sum();
 
         int paid = payments.stream()
                 .filter(p -> p.getStatut() == PaiementStatut.VALIDE)
-                .mapToInt(PaiementEntity::getMontantCentimes)
+                .mapToInt(this::getMontantPaiementCentimes)
                 .sum();
 
         int refunded = payments.stream()
                 .filter(p -> p.getStatut() == PaiementStatut.REMBOURSE)
-                .mapToInt(PaiementEntity::getMontantCentimes)
+                .mapToInt(this::getMontantPaiementCentimes)
                 .sum();
 
         int balance = -due;
@@ -163,6 +163,20 @@ public class PaiementService {
             );
         }
 
+        if (participation.getMembre() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Participation sans membre associe."
+            );
+        }
+
+        if (participation.getMatch() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Participation sans match associe."
+            );
+        }
+
         MembreEntity member = participation.getMembre();
         int openDebtAmount = openDebtAmount(member.getId());
         int participationAmount = participation.getMontantDuCentimes() != null
@@ -210,8 +224,13 @@ public class PaiementService {
             paiement.getParticipation().setStatut(ParticipationStatut.PAYEE);
         }
 
-        paiement.getReservation().setStatut(ReservationStatus.VALIDEE);
-        closeOpenDebts(paiement.getMembre().getId());
+        if (paiement.getReservation() != null) {
+            paiement.getReservation().setStatut(ReservationStatus.VALIDEE);
+        }
+
+        if (paiement.getMembre() != null) {
+            closeOpenDebts(paiement.getMembre().getId());
+        }
 
         return paiementMapper.toDTO(paiementRepository.save(paiement));
     }
@@ -263,11 +282,19 @@ public class PaiementService {
 
         paiement.setStatut(PaiementStatut.REMBOURSE);
 
+        if (paiement.getParticipation() != null) {
+            paiement.getParticipation().setStatut(ParticipationStatut.ANNULEE);
+        }
+
         return paiementMapper.toDTO(paiementRepository.save(paiement));
     }
 
     @Transactional
     public void rembourserPaiementsReservation(ReservationEntity reservation) {
+        if (reservation == null || reservation.getId() == null) {
+            return;
+        }
+
         List<PaiementEntity> paiements =
                 paiementRepository.findByReservation_IdAndStatut(
                         reservation.getId(),
@@ -275,16 +302,18 @@ public class PaiementService {
                 );
 
         for (PaiementEntity paiement : paiements) {
-            paiement.setStatut(PaiementStatut.REMBOURSE);
-
-            if (paiement.getParticipation() != null) {
-                paiement.getParticipation().setStatut(ParticipationStatut.ANNULEE);
-            }
+            rembourserPaiementValide(paiement);
         }
+
+        paiementRepository.saveAll(paiements);
     }
 
     @Transactional
     public void rembourserPaiementsMatch(Integer matchId) {
+        if (matchId == null) {
+            return;
+        }
+
         List<PaiementEntity> paiements =
                 paiementRepository.findByParticipation_Match_IdAndStatut(
                         matchId,
@@ -292,16 +321,18 @@ public class PaiementService {
                 );
 
         for (PaiementEntity paiement : paiements) {
-            paiement.setStatut(PaiementStatut.REMBOURSE);
-
-            if (paiement.getParticipation() != null) {
-                paiement.getParticipation().setStatut(ParticipationStatut.ANNULEE);
-            }
+            rembourserPaiementValide(paiement);
         }
+
+        paiementRepository.saveAll(paiements);
     }
 
     @Transactional
     public void rembourserPaiementsParticipation(Integer participationId) {
+        if (participationId == null) {
+            return;
+        }
+
         List<PaiementEntity> paiementsValides =
                 paiementRepository.findByParticipation_IdAndStatut(
                         participationId,
@@ -309,8 +340,10 @@ public class PaiementService {
                 );
 
         for (PaiementEntity paiement : paiementsValides) {
-            paiement.setStatut(PaiementStatut.REMBOURSE);
+            rembourserPaiementValide(paiement);
         }
+
+        paiementRepository.saveAll(paiementsValides);
 
         List<PaiementEntity> paiementsEnAttente =
                 paiementRepository.findByParticipation_IdAndStatut(
@@ -322,6 +355,8 @@ public class PaiementService {
             paiement.setStatut(PaiementStatut.ANNULE);
             paiement.setDateExpiration(null);
         }
+
+        paiementRepository.saveAll(paiementsEnAttente);
     }
 
     @Transactional
@@ -332,6 +367,10 @@ public class PaiementService {
             Integer amountCentimes,
             DetteRaison raison
     ) {
+        if (member == null) {
+            return;
+        }
+
         if (participation != null
                 && detteMembreRepository.existsByParticipation_IdAndStatut(
                 participation.getId(),
@@ -344,12 +383,24 @@ public class PaiementService {
         debt.setMembre(member);
         debt.setParticipation(participation);
         debt.setReservation(reservation);
-        debt.setMontantCentimes(amountCentimes);
+        debt.setMontantCentimes(amountCentimes != null ? amountCentimes : 0);
         debt.setRaison(raison);
         debt.setStatut(DetteStatut.OUVERTE);
         debt.setDateCreation(LocalDateTime.now());
 
         detteMembreRepository.save(debt);
+    }
+
+    private void rembourserPaiementValide(PaiementEntity paiement) {
+        if (paiement == null || paiement.getStatut() != PaiementStatut.VALIDE) {
+            return;
+        }
+
+        paiement.setStatut(PaiementStatut.REMBOURSE);
+
+        if (paiement.getParticipation() != null) {
+            paiement.getParticipation().setStatut(ParticipationStatut.ANNULEE);
+        }
     }
 
     private int openDebtAmount(Integer memberId) {
@@ -358,7 +409,7 @@ public class PaiementService {
                         DetteStatut.OUVERTE
                 )
                 .stream()
-                .mapToInt(DetteMembreEntity::getMontantCentimes)
+                .mapToInt(this::getMontantDetteCentimes)
                 .sum();
     }
 
@@ -375,6 +426,20 @@ public class PaiementService {
             debt.setStatut(DetteStatut.PAYEE);
             debt.setDateResolution(now);
         }
+
+        detteMembreRepository.saveAll(openDebts);
+    }
+
+    private int getMontantDetteCentimes(DetteMembreEntity dette) {
+        return dette.getMontantCentimes() != null
+                ? dette.getMontantCentimes()
+                : 0;
+    }
+
+    private int getMontantPaiementCentimes(PaiementEntity paiement) {
+        return paiement.getMontantCentimes() != null
+                ? paiement.getMontantCentimes()
+                : 0;
     }
 
     private ReservationEntity findReservationOrThrow(Integer reservationId) {

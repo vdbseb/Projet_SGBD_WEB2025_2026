@@ -9,6 +9,7 @@ import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
 
 type ReportMode = 'YEAR' | 'MONTH';
+
 type ChartItem = {
   label: string;
   value: number;
@@ -61,8 +62,8 @@ export class AdminStatistiques implements OnInit {
       let visiblePayments = payments;
 
       if (this.authService.isSiteAdmin()) {
-        visibleSites = sites.filter(site => site.id === admin.siteId);
-        visibleCourts = courts.filter(court => court.siteId === admin.siteId);
+        visibleSites = sites.filter(site => site.id === admin?.siteId);
+        visibleCourts = courts.filter(court => court.siteId === admin?.siteId);
 
         visibleReservations = reservations.filter(reservation => {
           const court = visibleCourts.find(c => c.id === reservation.courtId);
@@ -75,7 +76,7 @@ export class AdminStatistiques implements OnInit {
           visibleReservationIds.includes(payment.reservationId)
         );
 
-        this.selectedSiteId.set(admin.siteId);
+        this.selectedSiteId.set(admin?.siteId);
       }
 
       this.sites.set(visibleSites);
@@ -102,7 +103,7 @@ export class AdminStatistiques implements OnInit {
     this.selectedYear.set(new Date().getFullYear());
     this.selectedMonth.set('ALL');
     this.selectedSiteId.set(this.authService.isSiteAdmin()
-      ? this.authService.currentAdmin().siteId
+      ? this.authService.currentAdmin()?.siteId
       : 'ALL'
     );
     this.reportMode.set('YEAR');
@@ -121,6 +122,7 @@ export class AdminStatistiques implements OnInit {
     this.payments().forEach(payment => {
       const date = this.getPaymentDateObject(payment);
       const year = date.getFullYear();
+
       if (!Number.isNaN(year)) {
         years.add(year);
       }
@@ -210,6 +212,7 @@ export class AdminStatistiques implements OnInit {
   filteredPayments() {
     const selectedYear = this.selectedYear();
     const selectedMonth = this.selectedMonth();
+    const selectedSiteId = this.selectedSiteId();
 
     const selectedReservationIds = this.filteredReservations().map(r => r.id);
 
@@ -222,7 +225,7 @@ export class AdminStatistiques implements OnInit {
         date.getMonth() + 1 === selectedMonth;
 
       const matchesSite =
-        this.selectedSiteId() === 'ALL' ||
+        selectedSiteId === 'ALL' ||
         selectedReservationIds.includes(payment.reservationId);
 
       return matchesYear && matchesMonth && matchesSite;
@@ -293,7 +296,7 @@ export class AdminStatistiques implements OnInit {
 
   activeCourts() {
     return this.visibleCourtsForSelectedSite()
-      .filter(court => court.active !== false)
+      .filter(court => court.active !== false && court.maintenance !== true)
       .length;
   }
 
@@ -303,7 +306,51 @@ export class AdminStatistiques implements OnInit {
       .length;
   }
 
+  maintenanceCourts() {
+    return this.visibleCourtsForSelectedSite()
+      .filter(court => court.maintenance === true)
+      .length;
+  }
+
+  courtStatusItems(): ChartItem[] {
+    return [
+      {
+        label: 'Disponibles',
+        value: this.activeCourts()
+      },
+      {
+        label: 'Maintenance',
+        value: this.maintenanceCourts()
+      },
+      {
+        label: 'Inactifs',
+        value: this.inactiveCourts()
+      }
+    ];
+  }
+
+  /**
+   * CA encaissé brut :
+   * - VALIDE = paiement encore encaissé
+   * - REMBOURSE = paiement qui a bien été encaissé puis remboursé
+   *
+   * Important : un paiement REMBOURSE ne doit pas disparaître du brut.
+   * Sinon, netRevenue ferait VALIDE - REMBOURSE et compterait le remboursement deux fois.
+   */
+  grossRevenue() {
+    return this.filteredPayments()
+      .filter(payment =>
+        payment.statut === 'VALIDE' ||
+        payment.statut === 'REMBOURSE'
+      )
+      .reduce((sum, payment) => sum + this.getPaymentAmount(payment), 0);
+  }
+
   totalPaid() {
+    return this.grossRevenue();
+  }
+
+  totalValidatedStillPaid() {
     return this.filteredPayments()
       .filter(payment => payment.statut === 'VALIDE')
       .reduce((sum, payment) => sum + this.getPaymentAmount(payment), 0);
@@ -316,7 +363,7 @@ export class AdminStatistiques implements OnInit {
   }
 
   netRevenue() {
-    return this.totalPaid() - this.totalRefunded();
+    return this.grossRevenue() - this.totalRefunded();
   }
 
   pendingPayments() {
@@ -344,7 +391,6 @@ export class AdminStatistiques implements OnInit {
 
     const days = this.daysInSelectedPeriod();
     const slotsPerDay = 8;
-
     const theoreticalCapacity = activeCourtCount * days * slotsPerDay;
 
     if (theoreticalCapacity === 0) {
@@ -374,13 +420,22 @@ export class AdminStatistiques implements OnInit {
 
   monthlyRevenue(): ChartItem[] {
     return this.months().map(month => {
-      const value = this.filteredPaymentsForMonth(month.value)
-        .filter(payment => payment.statut === 'VALIDE')
+      const payments = this.filteredPaymentsForMonth(month.value);
+
+      const gross = payments
+        .filter(payment =>
+          payment.statut === 'VALIDE' ||
+          payment.statut === 'REMBOURSE'
+        )
+        .reduce((sum, payment) => sum + this.getPaymentAmount(payment), 0);
+
+      const refunded = payments
+        .filter(payment => payment.statut === 'REMBOURSE')
         .reduce((sum, payment) => sum + this.getPaymentAmount(payment), 0);
 
       return {
         label: month.label.substring(0, 3),
-        value
+        value: gross - refunded
       };
     });
   }
@@ -433,7 +488,7 @@ export class AdminStatistiques implements OnInit {
         site.id === this.selectedSiteId()
       )
       .map(site => {
-        const courtIds = site.courts?.map((court: any) => court.id) || [];
+        const courtIds = this.getCourtIdsForSite(site.id);
 
         const count = this.filteredReservations().filter(reservation =>
           courtIds.includes(reservation.courtId)
@@ -541,9 +596,21 @@ export class AdminStatistiques implements OnInit {
       .slice(0, 5);
   }
 
+  maintenanceCourtItems() {
+    return this.visibleCourtsForSelectedSite()
+      .filter(court => court.maintenance === true)
+      .slice(0, 5);
+  }
+
+  getCourtIdsForSite(siteId: number): number[] {
+    return this.courts()
+      .filter(court => court.siteId === siteId)
+      .map(court => court.id);
+  }
+
   getSiteNameByCourt(court: any): string {
     const site = this.sites().find(site => site.id === court.siteId);
-    return site?.clubName || site?.name || 'Site inconnu';
+    return site?.clubName || site?.name || site?.city || 'Site inconnu';
   }
 
   getCourtName(reservation: any): string {
@@ -559,17 +626,23 @@ export class AdminStatistiques implements OnInit {
     const court = this.courts().find(court => court.id === reservation.courtId);
     const site = this.sites().find(site => site.id === court?.siteId);
 
-    return site?.clubName || site?.name || 'Site inconnu';
+    return site?.clubName || site?.name || site?.city || 'Site inconnu';
   }
 
   getMemberNameFromPayment(payment: any): string {
-    const member = this.members().find(member => member.id === payment.membreId);
+    const member = this.members().find(member =>
+      member.id === payment.membreId ||
+      member.id === payment.memberId
+    );
 
     if (!member) {
       return 'Membre inconnu';
     }
 
-    return `${member.firstName} ${member.lastName}`;
+    const firstName = member.firstName || member.prenom || '';
+    const lastName = member.lastName || member.nom || '';
+
+    return `${firstName} ${lastName}`.trim() || member.matricule || 'Membre inconnu';
   }
 
   getPaymentStatusLabel(status: string): string {

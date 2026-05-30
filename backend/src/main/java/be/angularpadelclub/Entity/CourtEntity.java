@@ -3,14 +3,12 @@ package be.angularpadelclub.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "terrain")
-
 public class CourtEntity {
 
     @Id
@@ -26,8 +24,10 @@ public class CourtEntity {
     @Column(nullable = false)
     private boolean actif = true;
 
+    @Column(nullable = false)
+    private boolean maintenance = false;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "site_id", nullable = false)
     private SiteEntity site;
-
 }

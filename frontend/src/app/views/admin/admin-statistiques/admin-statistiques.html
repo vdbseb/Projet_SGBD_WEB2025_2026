@@ -14,7 +14,7 @@
     </h1>
 
     <p class="text-slate-500 mt-2">
-      Reporting global de l’activité du club.
+      Reporting global de l’activité du club, des paiements et de la disponibilité des terrains.
     </p>
   </header>
 
@@ -117,6 +117,12 @@
       <span class="px-4 py-2 rounded-2xl bg-blue-50 text-blue-700 font-bold">
         {{ totalReservations() }} réservation(s)
       </span>
+
+      @if (maintenanceCourts() > 0) {
+      <span class="px-4 py-2 rounded-2xl bg-red-50 text-red-700 font-bold">
+          {{ maintenanceCourts() }} terrain(s) en maintenance
+        </span>
+      }
     </div>
 
   </section>
@@ -133,7 +139,11 @@
       </p>
 
       <p class="text-xs text-slate-400 mt-2">
-        Encaissé {{ totalPaid() }}€ · Remboursé {{ totalRefunded() }}€
+        Encaissé {{ grossRevenue() }}€ · Remboursé {{ totalRefunded() }}€
+      </p>
+
+      <p class="text-[11px] text-slate-300 mt-1">
+        Paiements encore validés : {{ totalValidatedStillPaid() }}€
       </p>
     </div>
 
@@ -161,7 +171,7 @@
       </p>
 
       <p class="text-xs text-slate-400 mt-2">
-        Calculé sur {{ activeCourts() }} terrain(s) actif(s)
+        Calculé sur {{ activeCourts() }} terrain(s) disponible(s)
       </p>
     </div>
 
@@ -213,15 +223,15 @@
 
     <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
       <p class="text-xs uppercase font-black tracking-widest text-slate-400">
-        Terrains actifs
+        Terrains disponibles
       </p>
 
-      <p class="text-3xl font-black text-slate-900 mt-3">
+      <p class="text-3xl font-black text-emerald-700 mt-3">
         {{ activeCourts() }}
       </p>
 
       <p class="text-xs text-slate-400 mt-2">
-        {{ inactiveCourts() }} terrain(s) inactif(s)
+        {{ maintenanceCourts() }} en maintenance · {{ inactiveCourts() }} inactif(s)
       </p>
     </div>
 
@@ -248,10 +258,10 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-xl font-black text-slate-900 uppercase">
-            CA par mois
+            CA net par mois
           </h2>
           <p class="text-sm text-slate-400">
-            Revenus validés sur l’année sélectionnée.
+            Revenus nets après remboursements sur l’année sélectionnée.
           </p>
         </div>
 
@@ -329,18 +339,18 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-xl font-black text-slate-900 uppercase">
-            Réservations par site
+            État des terrains
           </h2>
           <p class="text-sm text-slate-400">
-            Volume sur la période sélectionnée.
+            Répartition selon la disponibilité opérationnelle.
           </p>
         </div>
 
-        <mat-icon class="text-slate-300">bar_chart</mat-icon>
+        <mat-icon class="text-slate-300">sports_tennis</mat-icon>
       </div>
 
       <div class="space-y-4">
-        @for (item of reservationsBySite(); track item.label) {
+        @for (item of courtStatusItems(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
               <span class="font-bold text-slate-700">
@@ -354,8 +364,13 @@
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
             <div
-              class="h-full rounded-full bg-blue-600"
-              [style.width.%]="barWidth(item.value, reservationsBySite())">
+              class="h-full rounded-full"
+              [class]="item.label === 'Disponibles'
+                  ? 'bg-emerald-600'
+                  : item.label === 'Maintenance'
+                    ? 'bg-red-600'
+                    : 'bg-slate-500'"
+              [style.width.%]="barWidth(item.value, courtStatusItems())">
             </div>
           </div>
         </div>
@@ -409,6 +424,44 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="text-xl font-black text-slate-900 uppercase">
+            Réservations par site
+          </h2>
+          <p class="text-sm text-slate-400">
+            Volume sur la période sélectionnée.
+          </p>
+        </div>
+
+        <mat-icon class="text-slate-300">bar_chart</mat-icon>
+      </div>
+
+      <div class="space-y-4">
+        @for (item of reservationsBySite(); track item.label) {
+        <div>
+          <div class="flex justify-between text-sm mb-2">
+              <span class="font-bold text-slate-700">
+                {{ item.label }}
+              </span>
+
+            <span class="font-black text-slate-900">
+                {{ item.value }}
+              </span>
+          </div>
+
+          <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-blue-600"
+              [style.width.%]="barWidth(item.value, reservationsBySite())">
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 uppercase">
             Membres par type
           </h2>
           <p class="text-sm text-slate-400">
@@ -442,6 +495,10 @@
         }
       </div>
     </div>
+
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
 
     <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
       <div class="flex items-center justify-between mb-6">
@@ -486,9 +543,73 @@
       </div>
     </div>
 
+    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
+      <h2 class="text-xl font-black text-slate-900 uppercase mb-6">
+        Points à surveiller
+      </h2>
+
+      <div class="space-y-5">
+
+        <div>
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
+            Terrains en maintenance
+          </p>
+
+          @for (court of maintenanceCourtItems(); track court.id) {
+          <p class="text-sm font-bold text-red-600 mb-1">
+            {{ court.name }} · {{ getSiteNameByCourt(court) }}
+          </p>
+          }
+
+          @if (maintenanceCourtItems().length === 0) {
+          <p class="text-sm text-slate-400">
+            Aucun terrain en maintenance.
+          </p>
+          }
+        </div>
+
+        <div>
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
+            Sites inactifs
+          </p>
+
+          @for (site of inactiveSiteItems(); track site.id) {
+          <p class="text-sm font-bold text-red-600 mb-1">
+            {{ site.clubName || site.name || site.city }}
+          </p>
+          }
+
+          @if (inactiveSiteItems().length === 0) {
+          <p class="text-sm text-slate-400">
+            Aucun site inactif.
+          </p>
+          }
+        </div>
+
+        <div>
+          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
+            Terrains inactifs
+          </p>
+
+          @for (court of inactiveCourtItems(); track court.id) {
+          <p class="text-sm font-bold text-orange-600 mb-1">
+            {{ court.name }} · {{ getSiteNameByCourt(court) }}
+          </p>
+          }
+
+          @if (inactiveCourtItems().length === 0) {
+          <p class="text-sm text-slate-400">
+            Aucun terrain inactif.
+          </p>
+          }
+        </div>
+
+      </div>
+    </div>
+
   </section>
 
-  <section class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-8">
 
     <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
       <h2 class="text-xl font-black text-slate-900 uppercase mb-6">
@@ -563,52 +684,6 @@
           Aucun paiement en attente.
         </p>
         }
-      </div>
-    </div>
-
-    <div class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm">
-      <h2 class="text-xl font-black text-slate-900 uppercase mb-6">
-        Points à surveiller
-      </h2>
-
-      <div class="space-y-5">
-
-        <div>
-          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
-            Sites inactifs
-          </p>
-
-          @for (site of inactiveSiteItems(); track site.id) {
-          <p class="text-sm font-bold text-red-600 mb-1">
-            {{ site.clubName || site.name || site.city }}
-          </p>
-          }
-
-          @if (inactiveSiteItems().length === 0) {
-          <p class="text-sm text-slate-400">
-            Aucun site inactif.
-          </p>
-          }
-        </div>
-
-        <div>
-          <p class="text-xs uppercase font-black tracking-widest text-slate-400 mb-2">
-            Terrains inactifs
-          </p>
-
-          @for (court of inactiveCourtItems(); track court.id) {
-          <p class="text-sm font-bold text-orange-600 mb-1">
-            {{ court.name }} · {{ getSiteNameByCourt(court) }}
-          </p>
-          }
-
-          @if (inactiveCourtItems().length === 0) {
-          <p class="text-sm text-slate-400">
-            Aucun terrain inactif.
-          </p>
-          }
-        </div>
-
       </div>
     </div>
 

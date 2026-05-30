@@ -3,6 +3,7 @@ export interface PadelCourt {
   name: string;
   type: 'Indoor' | 'Outdoor';
   active: boolean;
+  maintenance: boolean;
   siteId?: number;
 }
 

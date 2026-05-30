@@ -1,13 +1,22 @@
 package be.angularpadelclub.Service;
 
 import be.angularpadelclub.DTO.ReservationDTO;
-import be.angularpadelclub.Entity.*;
+import be.angularpadelclub.Entity.CourtEntity;
+import be.angularpadelclub.Entity.HoraireSiteEntity;
+import be.angularpadelclub.Entity.MatchEntity;
+import be.angularpadelclub.Entity.MembreEntity;
+import be.angularpadelclub.Entity.ParticipationEntity;
+import be.angularpadelclub.Entity.ReservationEntity;
 import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
 import be.angularpadelclub.Enum.ParticipationStatut;
 import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.ReservationMapper;
-import be.angularpadelclub.Repository.*;
+import be.angularpadelclub.Repository.CourtRepository;
+import be.angularpadelclub.Repository.MatchRepository;
+import be.angularpadelclub.Repository.MembreRepository;
+import be.angularpadelclub.Repository.ParticipationRepository;
+import be.angularpadelclub.Repository.ReservationRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +32,7 @@ import java.util.Optional;
 public class ReservationService {
 
     private static final int PLAYER_SHARE_CENTS = 1500;
+    private static final int MATCH_PRICE_EUROS = 60;
 
     private final ReservationRepository reservationRepository;
     private final CourtRepository courtRepository;
@@ -31,7 +41,7 @@ public class ReservationService {
     private final MatchRepository matchRepository;
     private final ParticipationRepository participationRepository;
     private final ReservationValidationService reservationValidationService;
-    private final PaiementService paiementService;
+    private final ReservationCancellationService reservationCancellationService;
 
     public ReservationService(
             ReservationRepository reservationRepository,
@@ -41,7 +51,7 @@ public class ReservationService {
             MatchRepository matchRepository,
             ParticipationRepository participationRepository,
             ReservationValidationService reservationValidationService,
-            PaiementService paiementService
+            ReservationCancellationService reservationCancellationService
     ) {
         this.reservationRepository = reservationRepository;
         this.courtRepository = courtRepository;
@@ -50,7 +60,7 @@ public class ReservationService {
         this.matchRepository = matchRepository;
         this.participationRepository = participationRepository;
         this.reservationValidationService = reservationValidationService;
-        this.paiementService = paiementService;
+        this.reservationCancellationService = reservationCancellationService;
     }
 
     public List<ReservationDTO> findAll() {
@@ -137,7 +147,7 @@ public class ReservationService {
         match.setDateMatch(dto.date());
         match.setHeureDebut(startTime);
         match.setHeureFin(endTime);
-        match.setPrixTotal(60);
+        match.setPrixTotal(MATCH_PRICE_EUROS);
         match.setCreatedAt(LocalDateTime.now());
         match.setTypeMatch(matchType);
         match.setStatut(
@@ -163,6 +173,20 @@ public class ReservationService {
         }
     }
 
+    @Transactional
+    public void cancelReservation(int id) {
+
+        ReservationEntity reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Réservation introuvable avec l'id " + id
+                ));
+
+        validateManualCancellationAllowed(reservation);
+
+        reservationCancellationService.cancelReservationByMember(reservation);
+    }
+
     private void createParticipation(
             MatchEntity match,
             MembreEntity membre
@@ -184,15 +208,9 @@ public class ReservationService {
         participationRepository.save(participation);
     }
 
-    @Transactional
-    public void cancelReservation(int id) {
-
-        ReservationEntity reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Réservation introuvable avec l'id " + id
-                ));
-
+    private void validateManualCancellationAllowed(
+            ReservationEntity reservation
+    ) {
         if (reservation.getStatut() == ReservationStatus.ANNULEE) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -206,14 +224,5 @@ public class ReservationService {
                     "Impossible d'annuler une réservation terminée."
             );
         }
-
-        reservation.setStatut(ReservationStatus.ANNULEE);
-
-        if (reservation.getMatch() != null) {
-            reservation.getMatch().setStatut(MatchStatus.ANNULE);
-        }
-
-        paiementService.rembourserPaiementsReservation(reservation);
-        reservationRepository.save(reservation);
     }
 }

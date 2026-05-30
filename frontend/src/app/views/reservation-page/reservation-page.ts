@@ -59,30 +59,58 @@ export class ReservationPage implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
 
-    if (Number.isFinite(id)) {
-      this.padelService.getSiteById(id).subscribe(site => {
+    if (!Number.isFinite(id)) {
+      this.snackBar.open('Site introuvable.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    this.padelService.getSiteById(id).subscribe({
+      next: site => {
         this.site.set(site);
 
         const year = new Date().getFullYear();
 
-        this.padelService.getSiteSchedule(site.id, year).subscribe(schedule => {
-          this.matchDurationMinutes.set(schedule.duree_match_minutes ?? 90);
-          this.pauseMinutes.set(schedule.pause_minutes ?? 15);
+        this.padelService.getSiteSchedule(site.id, year).subscribe({
+          next: schedule => {
+            this.matchDurationMinutes.set(schedule.duree_match_minutes ?? 90);
+            this.pauseMinutes.set(schedule.pause_minutes ?? 15);
+          },
+          error: () => {
+            this.matchDurationMinutes.set(90);
+            this.pauseMinutes.set(15);
+          }
         });
 
         this.loadClosingDays(site.id);
-      });
-    }
+      },
+      error: () => {
+        this.snackBar.open('Impossible de charger le site.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
   }
 
   private loadClosingDays(siteId: number) {
-    this.padelService.getSiteClosingDays(siteId).subscribe(siteDays => {
-      this.padelService.getGlobalClosingDays().subscribe(globalDays => {
-        this.closedDays.set([
-          ...siteDays,
-          ...globalDays
-        ]);
-      });
+    this.padelService.getSiteClosingDays(siteId).subscribe({
+      next: siteDays => {
+        this.padelService.getGlobalClosingDays().subscribe({
+          next: globalDays => {
+            this.closedDays.set([
+              ...siteDays,
+              ...globalDays
+            ]);
+          },
+          error: () => {
+            this.closedDays.set(siteDays);
+          }
+        });
+      },
+      error: () => {
+        this.closedDays.set([]);
+      }
     });
   }
 
@@ -119,10 +147,16 @@ export class ReservationPage implements OnInit {
 
   selectCourt(court: PadelCourt) {
     if (!court.active) {
+      this.snackBar.open('Ce terrain est actuellement indisponible.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    if (court.maintenance) {
       this.snackBar.open('Ce terrain est actuellement en maintenance.', 'OK', {
         duration: 4000
       });
-
       return;
     }
 
@@ -150,13 +184,18 @@ export class ReservationPage implements OnInit {
 
     const formattedDate = this.formatLocalDate(date);
 
-    this.padelService.getReservations(court.id, formattedDate).subscribe(reservations => {
-      this.reservedTimes.set(
-        reservations
-          .filter(reservation => reservation.reservationStatus !== 'ANNULEE')
-          .filter(reservation => reservation.matchStatus !== 'ANNULE')
-          .map(reservation => reservation.startTime)
-      );
+    this.padelService.getReservations(court.id, formattedDate).subscribe({
+      next: reservations => {
+        this.reservedTimes.set(
+          reservations
+            .filter((reservation: any) => reservation.reservationStatus !== 'ANNULEE')
+            .filter((reservation: any) => reservation.matchStatus !== 'ANNULE')
+            .map((reservation: any) => reservation.startTime)
+        );
+      },
+      error: () => {
+        this.reservedTimes.set([]);
+      }
     });
   }
 
@@ -180,6 +219,13 @@ export class ReservationPage implements OnInit {
 
     if (!court || !date || !time || !currentMember || !this.isMatchSelectionValid()) {
       this.snackBar.open('Veuillez compléter toutes les informations de réservation.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
+
+    if (!court.active || court.maintenance) {
+      this.snackBar.open('Ce terrain n’est pas disponible à la réservation.', 'OK', {
         duration: 4000
       });
       return;
@@ -222,7 +268,7 @@ export class ReservationPage implements OnInit {
         this.selectedTime.set(null);
         this.loadReservedTimes();
       },
-      error: error => {
+      error: (error: any) => {
         const message =
           error?.error?.detail ??
           error?.error?.message ??

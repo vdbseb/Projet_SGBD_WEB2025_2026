@@ -14,7 +14,8 @@ public class CourtMapper {
                 entity.getNom(),
                 entity.getSite().getId(),
                 entity.isCouvert(),
-                entity.isActif()
+                entity.isActif(),
+                entity.isMaintenance()
         );
     }
 
@@ -25,6 +26,7 @@ public class CourtMapper {
         entity.setSite(site);
         entity.setCouvert(dto.indoor());
         entity.setActif(dto.active());
+        entity.setMaintenance(dto.maintenance());
         return entity;
     }
 }
