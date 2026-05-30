@@ -19,6 +19,7 @@ export class DateSelectorComponent implements OnInit {
   courtName = input<string>('');
   initialDate = input<Date | null>(null);
   maxReservationDate = input<Date | null>(null);
+  tomorrowDayNumber = new Date(new Date().setDate(new Date().getDate() + 1)).getDate();
 
   dateChange = output<Date>();
 

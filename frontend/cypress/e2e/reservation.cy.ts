@@ -4,10 +4,8 @@ describe('Reservation happy flow', () => {
 
     cy.visit('http://localhost:4200');
 
-
     cy.contains(/réserve à arlon/i)
       .click();
-
 
     cy.get('[data-cy="login-input"]')
       .type('L0003');
@@ -15,28 +13,29 @@ describe('Reservation happy flow', () => {
     cy.get('[data-cy="login-button"]')
       .click();
 
-
     cy.contains(/arlon blue padel/i)
       .should('be.visible');
-
 
     cy.get('[data-cy="select-court-button"]')
       .first()
       .click();
 
-
-    cy.get('[data-cy="time-slot"]')
-      .contains('10:15')
+    cy.get('[data-cy="next-day-button"]')
+      .should('be.visible')
       .click();
 
+    cy.get('[data-cy="time-slot"]')
+      .not(':disabled')
+      .first()
+      .click();
 
     cy.get('[data-cy="public-open-match"]')
       .click();
 
-
     cy.get('[data-cy="confirm-booking-button"]')
+      .should('be.visible')
+      .should('not.be.disabled')
       .click();
-
 
     cy.contains(/réservation confirmée/i)
       .should('be.visible');
