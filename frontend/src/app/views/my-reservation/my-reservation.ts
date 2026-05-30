@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
@@ -33,6 +34,7 @@ export class MyReservations implements OnInit {
   courts = signal<any[]>([]);
   wallet = signal<any | null>(null);
   payingReservationId = signal<number | null>(null);
+  payingAllReservations = signal(false);
 
   ngOnInit() {
     const member = this.authService.currentMember();
@@ -227,6 +229,111 @@ export class MyReservations implements OnInit {
     return reservation.playerMatricule || 'Participants non disponibles';
   }
 
+  getReservationsToPay(): any[] {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return [];
+    }
+
+    return this.reservations().filter(reservation =>
+      !this.isCancelledReservation(reservation)
+      && this.getReservationStatus(reservation) !== 'past'
+      && !this.isPaid(reservation)
+      && !!this.findCurrentMemberParticipationId(reservation, member)
+    );
+  }
+
+  getTotalReservationsToPayCentimes(): number {
+    return this.getReservationsToPay()
+      .reduce((total, reservation) => total + this.getParticipationAmountCentimes(reservation), 0);
+  }
+
+  getTotalReservationsToPayEuros(): number {
+    return this.toEuros(this.getTotalReservationsToPayCentimes());
+  }
+
+  async payAllReservationParts() {
+    const member = this.authService.currentMember();
+
+    if (!member || this.payingAllReservations()) {
+      return;
+    }
+
+    const reservationsToPay = this.getReservationsToPay();
+
+    if (reservationsToPay.length === 0) {
+      this.snackBar.open('Aucune participation à régler.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const total = this.getTotalReservationsToPayEuros();
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Tout régler',
+        message: `Vous allez régler ${reservationsToPay.length} participation(s), pour un total de ${total} €. Confirmez-vous le paiement ?`,
+        confirmLabel: `Payer ${total} €`,
+        cancelLabel: 'Retour'
+      }
+    });
+
+    const confirmed = await firstValueFrom(dialogRef.afterClosed());
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.payingAllReservations.set(true);
+
+    try {
+      for (const reservation of reservationsToPay) {
+        const participationId = this.findCurrentMemberParticipationId(reservation, member);
+
+        if (!participationId) {
+          continue;
+        }
+
+        const payment: any = await firstValueFrom(
+          this.padelService.initierPaiementPourParticipation(participationId)
+        );
+
+        const paymentId = payment?.id ?? payment?.paiementId;
+
+        if (!paymentId) {
+          throw new Error('Identifiant de paiement introuvable.');
+        }
+
+        await firstValueFrom(
+          this.padelService.confirmPayment(paymentId)
+        );
+      }
+
+      this.snackBar.open('Toutes les participations ont été réglées.', 'OK', {
+        duration: 3500
+      });
+
+      this.refreshMemberData(member);
+    } catch (error: any) {
+      const message =
+        error?.error?.error
+        ?? error?.error?.message
+        ?? error?.error?.detail
+        ?? error?.message
+        ?? 'Impossible de régler toutes les participations.';
+
+      this.snackBar.open(message, 'OK', {
+        duration: 5000
+      });
+
+      this.refreshMemberData(member);
+    } finally {
+      this.payingAllReservations.set(false);
+    }
+  }
+
   cancelReservation(reservationId: number) {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -334,7 +441,7 @@ export class MyReservations implements OnInit {
       return;
     }
 
-    if (this.payingReservationId()) {
+    if (this.payingReservationId() || this.payingAllReservations()) {
       return;
     }
 
@@ -361,8 +468,8 @@ export class MyReservations implements OnInit {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Paiement',
-        message: `Confirmez-vous le paiement de votre participation${amount ? ` de ${amount}` : ''} ?`,
-        confirmLabel: amount ? `Payer ${amount}` : 'Payer',
+        message: `Confirmez-vous le paiement de votre participation de ${amount} ?`,
+        confirmLabel: `Payer ${amount}`,
         cancelLabel: 'Retour'
       }
     });
@@ -451,6 +558,22 @@ export class MyReservations implements OnInit {
     return this.getWalletAmountInEuros('amountRefunded');
   }
 
+  getParticipationAmountLabel(reservation: any): string {
+    return `${this.toEuros(this.getParticipationAmountCentimes(reservation))} €`;
+  }
+
+  private getParticipationAmountCentimes(reservation: any): number {
+    const participation = this.getCurrentMemberParticipation(reservation);
+
+    return participation?.montantDuCentimes
+      ?? participation?.montantParticipationCentimes
+      ?? reservation?.montantDuCentimes
+      ?? reservation?.montantParticipationCentimes
+      ?? reservation?.participationAmountCentimes
+      ?? reservation?.amountDueCentimes
+      ?? 1500;
+  }
+
   private getWalletAmountInEuros(fieldName: string): number {
     const wallet = this.wallet();
 
@@ -520,23 +643,6 @@ export class MyReservations implements OnInit {
       ?? participant?.participation?.id;
 
     return participantParticipationId ? Number(participantParticipationId) : null;
-  }
-
-  private getParticipationAmountLabel(reservation: any): string {
-    const participation = this.getCurrentMemberParticipation(reservation);
-
-    const amountCentimes =
-      participation?.montantDuCentimes
-      ?? participation?.montantParticipationCentimes
-      ?? reservation?.montantDuCentimes
-      ?? reservation?.montantParticipationCentimes
-      ?? reservation?.participationAmountCentimes
-      ?? reservation?.amountDueCentimes
-      ?? 1500;
-
-    const amountEuros = this.toEuros(amountCentimes);
-
-    return `${amountEuros} €`;
   }
 
   private getParticipants(reservation: any): any[] {

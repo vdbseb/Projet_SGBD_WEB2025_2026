@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../services/auth.service';
 import { PadelService } from '../../../services/padel.service';
@@ -37,6 +38,7 @@ export class MemberDashboard implements OnInit {
   loading = signal(false);
   savingProfile = signal(false);
   payingDebts = signal(false);
+  payingAllReservations = signal(false);
   profileEditMode = signal(false);
 
   profileForm = this.formBuilder.group({
@@ -87,19 +89,19 @@ export class MemberDashboard implements OnInit {
     this.loading.set(true);
 
     this.padelService.getMemberWallet(member.id).subscribe({
-      next: wallet => this.wallet.set(wallet),
+      next: (wallet: any) => this.wallet.set(wallet),
       error: () => this.showError('Impossible de charger le portefeuille membre.')
     });
 
     this.padelService.getActiveMemberPenalties(member.id).subscribe({
-      next: penalties => this.activePenalties.set(penalties ?? []),
+      next: (penalties: any[]) => this.activePenalties.set(penalties ?? []),
       error: () => this.activePenalties.set([])
     });
 
     this.padelService.getAllReservations().subscribe({
-      next: reservations => {
+      next: (reservations: any[]) => {
         this.reservations.set(
-          reservations.filter(reservation => this.isMemberReservation(reservation, member))
+          (reservations ?? []).filter(reservation => this.isMemberReservation(reservation, member))
         );
         this.loading.set(false);
       },
@@ -110,9 +112,9 @@ export class MemberDashboard implements OnInit {
     });
 
     this.padelService.getPayments().subscribe({
-      next: payments => {
+      next: (payments: any[]) => {
         this.payments.set(
-          payments
+          (payments ?? [])
             .filter(payment => payment.membreId === member.id || payment.memberId === member.id)
             .sort((a, b) => this.getPaymentTime(b) - this.getPaymentTime(a))
         );
@@ -157,7 +159,7 @@ export class MemberDashboard implements OnInit {
     this.savingProfile.set(true);
 
     this.padelService.updateOwnMemberProfile(member.id, this.profileForm.getRawValue()).subscribe({
-      next: updatedMember => {
+      next: (updatedMember: any) => {
         this.authService.login(updatedMember);
         this.resetProfileForm(updatedMember);
         this.profileEditMode.set(false);
@@ -185,7 +187,7 @@ export class MemberDashboard implements OnInit {
     this.payingDebts.set(true);
 
     this.padelService.initierMemberDebtsPayment(member.id).subscribe({
-      next: payment => {
+      next: (payment: any) => {
         const paymentId = payment?.id ?? payment?.paiementId;
 
         if (!paymentId) {
@@ -204,7 +206,7 @@ export class MemberDashboard implements OnInit {
             this.payingDebts.set(false);
             this.refreshDashboard();
           },
-          error: error => {
+          error: (error: any) => {
             this.payingDebts.set(false);
 
             const message =
@@ -218,7 +220,7 @@ export class MemberDashboard implements OnInit {
           }
         });
       },
-      error: error => {
+      error: (error: any) => {
         this.payingDebts.set(false);
 
         const message =
@@ -231,6 +233,233 @@ export class MemberDashboard implements OnInit {
         this.refreshDashboard();
       }
     });
+  }
+
+  getReservationsToPay(): any[] {
+    const member = this.currentMember();
+
+    if (!member) {
+      return [];
+    }
+
+    return this.reservations().filter(reservation =>
+      !this.isCancelledReservation(reservation)
+      && this.isUpcomingReservation(reservation)
+      && !this.isPaid(reservation)
+      && !!this.findCurrentMemberParticipationId(reservation, member)
+    );
+  }
+
+  getTotalReservationsToPayCentimes(): number {
+    return this.getReservationsToPay()
+      .reduce((total, reservation) => total + this.getParticipationAmountCentimes(reservation), 0);
+  }
+
+  getTotalReservationsToPayEuros(): number {
+    return this.toEuros(this.getTotalReservationsToPayCentimes());
+  }
+
+  async payAllReservationParts() {
+    const member = this.currentMember();
+
+    if (!member || this.payingAllReservations()) {
+      return;
+    }
+
+    const reservationsToPay = this.getReservationsToPay();
+
+    if (reservationsToPay.length === 0) {
+      this.snackBar.open('Aucune participation à régler.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const total = this.getTotalReservationsToPayEuros();
+
+    const confirmed = window.confirm(
+      `Régler les matchs\n\nTu vas régler ${reservationsToPay.length} participation(s), pour un total de ${total} €. Confirmer le paiement ?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.payingAllReservations.set(true);
+
+    try {
+      for (const reservation of reservationsToPay) {
+        const participationId = this.findCurrentMemberParticipationId(reservation, member);
+
+        if (!participationId) {
+          continue;
+        }
+
+        const payment: any = await firstValueFrom(
+          this.padelService.initierPaiementPourParticipation(participationId)
+        );
+
+        const paymentId = payment?.id ?? payment?.paiementId;
+
+        if (!paymentId) {
+          throw new Error('Identifiant de paiement introuvable.');
+        }
+
+        await firstValueFrom(
+          this.padelService.confirmPayment(paymentId)
+        );
+      }
+
+      this.snackBar.open('Toutes les participations à venir ont été réglées.', 'OK', {
+        duration: 3500
+      });
+
+      this.refreshDashboard();
+    } catch (error: any) {
+      const message =
+        error?.error?.error
+        ?? error?.error?.message
+        ?? error?.error?.detail
+        ?? error?.message
+        ?? 'Impossible de régler toutes les participations.';
+
+      this.showError(message);
+      this.refreshDashboard();
+    } finally {
+      this.payingAllReservations.set(false);
+    }
+  }
+
+  getCurrentMemberParticipation(reservation: any): any | null {
+    const member = this.currentMember();
+
+    if (!member) {
+      return null;
+    }
+
+    return this.getParticipants(reservation).find((participant: any) =>
+      participant.membreId === member.id
+      || participant.memberId === member.id
+      || participant.matricule === member.matricule
+    ) ?? null;
+  }
+
+  isPaid(reservation: any): boolean {
+    const participation = this.getCurrentMemberParticipation(reservation);
+
+    return participation?.statut === 'PAYEE'
+      || participation?.status === 'PAYEE'
+      || participation?.participationStatus === 'PAYEE'
+      || participation?.statutParticipation === 'PAYEE'
+      || reservation.paiementStatut === 'VALIDE'
+      || reservation.paymentStatus === 'VALIDE'
+      || reservation.participationStatus === 'PAYEE'
+      || reservation.statutParticipation === 'PAYEE';
+  }
+
+  getParticipationAmountLabel(reservation: any): string {
+    return `${this.toEuros(this.getParticipationAmountCentimes(reservation))} €`;
+  }
+
+  getDebtReasonLabel(debt: any): string {
+    const reason = debt?.raison ?? debt?.reason ?? '';
+
+    switch (reason) {
+      case 'PARTICIPATION_IMPAYEE':
+        return 'Participation impayée';
+      case 'SOLDE_ORGANISATEUR':
+        return 'Solde organisateur non réglé';
+      case 'MATCH_PRIVE_INCOMPLET':
+        return 'Match privé incomplet';
+      case 'ORGANISATEUR_NON_PAYE':
+        return 'Organisateur non payé dans les délais';
+      default:
+        return this.cleanDebtLabel(reason || 'Dette à régler');
+    }
+  }
+
+  getDebtReservation(debt: any): any | null {
+    const reservationId = debt?.reservationId ?? debt?.reservation?.id;
+
+    if (!reservationId) {
+      return null;
+    }
+
+    return this.reservations().find(reservation =>
+      Number(reservation.id) === Number(reservationId)
+    ) ?? null;
+  }
+
+  getDebtContextLabel(debt: any): string {
+    const reservation = this.getDebtReservation(debt);
+
+    if (!reservation) {
+      return 'Réservation concernée';
+    }
+
+    return this.getReservationLabel(reservation);
+  }
+
+  getDebtDateLabel(debt: any): string {
+    const reservation = this.getDebtReservation(debt);
+
+    if (!reservation) {
+      return '';
+    }
+
+    const date = reservation.date
+      ? new Date(reservation.date).toLocaleDateString('fr-BE')
+      : '';
+
+    const start = reservation.startTime?.substring(0, 5) ?? '';
+    const end = reservation.endTime?.substring(0, 5) ?? '';
+
+    if (date && start && end) {
+      return `${date} · ${start} - ${end}`;
+    }
+
+    return date;
+  }
+
+  private getParticipationAmountCentimes(reservation: any): number {
+    const participation = this.getCurrentMemberParticipation(reservation);
+
+    return participation?.montantDuCentimes
+      ?? participation?.montantParticipationCentimes
+      ?? reservation?.montantDuCentimes
+      ?? reservation?.montantParticipationCentimes
+      ?? reservation?.participationAmountCentimes
+      ?? reservation?.amountDueCentimes
+      ?? 1500;
+  }
+
+  private findCurrentMemberParticipationId(reservation: any, member: any): number | null {
+    const directParticipationId =
+      reservation?.participationId
+      ?? reservation?.participationMatchId
+      ?? reservation?.idParticipation
+      ?? reservation?.currentMemberParticipationId
+      ?? reservation?.maParticipationId;
+
+    if (directParticipationId) {
+      return Number(directParticipationId);
+    }
+
+    const participants = this.getParticipants(reservation);
+
+    const participant = participants.find((item: any) =>
+      item.membreId === member.id
+      || item.memberId === member.id
+      || item.matricule === member.matricule
+    );
+
+    const participantParticipationId =
+      participant?.participationId
+      ?? participant?.participationMatchId
+      ?? participant?.idParticipation
+      ?? participant?.participation?.id;
+
+    return participantParticipationId ? Number(participantParticipationId) : null;
   }
 
   hasActivePenalty(): boolean {
@@ -388,9 +617,8 @@ export class MemberDashboard implements OnInit {
       return false;
     }
 
-    return participant.id === member.id
+    return participant.membreId === member.id
       || participant.memberId === member.id
-      || participant.membreId === member.id
       || participant.matricule === member.matricule;
   }
 
@@ -446,7 +674,10 @@ export class MemberDashboard implements OnInit {
       || reservation.playerMatricule === member.matricule
       || reservation.participantMatricules?.includes(member.matricule)
       || reservation.members?.some((participant: any) =>
-        participant.id === member.id || participant.matricule === member.matricule
+        participant.id === member.id
+        || participant.memberId === member.id
+        || participant.membreId === member.id
+        || participant.matricule === member.matricule
       )
       || reservation.participants?.some((participant: any) =>
         participant.id === member.id
@@ -485,6 +716,15 @@ export class MemberDashboard implements OnInit {
 
   private cleanSentence(value: string): string {
     return value.trim().replace(/[.。]+$/g, '');
+  }
+
+  private cleanDebtLabel(value: string): string {
+    return value
+      .toString()
+      .split('_')
+      .join(' ')
+      .toLowerCase()
+      .replace(/^\w/, letter => letter.toUpperCase());
   }
 }
 

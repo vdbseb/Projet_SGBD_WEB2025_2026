@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -7,6 +7,22 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+
+type PublicMatchFilter =
+  | 'ALL'
+  | 'AVAILABLE'
+  | 'MINE'
+  | 'FULL'
+  | 'TODAY'
+  | 'WEEK';
+
+type PublicMatchViewMode = 'CARDS' | 'LIST';
+
+type PublicMatchSort =
+  | 'DATE_ASC'
+  | 'DATE_DESC'
+  | 'SPOTS_DESC'
+  | 'SITE_ASC';
 
 @Component({
   selector: 'app-public-matches',
@@ -20,76 +36,349 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
   templateUrl: './public-matchs.html'
 })
 export class PublicMatchs implements OnInit {
-  private padelService = inject(PadelService);
-  private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private readonly padelService = inject(PadelService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
-  authService = inject(AuthService);
+  readonly authService = inject(AuthService);
 
   reservations = signal<any[]>([]);
   courts = signal<any[]>([]);
   sites = signal<any[]>([]);
-  members = signal<any[]>([]);
+
+  searchTerm = signal('');
+  selectedSiteFilter = signal<string>('ALL');
+  selectedFilter = signal<PublicMatchFilter>('ALL');
+  viewMode = signal<PublicMatchViewMode>('CARDS');
+  sortMode = signal<PublicMatchSort>('DATE_ASC');
+  loadingMatchId = signal<number | null>(null);
+
+  publicMatches = computed(() => this.getPublicMatches());
+  filteredMatches = computed(() => this.buildFilteredMatches());
 
   ngOnInit() {
-    this.padelService.getCourts().subscribe(courts => {
-      this.courts.set(courts);
+    this.padelService.getCourts().subscribe({
+      next: courts => this.courts.set(courts ?? []),
+      error: () => this.courts.set([])
     });
 
-    this.padelService.getSites().subscribe(sites => {
-      this.sites.set(sites);
-    });
-
-    this.padelService.getMembers().subscribe(members => {
-      this.members.set(members);
+    this.padelService.getSites().subscribe({
+      next: sites => this.sites.set(sites ?? []),
+      error: () => this.sites.set([])
     });
 
     this.loadReservations();
   }
 
   loadReservations() {
-    this.padelService.getAllReservations().subscribe(reservations => {
-      this.reservations.set(reservations);
+    this.padelService.getAllReservations().subscribe({
+      next: reservations => this.reservations.set(reservations ?? []),
+      error: () => {
+        this.reservations.set([]);
+        this.snackBar.open('Impossible de charger les matchs publics.', 'OK', {
+          duration: 4000
+        });
+      }
     });
   }
 
-  getPublicMatches() {
+  setFilter(filter: PublicMatchFilter) {
+    this.selectedFilter.set(filter);
+  }
+
+  setViewMode(mode: PublicMatchViewMode) {
+    this.viewMode.set(mode);
+  }
+
+  setSearchTerm(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm.set(input.value ?? '');
+  }
+
+  setSiteFilter(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.selectedSiteFilter.set(select.value);
+  }
+
+  setSortMode(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.sortMode.set(select.value as PublicMatchSort);
+  }
+
+  getPublicMatches(): any[] {
     const now = new Date();
 
     return this.reservations().filter(reservation => {
-      const reservationDate = new Date(`${reservation.date}T${reservation.startTime}`);
+      const reservationDate = this.getReservationDateTime(reservation);
 
       return reservation.matchType === 'PUBLIC'
         && reservation.reservationStatus !== 'ANNULEE'
         && reservation.matchStatus !== 'ANNULE'
         && reservationDate > now;
-
     });
   }
 
+  getAvailableSiteNames(): string[] {
+    const names = this.publicMatches()
+      .map(reservation => this.getSiteName(reservation))
+      .filter(siteName => siteName && siteName !== 'Site inconnu');
+
+    return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  }
+
+  private buildFilteredMatches(): any[] {
+    const search = this.normalizeText(this.searchTerm());
+    const filter = this.selectedFilter();
+    const selectedSite = this.selectedSiteFilter();
+
+    let matches = this.publicMatches().filter(reservation => {
+      if (selectedSite !== 'ALL' && this.getSiteName(reservation) !== selectedSite) {
+        return false;
+      }
+
+      if (filter === 'AVAILABLE' && !this.canJoinMatch(reservation)) {
+        return false;
+      }
+
+      if (filter === 'MINE' && !this.isParticipant(reservation) && !this.isOrganizer(reservation)) {
+        return false;
+      }
+
+      if (filter === 'FULL' && !this.isFull(reservation)) {
+        return false;
+      }
+
+      if (filter === 'TODAY' && !this.isToday(reservation)) {
+        return false;
+      }
+
+      if (filter === 'WEEK' && !this.isThisWeek(reservation)) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
+      const searchable = this.normalizeText([
+        this.getCourtName(reservation),
+        this.getSiteName(reservation),
+        reservation.date,
+        reservation.startTime,
+        reservation.endTime
+      ].join(' '));
+
+      return searchable.includes(search);
+    });
+
+    matches = [...matches].sort((a, b) => {
+      switch (this.sortMode()) {
+        case 'DATE_DESC':
+          return this.getReservationDateTime(b).getTime() - this.getReservationDateTime(a).getTime();
+
+        case 'SPOTS_DESC':
+          return this.getRemainingSpots(b) - this.getRemainingSpots(a);
+
+        case 'SITE_ASC': {
+          const siteCompare = this.getSiteName(a).localeCompare(this.getSiteName(b));
+
+          return siteCompare !== 0
+            ? siteCompare
+            : this.getReservationDateTime(a).getTime() - this.getReservationDateTime(b).getTime();
+        }
+
+        case 'DATE_ASC':
+        default:
+          return this.getReservationDateTime(a).getTime() - this.getReservationDateTime(b).getTime();
+      }
+    });
+
+    return matches;
+  }
+
+  countAvailableMatches(): number {
+    return this.publicMatches().filter(reservation => this.canJoinMatch(reservation)).length;
+  }
+
+  countMyMatches(): number {
+    return this.publicMatches().filter(reservation =>
+      this.isParticipant(reservation) || this.isOrganizer(reservation)
+    ).length;
+  }
+
+  countFullMatches(): number {
+    return this.publicMatches().filter(reservation => this.isFull(reservation)).length;
+  }
+
+  countTodayMatches(): number {
+    return this.publicMatches().filter(reservation => this.isToday(reservation)).length;
+  }
+
+  countWeekMatches(): number {
+    return this.publicMatches().filter(reservation => this.isThisWeek(reservation)).length;
+  }
+
   getParticipantsCount(reservation: any): number {
-    return 1 + (reservation.participantMatricules?.length || 0);
+    const participants = this.getParticipants(reservation);
+
+    if (participants.length > 0) {
+      return Math.min(4, participants.length);
+    }
+
+    const matricules = reservation.participantMatricules ?? [];
+
+    const organizerCount = reservation.memberId || reservation.membreId || reservation.organisateurId
+      ? 1
+      : 0;
+
+    return Math.min(4, organizerCount + matricules.length);
   }
 
   getRemainingSpots(reservation: any): number {
-    return 4 - this.getParticipantsCount(reservation);
+    return Math.max(0, 4 - this.getParticipantsCount(reservation));
+  }
+
+  isFull(reservation: any): boolean {
+    return this.getRemainingSpots(reservation) <= 0
+      || this.getParticipantsCount(reservation) >= 4
+      || reservation.matchStatus === 'COMPLET';
+  }
+
+  isOrganizer(reservation: any): boolean {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return false;
+    }
+
+    return reservation.memberId === member.id
+      || reservation.membreId === member.id
+      || reservation.organisateurId === member.id;
+  }
+
+  isParticipant(reservation: any): boolean {
+    const member = this.authService.currentMember();
+
+    if (!member) {
+      return false;
+    }
+
+    return reservation.participantMatricules?.includes(member.matricule)
+      || this.getParticipants(reservation).some((participant: any) =>
+        participant.membreId === member.id
+        || participant.memberId === member.id
+        || participant.id === member.id
+        || participant.matricule === member.matricule
+      );
+  }
+
+  canJoinMatch(reservation: any): boolean {
+    return !this.isFull(reservation)
+      && !this.isParticipant(reservation)
+      && !this.isOrganizer(reservation)
+      && !!this.authService.currentMember();
+  }
+
+  getActionLabel(reservation: any): string {
+    if (this.loadingMatchId() === reservation.id) {
+      return 'Traitement...';
+    }
+
+    if (this.isFull(reservation)) {
+      return 'Match complet';
+    }
+
+    if (this.isOrganizer(reservation)) {
+      return 'Organisateur';
+    }
+
+    if (this.isParticipant(reservation)) {
+      return 'Quitter le match';
+    }
+
+    return 'Rejoindre ce match';
   }
 
   getCourtName(reservation: any): string {
     const court = this.courts().find(c => c.id === reservation.courtId);
-    return reservation.courtName || court?.name || 'Terrain inconnu';
+
+    return reservation.courtName
+      || court?.name
+      || court?.nom
+      || 'Terrain inconnu';
   }
 
   getSiteName(reservation: any): string {
-    const court = this.courts().find(c => c.id === reservation.courtId);
-    const site = this.sites().find(s => s.id === court?.siteId);
+    if (reservation.siteName) {
+      return reservation.siteName;
+    }
 
-    return reservation.siteName || site?.clubName || 'Site inconnu';
+    const court = this.courts().find(c => c.id === reservation.courtId);
+
+    const courtSiteId =
+      court?.siteId
+      ?? court?.site?.id
+      ?? reservation.siteId;
+
+    const site = this.sites().find(s =>
+      Number(s.id) === Number(courtSiteId)
+    );
+
+    return site?.clubName
+      || site?.nom
+      || site?.name
+      || 'Site inconnu';
+  }
+
+  getMatchDateLabel(reservation: any): string {
+    return this.getReservationDateTime(reservation).toLocaleDateString('fr-BE');
+  }
+
+  getMatchTimeLabel(reservation: any): string {
+    const start = reservation.startTime?.substring(0, 5) ?? '';
+    const end = reservation.endTime?.substring(0, 5) ?? '';
+
+    return `${start} - ${end}`;
+  }
+
+  getMatchStatusClass(reservation: any): string {
+    if (this.isFull(reservation)) {
+      return 'bg-red-100 text-red-700';
+    }
+
+    if (this.isParticipant(reservation) || this.isOrganizer(reservation)) {
+      return 'bg-violet-100 text-violet-700';
+    }
+
+    return 'bg-emerald-50 text-emerald-700';
+  }
+
+  getMatchStatusLabel(reservation: any): string {
+    if (this.isFull(reservation)) {
+      return 'Complet';
+    }
+
+    if (this.isOrganizer(reservation)) {
+      return 'Organisé par toi';
+    }
+
+    if (this.isParticipant(reservation)) {
+      return 'Déjà rejoint';
+    }
+
+    return `${this.getRemainingSpots(reservation)} place(s) libre(s)`;
   }
 
   joinMatch(reservation: any) {
     const member = this.authService.currentMember();
     const matchId = reservation.matchId;
+
+    if (!member) {
+      this.snackBar.open('Connecte-toi avec ton matricule pour rejoindre un match.', 'OK', {
+        duration: 4000
+      });
+      return;
+    }
 
     if (!matchId) {
       this.snackBar.open('Match introuvable pour cette réservation.', 'OK', {
@@ -97,25 +386,23 @@ export class PublicMatchs implements OnInit {
       });
       return;
     }
-    if (!member) {
-      return;
-    }
-    if (reservation.memberId === member.id) {
-      this.snackBar.open('Vous êtes déjà organisateur de ce match.', 'OK', {
+
+    if (this.isOrganizer(reservation)) {
+      this.snackBar.open('Tu es déjà organisateur de ce match.', 'OK', {
         duration: 3000
       });
       return;
     }
 
-    if (this.getParticipantsCount(reservation) >= 4) {
+    if (this.isFull(reservation)) {
       this.snackBar.open('Ce match est déjà complet.', 'OK', {
         duration: 3000
       });
       return;
     }
 
-    if (reservation.participantMatricules?.includes(member.matricule)) {
-      this.snackBar.open('Vous participez déjà à ce match.', 'OK', {
+    if (this.isParticipant(reservation)) {
+      this.snackBar.open('Tu participes déjà à ce match.', 'OK', {
         duration: 3000
       });
       return;
@@ -124,42 +411,48 @@ export class PublicMatchs implements OnInit {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Rejoindre le match',
-        message: 'Confirmer le paiement de 15€ pour rejoindre ce match ?',
+        message: `Confirmer le paiement de 15€ pour rejoindre ${this.getCourtName(reservation)} le ${this.getMatchDateLabel(reservation)} à ${reservation.startTime?.substring(0, 5) ?? ''} ?`,
         confirmLabel: 'Payer 15€',
         cancelLabel: 'Retour'
       }
     });
 
-    dialogRef.afterClosed().subscribe(confirmed => {
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
       if (!confirmed) {
         return;
       }
 
+      this.loadingMatchId.set(reservation.id);
+
       this.padelService.joinPublicMatch(matchId, member.id).subscribe({
         next: () => {
-          this.snackBar.open('Vous avez rejoint le match !', 'OK', {
+          this.loadingMatchId.set(null);
+
+          this.snackBar.open('Tu as rejoint le match.', 'OK', {
             duration: 3000
           });
 
           this.loadReservations();
         },
-        error: () => {
-          this.snackBar.open('Impossible de rejoindre ce match.', 'OK', {
-            duration: 4000
+        error: (error: any) => {
+          this.loadingMatchId.set(null);
+
+          const message =
+            error?.error?.error
+            ?? error?.error?.message
+            ?? error?.error?.detail
+            ?? 'Impossible de rejoindre ce match.';
+
+          this.snackBar.open(message, 'OK', {
+            duration: 5000
           });
+
+          this.loadReservations();
         }
       });
     });
   }
-  isParticipant(reservation: any): boolean {
-    const member = this.authService.currentMember();
 
-    if (!member) {
-      return false;
-    }
-
-    return reservation.participantMatricules?.includes(member.matricule);
-  }
   leaveMatch(reservation: any) {
     const member = this.authService.currentMember();
 
@@ -176,19 +469,114 @@ export class PublicMatchs implements OnInit {
       return;
     }
 
-    this.padelService.leavePublicMatch(matchId, member.id).subscribe({
-      next: () => {
-        this.snackBar.open('Vous avez quitté le match.', 'OK', {
-          duration: 3000
-        });
-
-        this.loadReservations();
-      },
-      error: () => {
-        this.snackBar.open('Impossible de quitter le match.', 'OK', {
-          duration: 4000
-        });
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Quitter le match',
+        message: `Tu vas quitter ${this.getCourtName(reservation)} le ${this.getMatchDateLabel(reservation)}. Continuer ?`,
+        confirmLabel: 'Quitter',
+        cancelLabel: 'Retour'
       }
     });
+
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.loadingMatchId.set(reservation.id);
+
+      this.padelService.leavePublicMatch(matchId, member.id).subscribe({
+        next: () => {
+          this.loadingMatchId.set(null);
+
+          this.snackBar.open('Tu as quitté le match.', 'OK', {
+            duration: 3000
+          });
+
+          this.loadReservations();
+        },
+        error: (error: any) => {
+          this.loadingMatchId.set(null);
+
+          const message =
+            error?.error?.error
+            ?? error?.error?.message
+            ?? error?.error?.detail
+            ?? 'Impossible de quitter le match.';
+
+          this.snackBar.open(message, 'OK', {
+            duration: 5000
+          });
+
+          this.loadReservations();
+        }
+      });
+    });
+  }
+
+  handlePrimaryAction(reservation: any) {
+    if (this.loadingMatchId() === reservation.id) {
+      return;
+    }
+
+    if (this.isParticipant(reservation)) {
+      this.leaveMatch(reservation);
+      return;
+    }
+
+    if (this.canJoinMatch(reservation)) {
+      this.joinMatch(reservation);
+    }
+  }
+
+  private getReservationDateTime(reservation: any): Date {
+    return new Date(`${reservation.date}T${reservation.startTime ?? '00:00:00'}`);
+  }
+
+  private isToday(reservation: any): boolean {
+    const date = this.getReservationDateTime(reservation);
+    const today = new Date();
+
+    return date.getFullYear() === today.getFullYear()
+      && date.getMonth() === today.getMonth()
+      && date.getDate() === today.getDate();
+  }
+
+  private isThisWeek(reservation: any): boolean {
+    const date = this.getReservationDateTime(reservation);
+    const now = new Date();
+
+    const end = new Date(now);
+    end.setDate(now.getDate() + 7);
+    end.setHours(23, 59, 59, 999);
+
+    return date >= now && date <= end;
+  }
+
+  private getParticipants(reservation: any): any[] {
+    if (Array.isArray(reservation?.participants)) {
+      return reservation.participants;
+    }
+
+    if (Array.isArray(reservation?.members)) {
+      return reservation.members;
+    }
+
+    if (Array.isArray(reservation?.participantMatricules)) {
+      return reservation.participantMatricules.map((matricule: string) => ({
+        matricule
+      }));
+    }
+
+    return [];
+  }
+
+  private normalizeText(value: string): string {
+    return (value ?? '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 }

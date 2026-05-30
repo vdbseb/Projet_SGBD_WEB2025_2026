@@ -116,16 +116,19 @@
                   </p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-              <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
-                {{ getPenaltyRemainingLabel(penalty) }}
-              </span>
+                <div class="flex flex-col gap-3">
+                  <div>
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
+                      {{ getPenaltyRemainingLabel(penalty) }}
+                    </span>
+                  </div>
 
                   @if (getPenaltyMatchLabel(penalty)) {
                   <div class="rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
                     <p class="text-[10px] uppercase tracking-widest font-black text-red-400 mb-1">
                       Match concerné
                     </p>
+
                     <p class="text-sm font-bold text-red-800">
                       {{ getPenaltyMatchLabel(penalty) }}
                     </p>
@@ -139,7 +142,6 @@
         </div>
       </div>
     </div>
-
     }
 
     <div class="grid xl:grid-cols-[1.35fr_0.65fr] gap-6 mb-6">
@@ -279,7 +281,7 @@
 
           @if (getParticipants(reservation).length > 0) {
           <div class="flex flex-wrap gap-2">
-            @for (participant of getParticipants(reservation); track participant.id || participant.matricule) {
+            @for (participant of getParticipants(reservation); track participant.participationId || participant.matricule) {
             <span
               class="inline-flex items-center rounded-full px-3 py-2 text-xs font-black border"
               [class]="isCurrentMember(participant)
@@ -330,6 +332,55 @@
       [amountPaid]="amountPaid()"
       [amountRefunded]="amountRefunded()">
     </app-player-wallet-card>
+
+    @if (getReservationsToPay().length > 0) {
+    <div class="mb-6 rounded-3xl border border-amber-100 bg-amber-50 p-6 shadow-sm">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+        <div>
+          <p class="text-[10px] uppercase tracking-widest font-black text-amber-600 mb-2">
+            Matchs à régler
+          </p>
+
+          <h2 class="text-2xl font-black text-slate-900">
+            {{ getReservationsToPay().length }} participation(s) en attente
+          </h2>
+
+          <p class="text-sm text-amber-800 font-semibold mt-1">
+            Total des matchs à venir à régler : {{ getTotalReservationsToPayEuros() }} €
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="payAllReservationParts()"
+          [disabled]="payingAllReservations()"
+          class="rounded-2xl bg-amber-500 px-5 py-3 text-xs font-black uppercase tracking-widest text-white hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ payingAllReservations() ? 'Paiement...' : 'Tout régler' }}
+        </button>
+      </div>
+
+      <div class="mt-5 grid md:grid-cols-2 gap-3">
+        @for (reservation of getReservationsToPay(); track reservation.id) {
+        <div class="rounded-2xl bg-white border border-amber-100 p-4 flex items-center justify-between gap-4">
+          <div>
+            <p class="font-black text-slate-900">
+              {{ getReservationLabel(reservation) }}
+            </p>
+
+            <p class="text-sm text-slate-500">
+              {{ reservation.date | date:'dd/MM/yyyy' }} · {{ reservation.startTime }} - {{ reservation.endTime }}
+            </p>
+          </div>
+
+          <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase text-amber-700">
+            {{ getParticipationAmountLabel(reservation) }}
+          </span>
+        </div>
+        }
+      </div>
+    </div>
+    }
 
     <div class="grid md:grid-cols-5 gap-4 mb-6">
       <div class="bg-white rounded-3xl border border-slate-100 p-5 shadow-sm">
@@ -387,9 +438,25 @@
           @for (debt of openDebts(); track debt.id) {
           <div class="rounded-2xl border border-red-100 bg-red-50 p-4 flex items-center justify-between gap-4">
             <div>
-              <p class="font-black text-red-900">{{ toEuros(debt.montantCentimes) }}€ à payer</p>
-              <p class="text-sm text-red-700">{{ debt.raison }} — réservation #{{ debt.reservationId || 'n/a' }}</p>
+              <p class="font-black text-red-900">
+                {{ toEuros(debt.montantCentimes) }}€ à payer
+              </p>
+
+              <p class="text-sm font-bold text-red-800 mt-1">
+                {{ getDebtReasonLabel(debt) }}
+              </p>
+
+              <p class="text-sm text-red-700 mt-1">
+                {{ getDebtContextLabel(debt) }}
+              </p>
+
+              @if (getDebtDateLabel(debt)) {
+              <p class="text-xs text-red-500 mt-1 font-bold">
+                {{ getDebtDateLabel(debt) }}
+              </p>
+              }
             </div>
+
             <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-red-700 uppercase">
               {{ debt.statut }}
             </span>

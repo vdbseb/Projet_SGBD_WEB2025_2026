@@ -7,12 +7,12 @@
   <p class="text-slate-500 mb-6">
     Connecté en tant que
     <span class="font-bold text-slate-900">
-        {{ member.firstName }} {{ member.lastName }}
-      </span>
+      {{ member.firstName }} {{ member.lastName }}
+    </span>
     —
     <span class="font-mono">
-        {{ member.matricule }}
-      </span>
+      {{ member.matricule }}
+    </span>
   </p>
 
   <app-player-wallet-card
@@ -21,6 +21,55 @@
     [amountPaid]="getAmountPaid()"
     [amountRefunded]="getAmountRefunded()">
   </app-player-wallet-card>
+
+  @if (getReservationsToPay().length > 0) {
+  <div class="mb-8 rounded-2xl border border-amber-100 bg-amber-50 p-6 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+      <div>
+        <p class="text-[10px] uppercase tracking-widest font-black text-amber-600 mb-2">
+          Participations à régler
+        </p>
+
+        <h2 class="text-2xl font-black text-slate-900">
+          {{ getReservationsToPay().length }} match(s) à payer
+        </h2>
+
+        <p class="text-sm text-amber-800 font-semibold mt-1">
+          Total à régler : {{ getTotalReservationsToPayEuros() }} €
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="payAllReservationParts()"
+        [disabled]="payingAllReservations()"
+        class="rounded-2xl bg-amber-500 px-5 py-3 text-xs font-black uppercase tracking-widest text-white hover:bg-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ payingAllReservations() ? 'Paiement...' : 'Tout régler' }}
+      </button>
+    </div>
+
+    <div class="mt-5 grid gap-3">
+      @for (reservation of getReservationsToPay(); track reservation.id) {
+      <div class="rounded-2xl bg-white border border-amber-100 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <p class="font-black text-slate-900">
+            {{ reservation.courtName || 'Terrain' }} — {{ getSiteName(reservation) }}
+          </p>
+
+          <p class="text-sm text-slate-500">
+            {{ reservation.date | date:'dd/MM/yyyy' }} · {{ reservation.startTime }} - {{ reservation.endTime }}
+          </p>
+        </div>
+
+        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase text-amber-700">
+          {{ getParticipationAmountLabel(reservation) }}
+        </span>
+      </div>
+      }
+    </div>
+  </div>
+  }
   }
 
   <div class="flex gap-3 mb-8 flex-wrap">
@@ -88,18 +137,18 @@
     @for (reservation of getFilteredReservations(); track reservation.id) {
     <div class="relative bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
 
-        <span
-          class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest"
-          [class]="reservation.reservationStatus === 'ANNULEE'
-            ? 'bg-red-100 text-red-700'
-            : getStatusClass(reservation)"
-        >
-          {{
-            reservation.reservationStatus === 'ANNULEE'
-              ? 'Annulée'
-              : getStatusLabel(reservation)
-          }}
-        </span>
+      <span
+        class="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest"
+        [class]="reservation.reservationStatus === 'ANNULEE'
+          ? 'bg-red-100 text-red-700'
+          : getStatusClass(reservation)"
+      >
+        {{
+          reservation.reservationStatus === 'ANNULEE'
+            ? 'Annulée'
+            : getStatusLabel(reservation)
+        }}
+      </span>
 
       <div class="flex items-center gap-2 mb-1 pr-24">
         <mat-icon class="text-slate-700">sports_tennis</mat-icon>
@@ -135,22 +184,22 @@
       <div class="flex gap-3 mt-5 flex-wrap">
         @if (isPaid(reservation)) {
         <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-xs uppercase tracking-widest">
-                <mat-icon class="text-base">check_circle</mat-icon>
-                Part déjà payée
-              </span>
+          <mat-icon class="text-base">check_circle</mat-icon>
+          Part déjà payée
+        </span>
         } @else if (canPayReservation(reservation)) {
         <button
           type="button"
           (click)="payReservation(reservation)"
-          [disabled]="isPayingReservation(reservation)"
+          [disabled]="isPayingReservation(reservation) || payingAllReservations()"
           class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {{ isPayingReservation(reservation) ? 'Paiement...' : 'Payer ma part — 15€' }}
+          {{ isPayingReservation(reservation) ? 'Paiement...' : 'Payer ma part — ' + getParticipationAmountLabel(reservation) }}
         </button>
         } @else {
         <span class="inline-flex items-center px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs uppercase tracking-widest">
-                Paiement non disponible
-              </span>
+          Paiement non disponible
+        </span>
         }
 
         <button

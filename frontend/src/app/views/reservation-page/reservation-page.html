@@ -1,7 +1,7 @@
 @if (site(); as currentSite) {
 <div class="min-h-screen bg-slate-50 p-6 md:p-12 font-sans">
 
-  <header class="text-center mb-10">
+  <header class="text-center mb-16">
     <h1 class="text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tighter">
       {{ currentSite.clubName }}
     </h1>
@@ -10,105 +10,35 @@
       {{ currentSite.city }} — Choisis ton terrain pour accéder au calendrier.
     </p>
 
+    <p class="text-slate-400 mt-2 text-sm font-bold">
+      {{ getReservationRuleLabel() }}
+    </p>
+
+    @if (getSiteMemberRestrictionMessage()) {
+    <div class="mt-5 max-w-2xl mx-auto rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-red-700 text-sm font-bold">
+      {{ getSiteMemberRestrictionMessage() }}
+    </div>
+    }
+
     <div class="w-16 h-1 bg-slate-900 mx-auto mt-4 rounded-full"></div>
   </header>
-
-  @if (hasActivePenalty()) {
-  <div class="max-w-4xl mx-auto mb-10 rounded-3xl border border-red-200 bg-red-50 p-6 shadow-sm">
-    <div class="flex flex-col md:flex-row gap-4 md:items-start">
-      <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shrink-0 font-black">
-        !
-      </div>
-
-      <div class="flex-1">
-        <p class="text-[10px] uppercase tracking-widest font-black text-red-500 mb-2">
-          Réservation bloquée
-        </p>
-
-        <h2 class="text-xl font-black text-red-950 mb-2">
-          Réservation impossible pour le moment
-        </h2>
-
-        <p class="text-red-800 font-semibold">
-          {{ getPenaltyMessage() }}
-        </p>
-
-        @if (getMainPenalty(); as penalty) {
-        <div class="mt-4 rounded-2xl bg-white border border-red-100 p-4">
-          <div class="grid md:grid-cols-2 gap-4">
-            <div>
-              <p class="text-xs uppercase tracking-widest font-black text-red-400 mb-1">
-                Raison
-              </p>
-
-              <p class="font-bold text-red-900">
-                {{ getPenaltyReason(penalty) }}
-              </p>
-            </div>
-
-            <div>
-              <p class="text-xs uppercase tracking-widest font-black text-red-400 mb-1">
-                Fin du blocage
-              </p>
-
-              <p class="font-bold text-red-900">
-                {{ getPenaltyEndDate(penalty) }}
-              </p>
-            </div>
-          </div>
-
-          <div class="mt-4 flex flex-wrap gap-2">
-            <span class="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
-              {{ getPenaltyRemainingLabel(penalty) }}
-            </span>
-          </div>
-
-          @if (getPenaltyMatchLabel(penalty)) {
-          <div class="mt-4 rounded-2xl bg-red-50 border border-red-100 px-4 py-3">
-            <p class="text-[10px] uppercase tracking-widest font-black text-red-400 mb-1">
-              Match concerné
-            </p>
-
-            <p class="text-sm font-bold text-red-800">
-              {{ getPenaltyMatchLabel(penalty) }}
-            </p>
-          </div>
-          }
-        </div>
-        }
-      </div>
-    </div>
-  </div>
-  }
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-7xl mx-auto items-stretch">
     @for (court of currentSite.courts; track court.id) {
     <app-padel-card
       [title]="court.name"
-      [subtitle]="hasActivePenalty()
-            ? 'Réservation bloquée'
-            : (court.maintenance
-              ? 'Maintenance'
-              : (court.active ? ('Padel ' + court.type) : 'Indisponible'))"
+      [subtitle]="court.maintenance
+            ? 'Maintenance'
+            : (court.active ? ('Padel ' + court.type) : 'Indisponible')"
       [initial]="currentSite.initial"
       [image]="court.type.toLowerCase() === 'indoor' ? 'images/indoor_padel.jpg' : 'images/outdoor_padel.jpg'"
       [isSelected]="selectedCourt()?.id === court.id"
-      [buttonLabel]="hasActivePenalty()
-            ? 'Pénalité active'
-            : (court.active && !court.maintenance
-              ? (selectedCourt()?.id === court.id ? 'Terrain sélectionné' : 'Choisir ce terrain')
-              : 'Indisponible')"
+      [buttonLabel]="canSelectCourt(court)
+            ? (selectedCourt()?.id === court.id ? 'Terrain sélectionné' : 'Choisir ce terrain')
+            : 'Indisponible'"
       (cardClick)="selectCourt(court)">
 
-      @if (hasActivePenalty()) {
-      <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase tracking-widest mb-3">
-        Bloqué
-      </span>
-
-      <p class="text-slate-500">
-        Tu ne peux pas choisir de terrain tant que ta pénalité est active.
-      </p>
-      } @else if (court.active && !court.maintenance) {
+      @if (canSelectCourt(court)) {
       Profite d'une session de jeu exceptionnelle sur notre terrain {{ court.name }}.
       } @else if (court.maintenance) {
       <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase tracking-widest mb-3">
@@ -118,13 +48,21 @@
       <p class="text-slate-500">
         Ce terrain est actuellement en maintenance et indisponible à la réservation.
       </p>
-      } @else {
+      } @else if (!court.active) {
       <span class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase tracking-widest mb-3">
         Indisponible
       </span>
 
       <p class="text-slate-500">
         Ce terrain est actuellement désactivé.
+      </p>
+      } @else {
+      <span class="inline-block px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-black uppercase tracking-widest mb-3">
+        Non autorisé
+      </span>
+
+      <p class="text-slate-500">
+        Ton abonnement ne permet pas de réserver sur ce centre.
       </p>
       }
 
@@ -138,11 +76,13 @@
     <app-date-selector
       [courtName]="court.name"
       [initialDate]="selectedDate()"
+      [maxReservationDate]="getMaxReservationDate()"
       (dateChange)="onDateSelected($event)">
     </app-date-selector>
 
     <app-time-slots
       [reservedTimes]="reservedTimes()"
+      [selectedDate]="selectedDate()"
       [openingTime]="site()?.openingTime ?? '08:00:00'"
       [closingTime]="site()?.closingTime ?? '22:00:00'"
       [matchDurationMinutes]="matchDurationMinutes()"
@@ -170,12 +110,6 @@
             <span class="text-emerald-400 mx-1">•</span>
             {{ selectedDate() | date:'dd MMMM' }} à {{ selectedTime() }}
           </h3>
-
-          @if (hasActivePenalty()) {
-          <p class="mt-3 text-sm text-red-300 font-bold">
-            {{ getPenaltyMessage() }}
-          </p>
-          }
         </div>
 
         <div class="w-full md:w-auto">
@@ -184,9 +118,9 @@
             color="primary"
             data-cy="confirm-booking-button"
             class="h-16 px-10 rounded-2xl text-lg font-black uppercase tracking-wide"
-            [disabled]="!isMatchSelectionValid() || !court.active || court.maintenance || hasActivePenalty()"
+            [disabled]="!isMatchSelectionValid() || !court.active || court.maintenance"
             (click)="onConfirmBooking()">
-            {{ hasActivePenalty() ? 'Réservation bloquée' : 'Ajouter au panier' }}
+            Ajouter au panier
           </button>
         </div>
       </div>

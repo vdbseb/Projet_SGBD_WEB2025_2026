@@ -1,4 +1,4 @@
-import {Component, output, signal, OnInit, inject, input} from '@angular/core';
+import { Component, output, signal, OnInit, inject, input } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 
 interface DayItem {
@@ -18,19 +18,25 @@ interface DayItem {
 export class DateSelectorComponent implements OnInit {
   courtName = input<string>('');
   initialDate = input<Date | null>(null);
-  private datePipe = inject(DatePipe);
-
+  maxReservationDate = input<Date | null>(null);
 
   dateChange = output<Date>();
 
-  selectedDate = signal<Date>(this.resetTime(new Date()));
+  private datePipe = inject(DatePipe);
 
-  // Liste des 21 jours
+  selectedDate = signal<Date>(this.resetTime(new Date()));
   daysList = signal<DayItem[]>([]);
 
   ngOnInit() {
     this.generateThreeWeeks();
+
+    const initial = this.initialDate();
+
+    if (initial && !this.isDateDisabled(initial)) {
+      this.selectedDate.set(this.resetTime(initial));
+    }
   }
+
   generateThreeWeeks() {
     const days: DayItem[] = [];
     const today = this.resetTime(new Date());
@@ -46,37 +52,61 @@ export class DateSelectorComponent implements OnInit {
         monthName: this.formatDate(current, 'MMM').toUpperCase()
       });
     }
+
     this.daysList.set(days);
   }
 
-  /**
-   * Action au clic sur un jour
-   */
   selectDate(date: Date) {
+    if (this.isDateDisabled(date)) {
+      return;
+    }
+
     const cleanDate = this.resetTime(date);
     this.selectedDate.set(cleanDate);
     this.dateChange.emit(cleanDate);
   }
 
-  /**
-   * Vérifie si la date est celle sélectionnée (pour le style CSS)
-   */
   isSelected(date: Date): boolean {
     return date.getTime() === this.selectedDate().getTime();
   }
 
-  /**
-   * Helper : Réinitialise l'heure à minuit pour comparer uniquement les jours
-   */
+  isDateDisabled(date: Date): boolean {
+    const cleanDate = this.resetTime(date);
+    const today = this.resetTime(new Date());
+
+    if (cleanDate < today) {
+      return true;
+    }
+
+    const max = this.maxReservationDate();
+
+    if (!max) {
+      return false;
+    }
+
+    return cleanDate > this.resetTime(max);
+  }
+
+  getDisabledReason(date: Date): string {
+    if (!this.isDateDisabled(date)) {
+      return '';
+    }
+
+    const max = this.maxReservationDate();
+
+    if (max && this.resetTime(date) > this.resetTime(max)) {
+      return 'Hors délai';
+    }
+
+    return 'Indisponible';
+  }
+
   private resetTime(date: Date): Date {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     return d;
   }
 
-  /**
-   * Helper : Formatage rapide via DatePipe
-   */
   private formatDate(date: Date, format: string): string {
     const res = this.datePipe.transform(date, format) || '';
     return res.charAt(0).toUpperCase() + res.slice(1).replace('.', '');
