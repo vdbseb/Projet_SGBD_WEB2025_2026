@@ -16,11 +16,11 @@ import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-s
   selector: 'app-admin-sites',
   standalone: true,
   imports: [
-   CommonModule,
-     MatIconModule,
-     FormsModule,
-     MatSnackBarModule,
-     AdminPageShellComponent
+    CommonModule,
+    MatIconModule,
+    FormsModule,
+    MatSnackBarModule,
+    AdminPageShellComponent
   ],
   templateUrl: './admin-sites.html'
 })
@@ -39,8 +39,9 @@ export class AdminSites implements OnInit {
   search = signal('');
   selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   selectedCity = signal<string>('ALL');
-  addingClosure = signal<any | null>(null);
 
+  addingClosure = signal<any | null>(null);
+  editingSchedule = signal<any | null>(null);
   originalSchedule = signal<any | null>(null);
 
   closureForm = signal({
@@ -52,7 +53,6 @@ export class AdminSites implements OnInit {
     repeatUntil: ''
   });
 
-  editingSchedule = signal<any | null>(null);
   scheduleForm = signal({
     id: null as number | null,
     siteId: null as number | null,
@@ -123,8 +123,8 @@ export class AdminSites implements OnInit {
 
       const matchesStatus =
         selectedStatus === 'ALL' ||
-        (selectedStatus === 'ACTIVE' && site.active) ||
-        (selectedStatus === 'INACTIVE' && !site.active);
+        (selectedStatus === 'ACTIVE' && site.active !== false) ||
+        (selectedStatus === 'INACTIVE' && site.active === false);
 
       const matchesCity =
         selectedCity === 'ALL' ||
@@ -177,8 +177,24 @@ export class AdminSites implements OnInit {
     });
   }
 
+  private buildSiteUpdatePayload(site: any, active: boolean) {
+    return {
+      ...site,
+      active,
+      name: site.name || site.clubName,
+      clubName: site.clubName || site.name,
+      city: site.city,
+      adresse: site.adresse,
+      codePostal: site.codePostal,
+      openingTime: site.openingTime || site.heureOuverture,
+      closingTime: site.closingTime || site.heureFermeture,
+      heureOuverture: site.heureOuverture || site.openingTime,
+      heureFermeture: site.heureFermeture || site.closingTime
+    };
+  }
+
   private reactivateSite(siteId: number) {
-    this.padelService.updateSite(siteId, { active: true }).subscribe({
+    this.padelService.reactivateSite(siteId).subscribe({
       next: () => {
         this.snackBar.open('Site réactivé avec succès.', 'OK', {
           duration: 3000
@@ -216,11 +232,11 @@ export class AdminSites implements OnInit {
   }
 
   activeSites() {
-    return this.visibleSites().filter(site => site.active).length;
+    return this.visibleSites().filter(site => site.active !== false).length;
   }
 
   inactiveSites() {
-    return this.visibleSites().filter(site => !site.active).length;
+    return this.visibleSites().filter(site => site.active === false).length;
   }
 
   totalCourts() {
@@ -277,11 +293,11 @@ export class AdminSites implements OnInit {
   }
 
   getSiteStatusLabel(site: any): string {
-    return site.active ? 'Actif' : 'Inactif';
+    return site.active !== false ? 'Actif' : 'Inactif';
   }
 
   getSiteStatusClass(site: any): string {
-    return site.active
+    return site.active !== false
       ? 'bg-emerald-100 text-emerald-700'
       : 'bg-red-100 text-red-700';
   }
@@ -292,6 +308,7 @@ export class AdminSites implements OnInit {
     this.padelService.getSiteSchedule(site.id, year).subscribe({
       next: schedule => {
         this.editingSchedule.set(site);
+
         this.originalSchedule.set({
           heure_debut: schedule.heure_debut,
           heure_fin: schedule.heure_fin
@@ -458,14 +475,11 @@ export class AdminSites implements OnInit {
 
       if (recurrence === 'WEEKLY') {
         current.setDate(current.getDate() + 7);
-      }
-      else if (recurrence === 'MONTHLY') {
+      } else if (recurrence === 'MONTHLY') {
         current.setMonth(current.getMonth() + 1);
-      }
-      else if (recurrence === 'YEARLY') {
+      } else if (recurrence === 'YEARLY') {
         current.setFullYear(current.getFullYear() + 1);
-      }
-      else {
+      } else {
         break;
       }
     }
@@ -482,6 +496,7 @@ export class AdminSites implements OnInit {
         'OK',
         { duration: 3000 }
       );
+
       return;
     }
 
@@ -495,6 +510,7 @@ export class AdminSites implements OnInit {
       this.snackBar.open('Aucune date de fermeture à créer.', 'OK', {
         duration: 3000
       });
+
       return;
     }
 
@@ -532,6 +548,7 @@ export class AdminSites implements OnInit {
 
   private parseLocalDate(value: string): Date {
     const [year, month, day] = value.split('-').map(Number);
+
     return new Date(year, month - 1, day);
   }
 

@@ -59,6 +59,13 @@ export class PadelService {
     );
   }
 
+reactivateSite(siteId: number) {
+  return this.httpClient.patch<any>(
+    `${this.apiBaseUrl}/sites/${siteId}/reactivate`,
+    null
+  );
+}
+
   updateSite(siteId: number, site: any) {
     return this.httpClient.put<any>(
       `${this.apiBaseUrl}/sites/${siteId}`,

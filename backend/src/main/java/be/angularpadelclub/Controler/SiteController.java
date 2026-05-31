@@ -59,6 +59,16 @@ public class SiteController {
         return siteService.updateSite(id, dto);
     }
 
+    @PatchMapping(
+            value = "/{id}/reactivate",
+            produces = "application/json"
+    )
+    public SiteDTO reactivateSite(
+            @PathVariable("id") int id
+    ) {
+        return siteService.reactivateSite(id);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteSite(

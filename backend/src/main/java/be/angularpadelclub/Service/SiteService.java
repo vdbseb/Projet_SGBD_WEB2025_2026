@@ -149,6 +149,30 @@ public class SiteService {
         siteRepository.save(site);
     }
 
+    @Transactional
+    public SiteDTO reactivateSite(int id) {
+        SiteEntity site = referenceLookupService.findSiteOrThrow(id);
+
+        if (site.isActif()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Le site est déjà actif."
+            );
+        }
+
+        site.setActif(true);
+
+        SiteEntity updatedSite = siteRepository.save(site);
+
+        int currentYear = LocalDate.now().getYear();
+
+        HoraireSiteEntity horaire = horaireSiteRepository
+                .findBySite_IdAndAnnee(updatedSite.getId(), currentYear)
+                .orElse(null);
+
+        return siteMapper.toDTO(updatedSite, horaire);
+    }
+
     private HoraireSiteEntity buildDefaultHoraireForSite(
             SiteEntity site,
             SiteDTO dto
