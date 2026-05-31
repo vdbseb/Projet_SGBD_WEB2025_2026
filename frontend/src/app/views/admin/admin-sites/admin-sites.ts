@@ -34,6 +34,16 @@ export class AdminSites implements OnInit {
   search = signal('');
   selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   selectedCity = signal<string>('ALL');
+  addingClosure = signal<any | null>(null);
+
+  closureForm = signal({
+    siteId: null as number | null,
+    dateFermeture: '',
+    raison: '',
+    global: false,
+    recurrence: 'ONCE',
+    repeatUntil: ''
+  });
 
   ngOnInit() {
     this.loadSites();
@@ -150,7 +160,7 @@ export class AdminSites implements OnInit {
   }
 
   private reactivateSite(siteId: number) {
-    this.padelService.updateSite(siteId, { active: true }).subscribe({
+    this.padelService.updateSite(siteId, {active: true}).subscribe({
       next: () => {
         this.snackBar.open('Site réactivé avec succès.', 'OK', {
           duration: 3000
@@ -256,5 +266,165 @@ export class AdminSites implements OnInit {
     return site.active
       ? 'bg-emerald-100 text-emerald-700'
       : 'bg-red-100 text-red-700';
+  }
+
+  editingSchedule = signal<any | null>(null);
+  scheduleForm = signal({
+    id: null as number | null,
+    siteId: null as number | null,
+    annee: new Date().getFullYear(),
+    heure_debut: '',
+    heure_fin: '',
+    duree_match_minutes: 90,
+    pause_minutes: 15
+  });
+
+  openScheduleEditor(site: any) {
+    const year = new Date().getFullYear();
+
+    this.padelService.getSiteSchedule(site.id, year).subscribe({
+      next: schedule => {
+        this.editingSchedule.set(site);
+
+        this.scheduleForm.set({
+          id: schedule.id,
+          siteId: schedule.siteId,
+          annee: schedule.annee,
+          heure_debut: schedule.heure_debut,
+          heure_fin: schedule.heure_fin,
+          duree_match_minutes: schedule.duree_match_minutes,
+          pause_minutes: schedule.pause_minutes
+        });
+      },
+      error: () => {
+        this.snackBar.open('Aucun horaire trouvé pour ce site.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
+  }
+
+  closeScheduleEditor() {
+    this.editingSchedule.set(null);
+  }
+
+  saveSchedule() {
+    const form = this.scheduleForm();
+
+    if (!form.id) {
+      return;
+    }
+
+    this.padelService.updateSiteSchedule(form.id, form).subscribe({
+      next: () => {
+        this.snackBar.open('Horaires modifiés avec succès.', 'OK', {
+          duration: 3000
+        });
+
+        this.closeScheduleEditor();
+        this.loadSites();
+      },
+      error: () => {
+        this.snackBar.open('Impossible de modifier les horaires.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
+  }
+
+  openClosureEditor(site: any) {
+    this.addingClosure.set(site);
+
+    this.closureForm.set({
+      siteId: site.id,
+      dateFermeture: '',
+      raison: '',
+      global: false,
+      recurrence: 'ONCE',
+      repeatUntil: ''
+    });
+  }
+
+  closeClosureEditor() {
+    this.addingClosure.set(null);
+  }
+
+  generateClosureDates(
+    startDate: string,
+    recurrence: string,
+    repeatUntil: string
+  ): string[] {
+    const dates: string[] = [];
+    const current = new Date(startDate);
+    const end = repeatUntil ? new Date(repeatUntil) : new Date(startDate);
+
+    while (current <= end) {
+      dates.push(current.toISOString().split('T')[0]);
+
+      if (recurrence === 'ONCE') {
+        break;
+      }
+
+      if (recurrence === 'WEEKLY') {
+        current.setDate(current.getDate() + 7);
+      }
+      else if (recurrence === 'MONTHLY') {
+        current.setMonth(current.getMonth() + 1);
+      }
+      else if (recurrence === 'YEARLY') {
+        current.setFullYear(current.getFullYear() + 1);
+      }
+      else {
+        break;
+      }
+    }
+
+    return dates;
+  }
+
+  saveClosure() {
+    const form = this.closureForm();
+
+    if (!form.siteId || !form.dateFermeture) {
+      this.snackBar.open('Choisis une date de fermeture.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const dates = this.generateClosureDates(
+      form.dateFermeture,
+      form.recurrence,
+      form.repeatUntil
+    );
+
+    let completed = 0;
+
+    dates.forEach(date => {
+      this.padelService.createSiteClosingDay({
+        siteId: form.siteId,
+        dateFermeture: date,
+        raison: form.raison,
+        global: form.global
+      }).subscribe({
+        next: () => {
+          completed++;
+
+          if (completed === dates.length) {
+            this.snackBar.open('Jour(s) de fermeture ajouté(s).', 'OK', {
+              duration: 3000
+            });
+
+            this.closeClosureEditor();
+            this.loadSites();
+          }
+        },
+        error: () => {
+          this.snackBar.open('Impossible d’ajouter une fermeture.', 'OK', {
+            duration: 4000
+          });
+        }
+      });
+    });
   }
 }

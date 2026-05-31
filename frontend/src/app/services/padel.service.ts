@@ -248,6 +248,13 @@ export class PadelService {
     );
   }
 
+  createSiteClosingDay(closure: any) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/jours-fermeture`,
+      closure
+    );
+  }
+
   getSiteClosingDays(siteId: number) {
     return this.httpClient.get<any[]>(
       `${this.apiBaseUrl}/jours-fermeture/site/${siteId}`
@@ -257,6 +264,13 @@ export class PadelService {
   getGlobalClosingDays() {
     return this.httpClient.get<any[]>(
       `${this.apiBaseUrl}/jours-fermeture/globales`
+    );
+  }
+
+  updateSiteSchedule(scheduleId: number, schedule: any) {
+    return this.httpClient.put<any>(
+      `${this.apiBaseUrl}/horaires-sites/${scheduleId}`,
+      schedule
     );
   }
 

@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="correction package name">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/cypress/e2e/public-match.cy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/cypress/e2e/public-match.cy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/cypress/e2e/reservation.cy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/cypress/e2e/reservation.cy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/cypress/e2e/test-guard-admn.cy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/cypress/e2e/test-guard-admn.cy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.ts" afterDir="false" />
+    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="ajout récurrence">
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +48,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="admin-modifier-horaires" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -64,10 +59,13 @@
     &quot;assignee&quot;: &quot;vdbseb&quot;
   }
 }</component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="0d4d2dee-2c03-4190-9ab6-b4515df46086" />
+  </component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/vdbseb/Projet_SGBD_WEB2025_2026.git&quot;,
-    &quot;accountId&quot;: &quot;bb4e93e7-14f1-4967-b9c5-2f969951372e&quot;
+    &quot;url&quot;: &quot;https://github.com/vdbseb/Projet_SGBD_WEB2025_2026&quot;,
+    &quot;accountId&quot;: &quot;0d4d2dee-2c03-4190-9ab6-b4515df46086&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -84,6 +82,65 @@
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.4233726561812636" />
+      <entry key="MS500" value="1.842062984637248" />
+      <entry key="S2" value="1.9797555577043957" />
+      <entry key="S5" value="2.3679410864377965" />
+      <entry key="S10" value="3.1430360434693236" />
+      <entry key="S30" value="4.588323684954335" />
+      <entry key="S60" value="5.253389425612688" />
+      <entry key="M2" value="6.310782251938576" />
+      <entry key="M5" value="10.782660497091287" />
+      <entry key="M10" value="17.393925344059117" />
+      <entry key="M15" value="22.224560303368747" />
+      <entry key="M30" value="30.482495556273314" />
+      <entry key="H1" value="36.94138949127428" />
+      <entry key="H2" value="41.07510220160012" />
+      <entry key="H4" value="43.427934587685534" />
+      <entry key="D1" value="45.55508240084279" />
+      <entry key="W1" value="45.93602860247756" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="1.361589027322828" />
+      <entry key="MS500" value="1.826589302652527" />
+      <entry key="S2" value="1.975632552715873" />
+      <entry key="S5" value="2.3659620195188253" />
+      <entry key="S10" value="3.141663295990389" />
+      <entry key="S30" value="4.5876021144039205" />
+      <entry key="S60" value="5.252927376241854" />
+      <entry key="M2" value="6.310242251301897" />
+      <entry key="M5" value="10.781920180219132" />
+      <entry key="M10" value="17.393305214215083" />
+      <entry key="M15" value="22.224060015358823" />
+      <entry key="M30" value="30.48218672893228" />
+      <entry key="H1" value="36.941215768156475" />
+      <entry key="H2" value="41.07500965575922" />
+      <entry key="H4" value="43.42788676043534" />
+      <entry key="D1" value="45.555074200917005" />
+      <entry key="W1" value="45.93602742527938" />
+    </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
@@ -111,7 +168,7 @@
     "Spring Boot.PadelBackApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "update-test-cypress",
+    "git-widget-placeholder": "124-admin-modifier-horaires-ajouter-jour-de-fermeture",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
@@ -128,7 +185,7 @@
     "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "reference.settings.project.maven.runner",
     "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\vharm\\IdeaProjects\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Users\\capta\\Documents\\Bachelier en Informatique de Gestion\\Année 3\\SGBD\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -148,7 +205,7 @@
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Controler" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.cypress:open">
+  <component name="RunManager" selected="Spring Boot.PadelBackApplication">
     <configuration name="PaiementServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="PadelBack" />
       <extension name="coverage">
@@ -200,9 +257,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Spring Boot.PadelBackApplication" />
         <item itemvalue="npm.cypress:open" />
         <item itemvalue="npm.start" />
-        <item itemvalue="Spring Boot.PadelBackApplication" />
         <item itemvalue="JUnit.PaiementServiceTest" />
       </list>
     </recent_temporary>
@@ -221,9 +278,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1779261223306</updated>
-      <workItem from="1780150626331" duration="573000" />
-      <workItem from="1780153488785" duration="98000" />
-      <workItem from="1780162473103" duration="2474000" />
+      <workItem from="1780162392515" duration="1411000" />
+      <workItem from="1780163939842" duration="3019000" />
     </task>
     <task id="LOCAL-00001" summary="Création db,&#10;dockerisation de la db&#10;verification des donnée">
       <option name="closed" value="true" />
@@ -249,7 +305,31 @@
       <option name="project" value="LOCAL" />
       <updated>1779446864134</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="modifier horaires site">
+      <option name="closed" value="true" />
+      <created>1780171142287</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1780171142287</updated>
+    </task>
+    <task id="LOCAL-00005" summary="ajout jour fermeture">
+      <option name="closed" value="true" />
+      <created>1780220373818</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1780220373818</updated>
+    </task>
+    <task id="LOCAL-00006" summary="ajout récurrence">
+      <option name="closed" value="true" />
+      <created>1780221482522</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1780221482522</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -270,14 +350,8 @@
     <MESSAGE value="Création db,&#10;dockerisation de la db&#10;verification des donnée" />
     <MESSAGE value="changement architecture &#10;Tentative de passage de H2 à postgr" />
     <MESSAGE value="correction package name" />
-    <option name="LAST_COMMIT_MESSAGE" value="correction package name" />
-  </component>
-  <component name="github-copilot-workspace">
-    <instructionFileLocations>
-      <option value=".github/instructions" />
-    </instructionFileLocations>
-    <promptFileLocations>
-      <option value=".github/prompts" />
-    </promptFileLocations>
+    <MESSAGE value="ajout jour fermeture" />
+    <MESSAGE value="ajout récurrence" />
+    <option name="LAST_COMMIT_MESSAGE" value="ajout récurrence" />
   </component>
 </project>
