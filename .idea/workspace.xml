@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="modifier horaires site">
+    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="ajout jour fermeture">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" afterDir="false" />
     </list>
@@ -85,23 +84,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.095013734663612" />
-      <entry key="MS500" value="3.0895374747472815" />
-      <entry key="S2" value="5.519555028083601" />
-      <entry key="S5" value="6.347978002153041" />
-      <entry key="S10" value="6.662986791752787" />
-      <entry key="S30" value="6.885112821103727" />
-      <entry key="S60" value="6.942492020814852" />
-      <entry key="M2" value="7.013783254188202" />
-      <entry key="M5" value="7.899212056973437" />
-      <entry key="M10" value="9.519213895727649" />
-      <entry key="M15" value="10.543248690020567" />
-      <entry key="M30" value="11.981018970801285" />
-      <entry key="H1" value="12.905019117733755" />
-      <entry key="H2" value="13.42928346154315" />
-      <entry key="H4" value="13.708585928967326" />
-      <entry key="D1" value="13.950567873707397" />
-      <entry key="W1" value="13.992916836823232" />
+      <entry key="MS100" value="1.1339716828170365" />
+      <entry key="MS500" value="1.668963777393056" />
+      <entry key="S2" value="1.9043801551723163" />
+      <entry key="S5" value="1.9684554281085564" />
+      <entry key="S10" value="2.169701906364966" />
+      <entry key="S30" value="3.7622287852063807" />
+      <entry key="S60" value="5.745404833427006" />
+      <entry key="M2" value="8.384026043712236" />
+      <entry key="M5" value="13.160818187971167" />
+      <entry key="M10" value="18.709880970337437" />
+      <entry key="M15" value="22.548535394237422" />
+      <entry key="M30" value="28.84469562522285" />
+      <entry key="H1" value="33.58078023908317" />
+      <entry key="H2" value="36.53947440873137" />
+      <entry key="H4" value="38.20099533193522" />
+      <entry key="D1" value="39.69005622476304" />
+      <entry key="W1" value="39.955467024346106" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -123,23 +122,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.071169616920382" />
-      <entry key="MS500" value="3.071995547962741" />
-      <entry key="S2" value="5.511595279272818" />
-      <entry key="S5" value="6.344323674390695" />
-      <entry key="S10" value="6.66107101445167" />
-      <entry key="S30" value="6.884453483080606" />
-      <entry key="S60" value="6.942159656291456" />
-      <entry key="M2" value="7.01361366931939" />
-      <entry key="M5" value="7.899121721303812" />
-      <entry key="M10" value="9.519147923619617" />
-      <entry key="M15" value="10.54319593083837" />
-      <entry key="M30" value="11.980986426527316" />
-      <entry key="H1" value="12.905000864213617" />
-      <entry key="H2" value="13.429273772619672" />
-      <entry key="H4" value="13.708580934751572" />
-      <entry key="D1" value="13.950567019713503" />
-      <entry key="W1" value="13.992916714283458" />
+      <entry key="MS100" value="0.8072231987280696" />
+      <entry key="MS500" value="1.5537611282918757" />
+      <entry key="S2" value="1.8701917856405492" />
+      <entry key="S5" value="1.95417911626287" />
+      <entry key="S10" value="2.161207544296979" />
+      <entry key="S30" value="3.7550897671567403" />
+      <entry key="S60" value="5.73984238051094" />
+      <entry key="M2" value="8.380440392287502" />
+      <entry key="M5" value="13.159107174949979" />
+      <entry key="M10" value="18.708949999639234" />
+      <entry key="M15" value="22.547887944041857" />
+      <entry key="M30" value="28.844351582384228" />
+      <entry key="H1" value="33.58060074198253" />
+      <entry key="H2" value="36.5393823247336" />
+      <entry key="H4" value="38.20094863247373" />
+      <entry key="D1" value="39.69004834308374" />
+      <entry key="W1" value="39.955465895881844" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -313,7 +312,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780171142287</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="ajout jour fermeture">
+      <option name="closed" value="true" />
+      <created>1780220373818</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1780220373818</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -334,6 +341,7 @@
     <MESSAGE value="Création db,&#10;dockerisation de la db&#10;verification des donnée" />
     <MESSAGE value="changement architecture &#10;Tentative de passage de H2 à postgr" />
     <MESSAGE value="correction package name" />
-    <option name="LAST_COMMIT_MESSAGE" value="correction package name" />
+    <MESSAGE value="ajout jour fermeture" />
+    <option name="LAST_COMMIT_MESSAGE" value="ajout jour fermeture" />
   </component>
 </project>

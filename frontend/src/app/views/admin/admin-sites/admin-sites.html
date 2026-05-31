@@ -273,6 +273,38 @@
               />
             </div>
 
+            <div>
+              <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+                Récurrence
+              </label>
+
+              <select
+                class="w-full border rounded-2xl px-4 py-3"
+                [ngModel]="closureForm().recurrence"
+                (ngModelChange)="closureForm.set({ ...closureForm(), recurrence: $event })"
+              >
+                <option value="ONCE">Unique</option>
+                <option value="WEEKLY">Hebdomadaire</option>
+                <option value="MONTHLY">Mensuel</option>
+                <option value="YEARLY">Annuel</option>
+              </select>
+            </div>
+
+            @if (closureForm().recurrence !== 'ONCE') {
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+                  Répéter jusqu’au
+                </label>
+
+                <input
+                  type="date"
+                  class="w-full border rounded-2xl px-4 py-3"
+                  [ngModel]="closureForm().repeatUntil"
+                  (ngModelChange)="closureForm.set({ ...closureForm(), repeatUntil: $event })"
+                />
+              </div>
+            }
+
           </div>
 
           <div class="flex justify-end gap-3 mt-8">

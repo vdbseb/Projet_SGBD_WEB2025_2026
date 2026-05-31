@@ -40,7 +40,9 @@ export class AdminSites implements OnInit {
     siteId: null as number | null,
     dateFermeture: '',
     raison: '',
-    global: false
+    global: false,
+    recurrence: 'ONCE',
+    repeatUntil: ''
   });
 
   ngOnInit() {
@@ -158,7 +160,7 @@ export class AdminSites implements OnInit {
   }
 
   private reactivateSite(siteId: number) {
-    this.padelService.updateSite(siteId, { active: true }).subscribe({
+    this.padelService.updateSite(siteId, {active: true}).subscribe({
       next: () => {
         this.snackBar.open('Site réactivé avec succès.', 'OK', {
           duration: 3000
@@ -273,12 +275,47 @@ export class AdminSites implements OnInit {
       siteId: site.id,
       dateFermeture: '',
       raison: '',
-      global: false
+      global: false,
+      recurrence: 'ONCE',
+      repeatUntil: ''
     });
   }
 
   closeClosureEditor() {
     this.addingClosure.set(null);
+  }
+
+  generateClosureDates(
+    startDate: string,
+    recurrence: string,
+    repeatUntil: string
+  ): string[] {
+    const dates: string[] = [];
+    const current = new Date(startDate);
+    const end = repeatUntil ? new Date(repeatUntil) : new Date(startDate);
+
+    while (current <= end) {
+      dates.push(current.toISOString().split('T')[0]);
+
+      if (recurrence === 'ONCE') {
+        break;
+      }
+
+      if (recurrence === 'WEEKLY') {
+        current.setDate(current.getDate() + 7);
+      }
+      else if (recurrence === 'MONTHLY') {
+        current.setMonth(current.getMonth() + 1);
+      }
+      else if (recurrence === 'YEARLY') {
+        current.setFullYear(current.getFullYear() + 1);
+      }
+      else {
+        break;
+      }
+    }
+
+    return dates;
   }
 
   saveClosure() {
@@ -291,20 +328,39 @@ export class AdminSites implements OnInit {
       return;
     }
 
-    this.padelService.createSiteClosingDay(form).subscribe({
-      next: () => {
-        this.snackBar.open('Jour de fermeture ajouté.', 'OK', {
-          duration: 3000
-        });
+    const dates = this.generateClosureDates(
+      form.dateFermeture,
+      form.recurrence,
+      form.repeatUntil
+    );
 
-        this.closeClosureEditor();
-        this.loadSites();
-      },
-      error: () => {
-        this.snackBar.open('Impossible d’ajouter ce jour de fermeture.', 'OK', {
-          duration: 4000
-        });
-      }
+    let completed = 0;
+
+    dates.forEach(date => {
+      this.padelService.createSiteClosingDay({
+        siteId: form.siteId,
+        dateFermeture: date,
+        raison: form.raison,
+        global: form.global
+      }).subscribe({
+        next: () => {
+          completed++;
+
+          if (completed === dates.length) {
+            this.snackBar.open('Jour(s) de fermeture ajouté(s).', 'OK', {
+              duration: 3000
+            });
+
+            this.closeClosureEditor();
+            this.loadSites();
+          }
+        },
+        error: () => {
+          this.snackBar.open('Impossible d’ajouter une fermeture.', 'OK', {
+            duration: 4000
+          });
+        }
+      });
     });
   }
 }
