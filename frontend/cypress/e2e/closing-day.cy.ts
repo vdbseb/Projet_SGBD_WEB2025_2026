@@ -1,6 +1,6 @@
 describe('Closing days flow', () => {
 
-  it('should block reservation on a closed day', () => {
+  it('should block reservation on the day after 18', () => {
 
     cy.visit('http://localhost:4200');
 
@@ -20,11 +20,27 @@ describe('Closing days flow', () => {
       .first()
       .click();
 
-    cy.contains('19')
-      .click();
-
-    cy.contains(/le centre est fermé à cette date/i)
+    cy.contains('button', /18/)
+      .scrollIntoView()
       .should('be.visible');
+
+    cy.get('button')
+      .then(($buttons) => {
+        const buttons = [...$buttons];
+
+        const index18 = buttons.findIndex((button) =>
+          button.textContent?.includes('18')
+        );
+
+        expect(index18).to.be.greaterThan(-1);
+
+        cy.wrap(buttons[index18 + 1])
+          .scrollIntoView()
+          .should('be.visible')
+          .and('be.disabled')
+          .and('contain.text', '19')
+          .and('contain.text', 'Fermeture globale');
+      });
 
   });
 

@@ -266,6 +266,10 @@ VALUES
     (5, 3, '2026-11-11', 'Fermeture exceptionnelle Arlon', false),
     (6, 4, '2026-09-27', 'Fermeture exceptionnelle Namur', false),
     (7, NULL, '2027-01-01', 'Nouvel an', true);
+--pour cypress
+INSERT INTO jour_fermeture (site_id, date_fermeture, global, raison)
+VALUES (1, '2026-06-19', false, 'Fermeture test Cypress')
+    ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- SEED : MEMBRES
