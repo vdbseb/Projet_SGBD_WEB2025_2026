@@ -29,23 +29,6 @@ public class MatchSchedulerService {
 
     private static final long SCHEDULER_FIXED_RATE_MS = 300_000L;
 
-    private static final List<ParticipationStatut> STATUTS_PARTICIPATION_ACTIVE = List.of(
-            ParticipationStatut.EN_ATTENTE_PAIEMENT,
-            ParticipationStatut.PAYEE
-    );
-
-    private static final List<MatchStatus> STATUTS_MATCH_RENDABLE_PUBLIC = List.of(
-            MatchStatus.PLANIFIE,
-            MatchStatus.OUVERT,
-            MatchStatus.COMPLET
-    );
-
-    private static final List<MatchStatus> STATUTS_MATCH_PUBLIC_FACTURABLE = List.of(
-            MatchStatus.PLANIFIE,
-            MatchStatus.OUVERT,
-            MatchStatus.COMPLET
-    );
-
     private final MatchRepository matchRepository;
     private final ParticipationRepository participationRepository;
     private final PenaliteRepository penaliteRepository;
@@ -90,7 +73,7 @@ public class MatchSchedulerService {
                 continue;
             }
 
-            if (!peutEtreRenduPublic(match)) {
+            if (!ClubBusinessRules.isPublicConvertibleMatch(match)) {
                 continue;
             }
 
@@ -140,7 +123,7 @@ public class MatchSchedulerService {
 
             boolean organisateur = estOrganisateur(match, participation);
 
-            if (peutEtreRenduPublic(match)) {
+            if (ClubBusinessRules.isPublicConvertibleMatch(match)) {
                 convertirEnMatchPublic(match);
             }
 
@@ -209,7 +192,7 @@ public class MatchSchedulerService {
     private List<MatchEntity> getMatchsPublicsPotentiellementFacturables() {
         List<MatchEntity> matchs = new ArrayList<>();
 
-        for (MatchStatus statut : STATUTS_MATCH_PUBLIC_FACTURABLE) {
+        for (MatchStatus statut : ClubBusinessRules.PUBLIC_BILLABLE_MATCH_STATUSES) {
             matchs.addAll(
                     matchRepository.findByTypeMatchAndStatut(
                             MatchType.PUBLIC,
@@ -241,26 +224,8 @@ public class MatchSchedulerService {
 
         return match.getParticipations()
                 .stream()
-                .filter(this::estParticipationActive)
+                .filter(ClubBusinessRules::isActiveParticipation)
                 .count();
-    }
-
-    private boolean estParticipationActive(
-            ParticipationEntity participation
-    ) {
-        return participation != null
-                && participation.getStatut() != null
-                && STATUTS_PARTICIPATION_ACTIVE.contains(
-                participation.getStatut()
-        );
-    }
-
-    private boolean peutEtreRenduPublic(MatchEntity match) {
-        return match != null
-                && match.getStatut() != null
-                && STATUTS_MATCH_RENDABLE_PUBLIC.contains(
-                match.getStatut()
-        );
     }
 
     private void convertirEnMatchPublic(MatchEntity match) {

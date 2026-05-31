@@ -48,8 +48,7 @@ public class ParticipationService {
     }
 
     public boolean isActiveParticipation(ParticipationStatut statut) {
-        return statut == ParticipationStatut.EN_ATTENTE_PAIEMENT
-                || statut == ParticipationStatut.PAYEE;
+        return ClubBusinessRules.isActiveParticipationStatus(statut);
     }
 
     private void validatePendingParticipationInput(

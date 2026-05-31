@@ -6,7 +6,6 @@ import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
-import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
 import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.ReservationMapper;
@@ -107,9 +106,14 @@ public class ReservationService {
                 dto.memberId()
         );
 
-        List<String> participantMatricules = normalizeParticipants(
+        reservationValidationService.validateParticipants(
                 dto.participantMatricules()
         );
+
+        List<String> participantMatricules =
+                ClubBusinessRules.normalizeParticipantMatricules(
+                        dto.participantMatricules()
+                );
 
         validateOrganizerIsNotInParticipants(
                 member,
@@ -123,10 +127,6 @@ public class ReservationService {
                         dto.date(),
                         dto.startTime()
                 );
-
-        reservationValidationService.validateParticipants(
-                participantMatricules
-        );
 
         LocalTime startTime = dto.startTime();
         LocalTime endTime = startTime.plusMinutes(
@@ -241,20 +241,6 @@ public class ReservationService {
         }
     }
 
-    private List<String> normalizeParticipants(
-            List<String> participantMatricules
-    ) {
-        if (participantMatricules == null) {
-            return List.of();
-        }
-
-        return participantMatricules.stream()
-                .filter(matricule -> matricule != null && !matricule.isBlank())
-                .map(matricule -> matricule.trim().toUpperCase())
-                .distinct()
-                .toList();
-    }
-
     private void validateOrganizerIsNotInParticipants(
             MembreEntity organizer,
             List<String> participantMatricules
@@ -264,7 +250,7 @@ public class ReservationService {
         }
 
         boolean organizerAlsoParticipant = participantMatricules.contains(
-                organizer.getMatricule().trim().toUpperCase()
+                ClubBusinessRules.normalizeMatricule(organizer.getMatricule())
         );
 
         if (organizerAlsoParticipant) {
@@ -295,25 +281,13 @@ public class ReservationService {
         match.setPrixTotal(ClubBusinessRules.DEFAULT_MATCH_PRICE_EUROS);
         match.setCreatedAt(LocalDateTime.now());
         match.setTypeMatch(matchType);
-        match.setStatut(resolveInitialMatchStatus(matchType, totalPlayers));
+        match.setStatut(ClubBusinessRules.resolveMatchStatusAfterParticipantCount(
+                matchType,
+                totalPlayers
+        ));
         match.setReservation(reservation);
 
         return matchRepository.save(match);
-    }
-
-    private MatchStatus resolveInitialMatchStatus(
-            MatchType matchType,
-            int totalPlayers
-    ) {
-        if (matchType == MatchType.PRIVE) {
-            return totalPlayers >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH
-                    ? MatchStatus.COMPLET
-                    : MatchStatus.PLANIFIE;
-        }
-
-        return totalPlayers >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH
-                ? MatchStatus.COMPLET
-                : MatchStatus.OUVERT;
     }
 
     private void validateManualCancellationAllowed(

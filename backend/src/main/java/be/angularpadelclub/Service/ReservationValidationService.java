@@ -48,230 +48,151 @@ public class ReservationValidationService {
             LocalDate date,
             LocalTime startTime
     ) {
-        validateInput(court, member, date, startTime);
+        validateRequiredReservationData(court, member, date, startTime);
         validateMemberCanReserve(member);
         validateCourtCanBeReserved(court);
-        validateSiteIsActive(court.getSite());
+        validateSiteCanReceiveReservations(court.getSite());
         validateReservationDelay(member, court, date);
         validateSiteIsOpen(court.getSite().getId(), date);
 
-        HoraireSiteEntity horaire = horaireSiteService.findBySiteIdAndAnnee(
-                court.getSite().getId(),
-                date.getYear()
-        );
+        HoraireSiteEntity schedule = findScheduleForReservation(court, date);
 
-        validateInsideOpeningHours(horaire, startTime);
-        validateCourtAvailable(court, date, startTime, horaire);
+        validateInsideOpeningHours(schedule, startTime);
+        validateCourtAvailable(court, date, startTime, schedule);
 
-        return horaire;
+        return schedule;
     }
 
     public void validateParticipants(List<String> participants) {
-        List<String> safeParticipants = participants == null
-                ? List.of()
-                : participants.stream()
-                .filter(matricule -> matricule != null && !matricule.isBlank())
-                .map(matricule -> matricule.trim().toUpperCase())
-                .toList();
+        List<String> normalizedParticipants =
+                ClubBusinessRules.normalizeParticipantMatricules(participants);
 
-        int nombreJoueurs = 1 + safeParticipants.size();
-
-        if (nombreJoueurs > ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Un match ne peut pas avoir plus de "
-                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
-                            + " joueurs."
-            );
-        }
-
-        if (!safeParticipants.isEmpty()
-                && nombreJoueurs != ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Un match privé doit avoir exactement "
-                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
-                            + " joueurs."
-            );
-        }
-
-        long nombreParticipantsDistincts = safeParticipants
-                .stream()
-                .distinct()
-                .count();
-
-        if (nombreParticipantsDistincts != safeParticipants.size()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Un même participant ne peut pas être ajouté plusieurs fois."
-            );
-        }
+        validateMaximumPlayerCount(normalizedParticipants);
+        validatePrivateMatchIsCompleteWhenParticipantsAreProvided(
+                normalizedParticipants
+        );
+        validateNoDuplicateParticipants(normalizedParticipants);
     }
 
-    private void validateInput(
+    private void validateRequiredReservationData(
             CourtEntity court,
             MembreEntity member,
             LocalDate date,
             LocalTime startTime
     ) {
         if (court == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Réservation impossible : le terrain est obligatoire."
-            );
+            throw badRequest("Réservation impossible : le terrain est obligatoire.");
         }
 
         if (member == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Réservation impossible : le membre est obligatoire."
-            );
+            throw badRequest("Réservation impossible : le membre est obligatoire.");
         }
 
         if (date == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Réservation impossible : la date est obligatoire."
-            );
+            throw badRequest("Réservation impossible : la date est obligatoire.");
         }
 
         if (startTime == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Réservation impossible : l'heure de début est obligatoire."
-            );
+            throw badRequest("Réservation impossible : l'heure de début est obligatoire.");
         }
     }
 
     private void validateMemberCanReserve(MembreEntity member) {
         if (!member.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Réservation impossible : membre inactif."
-            );
+            throw forbidden("Réservation impossible : membre inactif.");
         }
 
-        boolean hasBlockingPenalty =
-                penaliteRepository.existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
-                        member.getId(),
-                        LocalDate.now()
-                );
-
-        if (hasBlockingPenalty) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Réservation impossible : le membre a une pénalité active."
-            );
+        if (hasActivePenalty(member)) {
+            throw forbidden("Réservation impossible : le membre a une pénalité active.");
         }
 
-        boolean hasOpenDebt = detteMembreRepository.existsByMembre_IdAndStatut(
+        if (hasOpenDebt(member)) {
+            throw forbidden("Réservation impossible : le membre a un solde dû.");
+        }
+    }
+
+    private boolean hasActivePenalty(MembreEntity member) {
+        return penaliteRepository.existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
+                member.getId(),
+                LocalDate.now()
+        );
+    }
+
+    private boolean hasOpenDebt(MembreEntity member) {
+        return detteMembreRepository.existsByMembre_IdAndStatut(
                 member.getId(),
                 DetteStatut.OUVERTE
         );
-
-        if (hasOpenDebt) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Réservation impossible : le membre a un solde dû."
-            );
-        }
     }
 
     private void validateCourtCanBeReserved(CourtEntity court) {
+        if (court.getSite() == null) {
+            throw badRequest("Réservation impossible : le terrain n'est lié à aucun site.");
+        }
+
         if (!court.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : le terrain est désactivé."
-            );
+            throw conflict("Réservation impossible : le terrain est désactivé.");
         }
 
         if (court.isMaintenance()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : le terrain est en maintenance."
-            );
-        }
-
-        if (court.getSite() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Réservation impossible : le terrain n'est lié à aucun site."
-            );
+            throw conflict("Réservation impossible : le terrain est en maintenance.");
         }
     }
 
-    private void validateSiteIsActive(SiteEntity site) {
+    private void validateSiteCanReceiveReservations(SiteEntity site) {
         if (site == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Réservation impossible : le site est introuvable."
-            );
+            throw badRequest("Réservation impossible : le site est introuvable.");
         }
 
         if (!site.isActif()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : le site est désactivé."
-            );
+            throw conflict("Réservation impossible : le site est désactivé.");
         }
     }
 
     private void validateReservationDelay(
             MembreEntity member,
             CourtEntity court,
-            LocalDate date
+            LocalDate reservationDate
     ) {
         LocalDate today = LocalDate.now();
 
-        if (date.isBefore(today)) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : la date est dans le passé."
-            );
+        if (reservationDate.isBefore(today)) {
+            throw conflict("Réservation impossible : la date est dans le passé.");
         }
 
         String matricule = member.getMatricule();
 
-        if (matricule == null || matricule.isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : le membre n'a pas de matricule."
-            );
+        if (ClubBusinessRules.isBlank(matricule)) {
+            throw conflict("Réservation impossible : le membre n'a pas de matricule.");
         }
 
-        String normalizedMatricule = matricule.trim().toUpperCase();
-
-        if (normalizedMatricule.startsWith("G")) {
-            validateGlobalMemberDelay(date, today);
+        if (ClubBusinessRules.isGlobalMemberMatricule(matricule)) {
+            validateGlobalMemberDelay(reservationDate, today);
             return;
         }
 
-        if (normalizedMatricule.startsWith("S")) {
+        if (ClubBusinessRules.isSiteMemberMatricule(matricule)) {
             validateSiteMemberCanReserveOnCourt(member, court);
-            validateSiteMemberDelay(date, today);
+            validateSiteMemberDelay(reservationDate, today);
             return;
         }
 
-        if (normalizedMatricule.startsWith("L")) {
-            validateFreeMemberDelay(date, today);
+        if (ClubBusinessRules.isFreeMemberMatricule(matricule)) {
+            validateFreeMemberDelay(reservationDate, today);
             return;
         }
 
-        throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                "Type de membre inconnu pour le matricule : " + matricule + "."
-        );
+        throw conflict("Type de membre inconnu pour le matricule : " + matricule + ".");
     }
 
     private void validateGlobalMemberDelay(
-            LocalDate date,
+            LocalDate reservationDate,
             LocalDate today
     ) {
-        if (date.isAfter(today.plusWeeks(
+        if (reservationDate.isAfter(today.plusWeeks(
                 ClubBusinessRules.GLOBAL_MEMBER_RESERVATION_WEEKS
         ))) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
+            throw forbidden(
                     "Un membre global ne peut réserver que "
                             + ClubBusinessRules.GLOBAL_MEMBER_RESERVATION_WEEKS
                             + " semaines à l'avance."
@@ -284,29 +205,22 @@ public class ReservationValidationService {
             CourtEntity court
     ) {
         if (member.getSite() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Un membre de site doit être lié à un site."
-            );
+            throw forbidden("Un membre de site doit être lié à un site.");
         }
 
         if (!member.getSite().getId().equals(court.getSite().getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Un membre de site ne peut réserver que sur son propre site."
-            );
+            throw forbidden("Un membre de site ne peut réserver que sur son propre site.");
         }
     }
 
     private void validateSiteMemberDelay(
-            LocalDate date,
+            LocalDate reservationDate,
             LocalDate today
     ) {
-        if (date.isAfter(today.plusWeeks(
+        if (reservationDate.isAfter(today.plusWeeks(
                 ClubBusinessRules.SITE_MEMBER_RESERVATION_WEEKS
         ))) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
+            throw forbidden(
                     "Un membre de site ne peut réserver que "
                             + ClubBusinessRules.SITE_MEMBER_RESERVATION_WEEKS
                             + " semaines à l'avance."
@@ -315,14 +229,13 @@ public class ReservationValidationService {
     }
 
     private void validateFreeMemberDelay(
-            LocalDate date,
+            LocalDate reservationDate,
             LocalDate today
     ) {
-        if (date.isAfter(today.plusDays(
+        if (reservationDate.isAfter(today.plusDays(
                 ClubBusinessRules.FREE_MEMBER_RESERVATION_DAYS
         ))) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
+            throw forbidden(
                     "Un membre libre ne peut réserver que "
                             + ClubBusinessRules.FREE_MEMBER_RESERVATION_DAYS
                             + " jours à l'avance."
@@ -334,36 +247,41 @@ public class ReservationValidationService {
             Integer siteId,
             LocalDate date
     ) {
-        boolean fermetureSite = jourFermetureService.existsBySiteAndDate(siteId, date);
-        boolean fermetureGlobale = jourFermetureService.existsGlobalByDate(date);
+        boolean isSiteClosed = jourFermetureService.existsBySiteAndDate(siteId, date);
+        boolean isGloballyClosed = jourFermetureService.existsGlobalByDate(date);
 
-        if (fermetureSite || fermetureGlobale) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : le site est fermé à cette date."
-            );
+        if (isSiteClosed || isGloballyClosed) {
+            throw conflict("Réservation impossible : le site est fermé à cette date.");
         }
     }
 
+    private HoraireSiteEntity findScheduleForReservation(
+            CourtEntity court,
+            LocalDate date
+    ) {
+        return horaireSiteService.findBySiteIdAndAnnee(
+                court.getSite().getId(),
+                date.getYear()
+        );
+    }
+
     private void validateInsideOpeningHours(
-            HoraireSiteEntity horaire,
+            HoraireSiteEntity schedule,
             LocalTime startTime
     ) {
-        if (horaire == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+        if (schedule == null) {
+            throw conflict(
                     "Réservation impossible : aucun horaire n'est défini pour ce site et cette année."
             );
         }
 
-        LocalTime endTime = startTime.plusMinutes(horaire.getDuree_match_minutes());
+        LocalTime endTime = startTime.plusMinutes(
+                schedule.getDuree_match_minutes()
+        );
 
-        if (startTime.isBefore(horaire.getHeure_debut())
-                || endTime.isAfter(horaire.getHeure_fin())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Réservation impossible : en dehors des heures d'ouverture."
-            );
+        if (startTime.isBefore(schedule.getHeure_debut())
+                || endTime.isAfter(schedule.getHeure_fin())) {
+            throw conflict("Réservation impossible : en dehors des heures d'ouverture.");
         }
     }
 
@@ -371,33 +289,50 @@ public class ReservationValidationService {
             CourtEntity court,
             LocalDate date,
             LocalTime startTime,
-            HoraireSiteEntity horaire
+            HoraireSiteEntity schedule
     ) {
-        LocalTime endTime = startTime.plusMinutes(horaire.getDuree_match_minutes());
-        LocalTime blockedEndTime = endTime.plusMinutes(horaire.getPause_minutes());
+        LocalTime endTime = startTime.plusMinutes(
+                schedule.getDuree_match_minutes()
+        );
+        LocalTime blockedEndTime = endTime.plusMinutes(
+                schedule.getPause_minutes()
+        );
 
         List<ReservationEntity> existingReservations =
                 reservationRepository.findByCourtAndDate(court, date);
 
-        for (ReservationEntity existing : existingReservations) {
-            if (canIgnoreExistingReservation(existing)) {
+        for (ReservationEntity existingReservation : existingReservations) {
+            if (canIgnoreExistingReservation(existingReservation)) {
                 continue;
             }
 
-            LocalTime existingBlockedEnd =
-                    existing.getEndTime().plusMinutes(horaire.getPause_minutes());
-
-            boolean overlap =
-                    startTime.isBefore(existingBlockedEnd)
-                            && blockedEndTime.isAfter(existing.getStartTime());
-
-            if (overlap) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
+            if (overlapsReservedSlotWithPause(
+                    startTime,
+                    blockedEndTime,
+                    existingReservation,
+                    schedule
+            )) {
+                throw conflict(
                         "Réservation impossible : ce terrain est déjà réservé sur ce créneau."
                 );
             }
         }
+    }
+
+    private boolean overlapsReservedSlotWithPause(
+            LocalTime requestedStartTime,
+            LocalTime requestedBlockedEndTime,
+            ReservationEntity existingReservation,
+            HoraireSiteEntity schedule
+    ) {
+        LocalTime existingBlockedEndTime = existingReservation
+                .getEndTime()
+                .plusMinutes(schedule.getPause_minutes());
+
+        return requestedStartTime.isBefore(existingBlockedEndTime)
+                && requestedBlockedEndTime.isAfter(
+                existingReservation.getStartTime()
+        );
     }
 
     private boolean canIgnoreExistingReservation(ReservationEntity existing) {
@@ -406,5 +341,55 @@ public class ReservationValidationService {
                 existing.getMatch() != null
                         && existing.getMatch().getStatut() == MatchStatus.ANNULE
         );
+    }
+
+    private void validateMaximumPlayerCount(List<String> participantMatricules) {
+        int totalPlayers = 1 + participantMatricules.size();
+
+        if (totalPlayers > ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
+            throw conflict(
+                    "Un match ne peut pas avoir plus de "
+                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
+                            + " joueurs."
+            );
+        }
+    }
+
+    private void validatePrivateMatchIsCompleteWhenParticipantsAreProvided(
+            List<String> participantMatricules
+    ) {
+        int totalPlayers = 1 + participantMatricules.size();
+
+        if (!participantMatricules.isEmpty()
+                && totalPlayers != ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
+            throw conflict(
+                    "Un match privé doit avoir exactement "
+                            + ClubBusinessRules.MAX_PLAYERS_PER_MATCH
+                            + " joueurs."
+            );
+        }
+    }
+
+    private void validateNoDuplicateParticipants(List<String> participantMatricules) {
+        long distinctParticipantCount = participantMatricules
+                .stream()
+                .distinct()
+                .count();
+
+        if (distinctParticipantCount != participantMatricules.size()) {
+            throw conflict("Un même participant ne peut pas être ajouté plusieurs fois.");
+        }
+    }
+
+    private ResponseStatusException badRequest(String message) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+    }
+
+    private ResponseStatusException forbidden(String message) {
+        return new ResponseStatusException(HttpStatus.FORBIDDEN, message);
+    }
+
+    private ResponseStatusException conflict(String message) {
+        return new ResponseStatusException(HttpStatus.CONFLICT, message);
     }
 }
