@@ -1,22 +1,7 @@
-<div class="min-h-screen bg-slate-50 p-8 md:p-12">
-
-  <a
-    routerLink="/admin"
-    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
-  >
-    <mat-icon>arrow_back</mat-icon>
-    Retour admin
-  </a>
-
-  <header class="mb-10">
-    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-      Statistiques
-    </h1>
-
-    <p class="text-slate-500 mt-2">
-      Reporting global de l’activité du club, des paiements et de la disponibilité des terrains.
-    </p>
-  </header>
+<app-admin-page-shell
+  title="Statistiques"
+  description="Reporting global de l’activité du club, des paiements et de la disponibilité des terrains."
+>
 
   <section class="bg-white border border-slate-100 rounded-4xl p-6 shadow-sm mb-8">
 
@@ -29,6 +14,7 @@
 
         <div class="flex flex-wrap gap-3">
           <button
+            type="button"
             (click)="setReportMode('YEAR')"
             class="px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest"
             [class]="reportMode() === 'YEAR'
@@ -39,6 +25,7 @@
           </button>
 
           <button
+            type="button"
             (click)="setReportMode('MONTH')"
             class="px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest"
             [class]="reportMode() === 'MONTH'
@@ -95,6 +82,7 @@
         }
 
         <button
+          type="button"
           (click)="resetFilters()"
           class="px-4 py-3 rounded-2xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
         >
@@ -120,8 +108,8 @@
 
       @if (maintenanceCourts() > 0) {
       <span class="px-4 py-2 rounded-2xl bg-red-50 text-red-700 font-bold">
-          {{ maintenanceCourts() }} terrain(s) en maintenance
-        </span>
+        {{ maintenanceCourts() }} terrain(s) en maintenance
+      </span>
       }
     </div>
 
@@ -272,13 +260,13 @@
         @for (item of monthlyRevenue(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-                <span class="font-bold text-slate-700">
-                  {{ item.label }}
-                </span>
+            <span class="font-bold text-slate-700">
+              {{ item.label }}
+            </span>
 
             <span class="font-black text-slate-900">
-                  {{ item.value }}€
-                </span>
+              {{ item.value }}€
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -310,13 +298,13 @@
         @for (item of monthlyReservations(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-                <span class="font-bold text-slate-700">
-                  {{ item.label }}
-                </span>
+            <span class="font-bold text-slate-700">
+              {{ item.label }}
+            </span>
 
             <span class="font-black text-slate-900">
-                  {{ item.value }}
-                </span>
+              {{ item.value }}
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -353,13 +341,13 @@
         @for (item of courtStatusItems(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-              <span class="font-bold text-slate-700">
-                {{ item.label }}
-              </span>
+            <span class="font-bold text-slate-700">
+              {{ item.label }}
+            </span>
 
             <span class="font-black text-slate-900">
-                {{ item.value }}
-              </span>
+              {{ item.value }}
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -396,13 +384,13 @@
         @for (item of paymentsByStatus(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-              <span class="font-bold text-slate-700">
-                {{ item.label }}
-              </span>
+            <span class="font-bold text-slate-700">
+              {{ item.label }}
+            </span>
 
             <span class="font-black text-slate-900">
-                {{ item.value }}
-              </span>
+              {{ item.value }}
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -438,13 +426,13 @@
         @for (item of reservationsBySite(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-              <span class="font-bold text-slate-700">
-                {{ item.label }}
-              </span>
+            <span class="font-bold text-slate-700">
+              {{ item.label }}
+            </span>
 
             <span class="font-black text-slate-900">
-                {{ item.value }}
-              </span>
+              {{ item.value }}
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -476,13 +464,13 @@
         @for (item of membersByType(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-              <span class="font-bold text-slate-700">
-                {{ item.label }}
-              </span>
+            <span class="font-bold text-slate-700">
+              {{ item.label }}
+            </span>
 
             <span class="font-black text-slate-900">
-                {{ item.value }}
-              </span>
+              {{ item.value }}
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -518,18 +506,18 @@
         @for (item of topCourts(); track item.label) {
         <div>
           <div class="flex justify-between text-sm mb-2">
-              <span>
-                <span class="font-bold text-slate-700">
-                  {{ item.label }}
-                </span>
-                <span class="text-slate-400">
-                  · {{ item.subLabel }}
-                </span>
+            <span>
+              <span class="font-bold text-slate-700">
+                {{ item.label }}
               </span>
+              <span class="text-slate-400">
+                · {{ item.subLabel }}
+              </span>
+            </span>
 
             <span class="font-black text-slate-900">
-                {{ item.value }}
-              </span>
+              {{ item.value }}
+            </span>
           </div>
 
           <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
@@ -689,4 +677,4 @@
 
   </section>
 
-</div>
+</app-admin-page-shell>

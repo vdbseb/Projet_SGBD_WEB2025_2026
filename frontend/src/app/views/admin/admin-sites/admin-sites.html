@@ -1,22 +1,7 @@
-<div class="min-h-screen bg-slate-50 p-8 md:p-12">
-
-  <a
-    routerLink="/admin"
-    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
-  >
-    <mat-icon>arrow_back</mat-icon>
-    Retour admin
-  </a>
-
-  <header class="mb-10">
-    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-      Sites
-    </h1>
-
-    <p class="text-slate-500 mt-2">
-      Gestion des centres Angular Padel Club.
-    </p>
-  </header>
+<app-admin-page-shell
+  title="Sites"
+  description="Gestion des centres Angular Padel Club."
+>
 
   <div class="bg-white border border-slate-100 rounded-4xl p-5 shadow-sm mb-8">
     <div class="flex flex-col xl:flex-row gap-4 xl:items-end">
@@ -62,6 +47,7 @@
         </select>
 
         <button
+          type="button"
           (click)="resetFilters()"
           class="px-4 py-4 rounded-2xl border border-slate-200 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900"
         >
@@ -85,12 +71,12 @@
         [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
       >
         <div class="absolute top-4 right-4">
-            <span
-              class="px-3 py-1 rounded-full text-xs font-black uppercase"
-              [class]="getSiteStatusClass(site)"
-            >
-              {{ getSiteStatusLabel(site) }}
-            </span>
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="getSiteStatusClass(site)"
+          >
+            {{ getSiteStatusLabel(site) }}
+          </span>
         </div>
       </div>
 
@@ -114,8 +100,8 @@
           </div>
 
           <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
-              {{ site.initial || site.city?.charAt(0) }}
-            </span>
+            {{ site.initial || site.city?.charAt(0) }}
+          </span>
         </div>
 
         <div class="bg-slate-50 rounded-2xl p-4 mb-5">
@@ -126,10 +112,10 @@
           <div class="flex items-center gap-2 text-slate-700 font-bold">
             <mat-icon class="text-base">schedule</mat-icon>
             <span>
-                {{ site.openingTime || site.heureOuverture || '—' }}
-                →
-                {{ site.closingTime || site.heureFermeture || '—' }}
-              </span>
+              {{ site.openingTime || site.heureOuverture || '—' }}
+              →
+              {{ site.closingTime || site.heureFermeture || '—' }}
+            </span>
           </div>
         </div>
 
@@ -184,6 +170,7 @@
 
         <div class="grid grid-cols-1 gap-3">
           <button
+            type="button"
             class="px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
             disabled
           >
@@ -191,6 +178,7 @@
           </button>
 
           <button
+            type="button"
             class="px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-widest"
             disabled
           >
@@ -198,11 +186,12 @@
           </button>
 
           <button
+            type="button"
             (click)="toggleSiteActive(site)"
             class="px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
             [class]="site.active !== false
-      ? 'bg-red-50 text-red-600 hover:bg-red-100'
-      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+              ? 'bg-red-50 text-red-600 hover:bg-red-100'
+              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
           >
             {{ site.active !== false ? 'Désactiver' : 'Réactiver' }}
           </button>
@@ -224,6 +213,7 @@
       </p>
 
       <button
+        type="button"
         (click)="resetFilters()"
         class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
       >
@@ -233,4 +223,4 @@
     }
   </div>
 
-</div>
+</app-admin-page-shell>

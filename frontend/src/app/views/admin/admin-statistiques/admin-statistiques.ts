@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +6,7 @@ import { forkJoin } from 'rxjs';
 
 import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
+import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-shell';
 
 type ReportMode = 'YEAR' | 'MONTH';
 
@@ -20,10 +20,10 @@ type ChartItem = {
   selector: 'app-admin-statistiques',
   standalone: true,
   imports: [
-    RouterLink,
     DatePipe,
     MatIconModule,
-    FormsModule
+    FormsModule,
+    AdminPageShellComponent
   ],
   templateUrl: './admin-statistiques.html'
 })
@@ -114,6 +114,7 @@ export class AdminStatistiques implements OnInit {
 
     this.reservations().forEach(reservation => {
       const year = this.getReservationDate(reservation).getFullYear();
+
       if (!Number.isNaN(year)) {
         years.add(year);
       }
@@ -649,12 +650,16 @@ export class AdminStatistiques implements OnInit {
     switch (status) {
       case 'EN_ATTENTE':
         return 'En attente';
+
       case 'VALIDE':
         return 'Validés';
+
       case 'REFUSE':
         return 'Refusés';
+
       case 'REMBOURSE':
         return 'Remboursés';
+
       default:
         return status;
     }

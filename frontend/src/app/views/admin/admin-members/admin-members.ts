@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -10,20 +9,22 @@ import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
 import { CreateMemberDialog } from './create-member-dialog/create-member-dialog';
 import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
+import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-shell';
+import { AdminViewMode, AdminViewToggleComponent } from '../shared/admin-view-toggle/admin-view-toggle';
 
 type MemberTypeFilter = 'ALL' | 'GLOBAL' | 'SITE' | 'LIBRE';
 type MemberStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
-type ViewMode = 'cards' | 'table';
 
 @Component({
   selector: 'app-admin-members',
   standalone: true,
   imports: [
-    RouterLink,
     MatIconModule,
     MatDialogModule,
     MatSnackBarModule,
-    FormsModule
+    FormsModule,
+    AdminPageShellComponent,
+    AdminViewToggleComponent
   ],
   templateUrl: './admin-members.html'
 })
@@ -40,7 +41,7 @@ export class AdminMembers implements OnInit {
   selectedType = signal<MemberTypeFilter>('ALL');
   selectedSiteId = signal<number | 'ALL'>('ALL');
   selectedStatus = signal<MemberStatusFilter>('ALL');
-  viewMode = signal<ViewMode>('cards');
+  viewMode = signal<AdminViewMode>('cards');
 
   ngOnInit() {
     this.initializeAdminScope();
@@ -245,12 +246,8 @@ export class AdminMembers implements OnInit {
     return '';
   }
 
-  showCardsView() {
-    this.viewMode.set('cards');
-  }
-
-  showTableView() {
-    this.viewMode.set('table');
+  setViewMode(mode: AdminViewMode) {
+    this.viewMode.set(mode);
   }
 
   resetFilters() {
