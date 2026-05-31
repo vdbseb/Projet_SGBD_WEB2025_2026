@@ -184,8 +184,8 @@
 
         <div class="grid grid-cols-1 gap-3">
           <button
-            class="px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
-            disabled
+            (click)="openScheduleEditor(site)"
+            class="px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest hover:bg-slate-700"
           >
             Modifier horaires
           </button>
@@ -330,4 +330,91 @@
     }
   </div>
 
+
+      @if (filteredSites().length === 0) {
+        <div class="col-span-full bg-white rounded-4xl p-10 text-center border border-slate-100 shadow-sm">
+          <mat-icon class="text-slate-300 text-5xl mb-3">search_off</mat-icon>
+
+          <h2 class="text-xl font-black text-slate-900 uppercase">
+            Aucun site trouvé
+          </h2>
+
+          <p class="text-slate-400 mt-2">
+            Modifie tes filtres ou réinitialise la recherche.
+          </p>
+
+          <button
+            (click)="resetFilters()"
+            class="mt-5 px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs tracking-widest"
+          >
+            Réinitialiser
+          </button>
+        </div>
+      }
+
+      @if (editingSchedule()) {
+        <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+          <div class="bg-white rounded-4xl p-8 w-full max-w-lg shadow-xl">
+
+            <h2 class="text-2xl font-black uppercase text-slate-900 mb-2">
+              Modifier horaires
+            </h2>
+
+            <p class="text-slate-500 mb-6">
+              {{ editingSchedule().clubName || editingSchedule().name }}
+            </p>
+
+            <div class="grid grid-cols-1 gap-4">
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+                  Heure ouverture
+                </label>
+
+                <input
+                  type="time"
+                  class="w-full border rounded-2xl px-4 py-3"
+                  [ngModel]="scheduleForm().heure_debut"
+                  (ngModelChange)="scheduleForm.set({ ...scheduleForm(), heure_debut: $event })"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+                  Heure fermeture
+                </label>
+
+                <input
+                  type="time"
+                  class="w-full border rounded-2xl px-4 py-3"
+                  [ngModel]="scheduleForm().heure_fin"
+                  (ngModelChange)="scheduleForm.set({ ...scheduleForm(), heure_fin: $event })"
+                />
+              </div>
+
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8">
+
+              <button
+                (click)="closeScheduleEditor()"
+                class="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-xs"
+              >
+                Annuler
+              </button>
+
+              <button
+                (click)="saveSchedule()"
+                class="px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs"
+              >
+                Enregistrer
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      }
+
+      </div>
 </div>

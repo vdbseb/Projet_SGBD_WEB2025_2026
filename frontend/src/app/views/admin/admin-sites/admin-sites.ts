@@ -268,6 +268,70 @@ export class AdminSites implements OnInit {
       : 'bg-red-100 text-red-700';
   }
 
+  editingSchedule = signal<any | null>(null);
+  scheduleForm = signal({
+    id: null as number | null,
+    siteId: null as number | null,
+    annee: new Date().getFullYear(),
+    heure_debut: '',
+    heure_fin: '',
+    duree_match_minutes: 90,
+    pause_minutes: 15
+  });
+
+  openScheduleEditor(site: any) {
+    const year = new Date().getFullYear();
+
+    this.padelService.getSiteSchedule(site.id, year).subscribe({
+      next: schedule => {
+        this.editingSchedule.set(site);
+
+        this.scheduleForm.set({
+          id: schedule.id,
+          siteId: schedule.siteId,
+          annee: schedule.annee,
+          heure_debut: schedule.heure_debut,
+          heure_fin: schedule.heure_fin,
+          duree_match_minutes: schedule.duree_match_minutes,
+          pause_minutes: schedule.pause_minutes
+        });
+      },
+      error: () => {
+        this.snackBar.open('Aucun horaire trouvé pour ce site.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
+  }
+
+  closeScheduleEditor() {
+    this.editingSchedule.set(null);
+  }
+
+  saveSchedule() {
+    const form = this.scheduleForm();
+
+    if (!form.id) {
+      return;
+    }
+
+    this.padelService.updateSiteSchedule(form.id, form).subscribe({
+      next: () => {
+        this.snackBar.open('Horaires modifiés avec succès.', 'OK', {
+          duration: 3000
+        });
+
+        this.closeScheduleEditor();
+        this.loadSites();
+      },
+      error: () => {
+        this.snackBar.open('Impossible de modifier les horaires.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
+  }
+
   openClosureEditor(site: any) {
     this.addingClosure.set(site);
 

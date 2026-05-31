@@ -8,6 +8,9 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +70,15 @@
     &quot;accountId&quot;: &quot;bb4e93e7-14f1-4967-b9c5-2f969951372e&quot;
   }
 }</component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="0d4d2dee-2c03-4190-9ab6-b4515df46086" />
+  </component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/vdbseb/Projet_SGBD_WEB2025_2026",
+    "accountId": "0d4d2dee-2c03-4190-9ab6-b4515df46086"
+  }
+}]]></component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -152,8 +164,6 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "JUnit.PaiementServiceTest.executor": "Run",
-    "Notification.DisplayName-DoNotAsk-No data sources detected": "No data sources detected",
-    "Notification.DoNotAsk-No data sources detected": "true",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
     "RequestMappingsPanelWidth0": "75",
@@ -167,6 +177,7 @@
     "Spring Boot.PadelBackApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "admin-modifier-horaires",
     "git-widget-placeholder": "124-admin-modifier-horaires-ajouter-jour-de-fermeture",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
@@ -177,11 +188,20 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
     "npm.cypress:open.executor": "Run",
     "npm.start.executor": "Run",
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\Users\\capta\\Documents\\Bachelier en Informatique de Gestion\\Année 3\\SGBD\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
     "settings.editor.selected.configurable": "reference.settings.project.maven.runner",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Users\\capta\\Documents\\Bachelier en Informatique de Gestion\\Année 3\\SGBD\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
@@ -266,7 +286,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.33514.17" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
       </set>
     </attachedChunks>
   </component>
@@ -322,6 +343,9 @@
     </task>
     <option name="localTasksCounter" value="6" />
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
