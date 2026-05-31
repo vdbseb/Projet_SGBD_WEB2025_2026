@@ -267,9 +267,15 @@
         </button>
 
         <button
-          type="button"
           (click)="saveSchedule()"
-          class="px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs"
+          [disabled]="!hasScheduleChanged()"
+          class="px-5 py-3 rounded-2xl font-black uppercase text-xs transition-all"
+          [class.bg-slate-900]="hasScheduleChanged()"
+          [class.text-white]="hasScheduleChanged()"
+          [class.hover:bg-slate-700]="hasScheduleChanged()"
+          [class.bg-slate-200]="!hasScheduleChanged()"
+          [class.text-slate-400]="!hasScheduleChanged()"
+          [class.cursor-not-allowed]="!hasScheduleChanged()"
         >
           Enregistrer
         </button>
@@ -298,6 +304,7 @@
           <input
             type="date"
             class="w-full border rounded-2xl px-4 py-3"
+            [min]="today"
             [ngModel]="closureForm().dateFermeture"
             (ngModelChange)="closureForm.set({ ...closureForm(), dateFermeture: $event })"
           />
@@ -360,9 +367,14 @@
         </button>
 
         <button
-          type="button"
           (click)="saveClosure()"
-          class="px-5 py-3 rounded-2xl bg-blue-600 text-white font-black uppercase text-xs"
+          [disabled]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
+          class="px-5 py-3 rounded-2xl font-black uppercase text-xs transition-all"
+          [class.bg-blue-600]="closureForm().raison?.trim() && closureForm().dateFermeture"
+          [class.text-white]="closureForm().raison?.trim() && closureForm().dateFermeture"
+          [class.bg-slate-200]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
+          [class.text-slate-400]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
+          [class.cursor-not-allowed]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
         >
           Ajouter
         </button>

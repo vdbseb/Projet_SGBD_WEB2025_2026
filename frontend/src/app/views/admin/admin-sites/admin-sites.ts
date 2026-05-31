@@ -28,6 +28,8 @@ export class AdminSites implements OnInit {
 
   authService = inject(AuthService);
 
+  today = new Date().toISOString().split('T')[0];
+
   sites = signal<any[]>([]);
   reservations = signal<any[]>([]);
 
@@ -35,6 +37,8 @@ export class AdminSites implements OnInit {
   selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   selectedCity = signal<string>('ALL');
   addingClosure = signal<any | null>(null);
+
+  originalSchedule = signal<any | null>(null);
 
   closureForm = signal({
     siteId: null as number | null,
@@ -285,6 +289,10 @@ export class AdminSites implements OnInit {
     this.padelService.getSiteSchedule(site.id, year).subscribe({
       next: schedule => {
         this.editingSchedule.set(site);
+        this.originalSchedule.set({
+          heure_debut: schedule.heure_debut,
+          heure_fin: schedule.heure_fin
+        });
 
         this.scheduleForm.set({
           id: schedule.id,
@@ -296,12 +304,34 @@ export class AdminSites implements OnInit {
           pause_minutes: schedule.pause_minutes
         });
       },
-      error: () => {
-        this.snackBar.open('Aucun horaire trouvé pour ce site.', 'OK', {
-          duration: 4000
-        });
+      error: error => {
+        this.snackBar.open(
+          getHttpErrorUserMessage(error),
+          'OK',
+          { duration: 5000 }
+        );
       }
     });
+  }
+
+  hasScheduleChanged(): boolean {
+    const original = this.originalSchedule();
+    const current = this.scheduleForm();
+
+    if (!original) {
+      return false;
+    }
+
+    const originalStart = original.heure_debut?.substring(0, 5);
+    const originalEnd = original.heure_fin?.substring(0, 5);
+
+    const currentStart = current.heure_debut?.substring(0, 5);
+    const currentEnd = current.heure_fin?.substring(0, 5);
+
+    return (
+      originalStart !== currentStart ||
+      originalEnd !== currentEnd
+    );
   }
 
   closeScheduleEditor() {
@@ -324,10 +354,12 @@ export class AdminSites implements OnInit {
         this.closeScheduleEditor();
         this.loadSites();
       },
-      error: () => {
-        this.snackBar.open('Impossible de modifier les horaires.', 'OK', {
-          duration: 4000
-        });
+      error: error => {
+        this.snackBar.open(
+          getHttpErrorUserMessage(error),
+          'OK',
+          { duration: 5000 }
+        );
       }
     });
   }
@@ -419,10 +451,12 @@ export class AdminSites implements OnInit {
             this.loadSites();
           }
         },
-        error: () => {
-          this.snackBar.open('Impossible d’ajouter une fermeture.', 'OK', {
-            duration: 4000
-          });
+        error: error => {
+          this.snackBar.open(
+            getHttpErrorUserMessage(error),
+            'OK',
+            { duration: 5000 }
+          );
         }
       });
     });
