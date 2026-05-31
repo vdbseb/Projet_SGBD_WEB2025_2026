@@ -31,7 +31,6 @@ import java.util.Optional;
 @Service
 public class PaiementService {
 
-    private static final int PAYMENT_EXPIRATION_MINUTES = 15;
     private static final String DEFAULT_CURRENCY = "EUR";
 
     private final PaiementRepository paiementRepository;
@@ -465,7 +464,7 @@ public class PaiementService {
         paiement.setMethode(PaiementMethode.CARTE);
         paiement.setStatut(PaiementStatut.EN_ATTENTE);
         paiement.setDateCreation(now);
-        paiement.setDateExpiration(now.plusMinutes(PAYMENT_EXPIRATION_MINUTES));
+        paiement.setDateExpiration(now.plusMinutes(ClubBusinessRules.PAYMENT_EXPIRATION_MINUTES));
 
         return paiement;
     }

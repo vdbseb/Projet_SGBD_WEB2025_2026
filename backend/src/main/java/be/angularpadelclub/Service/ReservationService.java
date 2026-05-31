@@ -6,7 +6,6 @@ import be.angularpadelclub.Entity.HoraireSiteEntity;
 import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.MembreEntity;
 import be.angularpadelclub.Entity.ReservationEntity;
-import be.angularpadelclub.Enum.MatchStatus;
 import be.angularpadelclub.Enum.MatchType;
 import be.angularpadelclub.Enum.ReservationStatus;
 import be.angularpadelclub.Mapper.ReservationMapper;
@@ -295,25 +294,13 @@ public class ReservationService {
         match.setPrixTotal(ClubBusinessRules.DEFAULT_MATCH_PRICE_EUROS);
         match.setCreatedAt(LocalDateTime.now());
         match.setTypeMatch(matchType);
-        match.setStatut(resolveInitialMatchStatus(matchType, totalPlayers));
+        match.setStatut(ClubBusinessRules.resolveMatchStatusAfterParticipantCount(
+                matchType,
+                totalPlayers
+        ));
         match.setReservation(reservation);
 
         return matchRepository.save(match);
-    }
-
-    private MatchStatus resolveInitialMatchStatus(
-            MatchType matchType,
-            int totalPlayers
-    ) {
-        if (matchType == MatchType.PRIVE) {
-            return totalPlayers >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH
-                    ? MatchStatus.COMPLET
-                    : MatchStatus.PLANIFIE;
-        }
-
-        return totalPlayers >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH
-                ? MatchStatus.COMPLET
-                : MatchStatus.OUVERT;
     }
 
     private void validateManualCancellationAllowed(

@@ -5,7 +5,6 @@ import be.angularpadelclub.Entity.MatchEntity;
 import be.angularpadelclub.Entity.ParticipationEntity;
 import be.angularpadelclub.Enum.DetteRaison;
 import be.angularpadelclub.Enum.DetteStatut;
-import be.angularpadelclub.Enum.ParticipationStatut;
 import be.angularpadelclub.Repository.DetteMembreRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -92,16 +91,10 @@ public class MatchBillingService {
 
         return match.getParticipations()
                 .stream()
-                .filter(this::estParticipationPayee)
+                .filter(ClubBusinessRules::isPaidParticipation)
                 .map(ParticipationEntity::getMontantDuCentimes)
                 .mapToInt(montant -> montant != null ? montant : 0)
                 .sum();
     }
 
-    private boolean estParticipationPayee(
-            ParticipationEntity participation
-    ) {
-        return participation != null
-                && participation.getStatut() == ParticipationStatut.PAYEE;
-    }
 }

@@ -18,12 +18,6 @@ import java.util.List;
 @Service
 public class MatchService {
 
-    private static final List<ParticipationStatut> ACTIVE_PARTICIPATION_STATUSES =
-            List.of(
-                    ParticipationStatut.EN_ATTENTE_PAIEMENT,
-                    ParticipationStatut.PAYEE
-            );
-
     private final MatchRepository matchRepository;
     private final ParticipationRepository participationRepository;
     private final PaiementService paiementService;
@@ -55,19 +49,7 @@ public class MatchService {
     ) {
         MatchEntity match = referenceLookupService.findMatchOrThrow(matchId);
 
-        if (match.getStatut() == MatchStatus.ANNULE) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Ce match est déjà annulé."
-            );
-        }
-
-        if (match.getStatut() == MatchStatus.TERMINE) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Impossible d'annuler un match terminé."
-            );
-        }
+        validateMatchCanBeCancelled(match);
 
         if (matricule == null || matricule.isBlank()) {
             throw new ResponseStatusException(
@@ -109,11 +91,14 @@ public class MatchService {
         int nombreParticipantsActifs =
                 participationRepository.countByMatch_IdAndStatutIn(
                         matchId,
-                        ACTIVE_PARTICIPATION_STATUSES
+                        ClubBusinessRules.ACTIVE_PARTICIPATION_STATUSES
                 );
 
         if (nombreParticipantsActifs >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
-            match.setStatut(MatchStatus.COMPLET);
+            match.setStatut(ClubBusinessRules.resolveMatchStatusAfterParticipantCount(
+                    match.getTypeMatch(),
+                    nombreParticipantsActifs
+            ));
             matchRepository.save(match);
 
             throw new ResponseStatusException(
@@ -150,7 +135,7 @@ public class MatchService {
                         .findFirstByMatch_IdAndMembre_IdAndStatutIn(
                                 matchId,
                                 memberId,
-                                ACTIVE_PARTICIPATION_STATUSES
+                                ClubBusinessRules.ACTIVE_PARTICIPATION_STATUSES
                         )
                         .orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.NOT_FOUND,
@@ -172,7 +157,7 @@ public class MatchService {
         int nombreParticipantsActifs =
                 participationRepository.countByMatch_IdAndStatutIn(
                         matchId,
-                        ACTIVE_PARTICIPATION_STATUSES
+                        ClubBusinessRules.ACTIVE_PARTICIPATION_STATUSES
                 );
 
         updateMatchStatusAfterParticipantCount(
@@ -181,6 +166,22 @@ public class MatchService {
         );
 
         matchRepository.save(match);
+    }
+
+    private void validateMatchCanBeCancelled(MatchEntity match) {
+        if (match.getStatut() == MatchStatus.ANNULE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Ce match est déjà annulé."
+            );
+        }
+
+        if (match.getStatut() == MatchStatus.TERMINE) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Impossible d'annuler un match terminé."
+            );
+        }
     }
 
     private void validateMatchCanBeJoined(MatchEntity match) {
@@ -239,7 +240,7 @@ public class MatchService {
                 participationRepository.existsByMatch_IdAndMembre_IdAndStatutIn(
                         matchId,
                         memberId,
-                        ACTIVE_PARTICIPATION_STATUSES
+                        ClubBusinessRules.ACTIVE_PARTICIPATION_STATUSES
                 );
 
         if (alreadyRegistered) {
@@ -254,17 +255,10 @@ public class MatchService {
             MatchEntity match,
             int nombreParticipantsActifs
     ) {
-        if (nombreParticipantsActifs >= ClubBusinessRules.MAX_PLAYERS_PER_MATCH) {
-            match.setStatut(MatchStatus.COMPLET);
-            return;
-        }
-
-        if (match.getTypeMatch() == MatchType.PUBLIC) {
-            match.setStatut(MatchStatus.OUVERT);
-            return;
-        }
-
-        match.setStatut(MatchStatus.PLANIFIE);
+        match.setStatut(ClubBusinessRules.resolveMatchStatusAfterParticipantCount(
+                match.getTypeMatch(),
+                nombreParticipantsActifs
+        ));
     }
 
     private boolean isOrganizer(
