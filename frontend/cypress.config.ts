@@ -1,6 +1,7 @@
 import { defineConfig } from "cypress";
 
 export default defineConfig({
+  projectId: 'ctvhjd',
   allowCypressEnv: false,
 
   e2e: {
