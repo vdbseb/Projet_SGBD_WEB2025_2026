@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { PadelService } from '../../../services/padel.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
+import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
 
 @Component({
   selector: 'app-admin-paiements',
@@ -16,7 +17,6 @@ import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
   templateUrl: './admin-paiements.html'
 })
 export class AdminPaiements implements OnInit {
-
   private padelService = inject(PadelService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
@@ -35,14 +35,32 @@ export class AdminPaiements implements OnInit {
   }
 
   private loadPayments() {
-    this.padelService.getPayments().subscribe(payments => {
-      this.payments.set(payments);
+    this.padelService.getPayments().subscribe({
+      next: payments => {
+        this.payments.set(payments);
+      },
+      error: error => {
+        this.payments.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 
   private loadMembers() {
-    this.padelService.getMembers().subscribe(members => {
-      this.members.set(members);
+    this.padelService.getMembers().subscribe({
+      next: members => {
+        this.members.set(members);
+      },
+      error: error => {
+        this.members.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 
@@ -237,18 +255,14 @@ export class AdminPaiements implements OnInit {
         next: () => {
           this.loadPayments();
 
-          this.snackBar.open(
-            'Paiement confirmé.',
-            'OK',
-            { duration: 3000 }
-          );
+          this.snackBar.open('Paiement confirmé.', 'OK', {
+            duration: 3000
+          });
         },
-        error: () => {
-          this.snackBar.open(
-            'Impossible de confirmer le paiement.',
-            'OK',
-            { duration: 4000 }
-          );
+        error: error => {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+            duration: 5000
+          });
         }
       });
     });
@@ -273,18 +287,14 @@ export class AdminPaiements implements OnInit {
         next: () => {
           this.loadPayments();
 
-          this.snackBar.open(
-            'Paiement refusé.',
-            'OK',
-            { duration: 3000 }
-          );
+          this.snackBar.open('Paiement refusé.', 'OK', {
+            duration: 3000
+          });
         },
-        error: () => {
-          this.snackBar.open(
-            'Impossible de refuser le paiement.',
-            'OK',
-            { duration: 4000 }
-          );
+        error: error => {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+            duration: 5000
+          });
         }
       });
     });
@@ -309,18 +319,14 @@ export class AdminPaiements implements OnInit {
         next: () => {
           this.loadPayments();
 
-          this.snackBar.open(
-            'Remboursement effectué.',
-            'OK',
-            { duration: 3000 }
-          );
+          this.snackBar.open('Remboursement effectué.', 'OK', {
+            duration: 3000
+          });
         },
-        error: () => {
-          this.snackBar.open(
-            'Impossible d’effectuer le remboursement.',
-            'OK',
-            { duration: 4000 }
-          );
+        error: error => {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+            duration: 5000
+          });
         }
       });
     });

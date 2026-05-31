@@ -3,11 +3,13 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { forkJoin } from 'rxjs';
 
 import { PadelService } from '../../../services/padel.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { AuthService } from '../../../services/auth.service';
+import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
 
 @Component({
   selector: 'app-admin-reservations',
@@ -18,6 +20,7 @@ import { AuthService } from '../../../services/auth.service';
 export class AdminReservations implements OnInit {
   private padelService = inject(PadelService);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   authService = inject(AuthService);
 
@@ -40,30 +43,37 @@ export class AdminReservations implements OnInit {
       courts: this.padelService.getCourts(),
       sites: this.padelService.getSites(),
       members: this.padelService.getMembers()
-    }).subscribe(({ reservations, courts, sites, members }) => {
-      this.courts.set(courts);
-      this.sites.set(sites);
-      this.members.set(members);
+    }).subscribe({
+      next: ({ reservations, courts, sites, members }) => {
+        this.courts.set(courts);
+        this.sites.set(sites);
+        this.members.set(members);
 
-      const admin = this.authService.currentAdmin();
+        const admin = this.authService.currentAdmin();
 
-      let visibleReservations = reservations;
+        let visibleReservations = reservations;
 
-      if (this.authService.isSiteAdmin()) {
-        visibleReservations = reservations.filter(reservation => {
-          const court = courts.find(c => c.id === reservation.courtId);
-          return court?.siteId === admin.siteId;
+        if (this.authService.isSiteAdmin()) {
+          visibleReservations = reservations.filter(reservation => {
+            const court = courts.find(c => c.id === reservation.courtId);
+            return court?.siteId === admin.siteId;
+          });
+        }
+
+        const sorted = visibleReservations.sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
+          const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
+
+          return dateA - dateB;
+        });
+
+        this.reservations.set(sorted);
+      },
+      error: error => {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
-
-      const sorted = visibleReservations.sort((a, b) => {
-        const dateA = new Date(`${a.date}T${a.startTime}`).getTime();
-        const dateB = new Date(`${b.date}T${b.startTime}`).getTime();
-
-        return dateA - dateB;
-      });
-
-      this.reservations.set(sorted);
     });
   }
 
@@ -280,9 +290,15 @@ export class AdminReservations implements OnInit {
           this.reservations.update(reservations =>
             reservations.filter(reservation => reservation.id !== reservationId)
           );
+
+          this.snackBar.open('Réservation supprimée.', 'OK', {
+            duration: 3000
+          });
         },
-        error: () => {
-          alert('Impossible de supprimer la réservation.');
+        error: error => {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+            duration: 5000
+          });
         }
       });
     });

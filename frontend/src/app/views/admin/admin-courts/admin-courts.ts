@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { FormsModule } from '@angular/forms';
+import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
 
 type CourtViewMode = 'CARDS' | 'TABLE';
 type CourtTypeFilter = 'ALL' | 'INDOOR' | 'OUTDOOR';
@@ -316,13 +317,8 @@ export class AdminCourts implements OnInit {
               { duration: 4500 }
             );
           },
-          error: (error: any) => {
-            const message =
-              error?.error?.detail ??
-              error?.error?.message ??
-              'Impossible de modifier la maintenance du terrain.';
-
-            this.snackBar.open(message, 'OK', {
+          error: error => {
+            this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
               duration: 5000
             });
           }
@@ -335,9 +331,11 @@ export class AdminCourts implements OnInit {
       next: sites => {
         this.sites.set(sites);
       },
-      error: () => {
-        this.snackBar.open('Impossible de charger les sites.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.sites.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -354,9 +352,11 @@ export class AdminCourts implements OnInit {
 
         this.courts.set(visibleCourts);
       },
-      error: () => {
-        this.snackBar.open('Impossible de charger les terrains.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.courts.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -367,9 +367,11 @@ export class AdminCourts implements OnInit {
       next: reservations => {
         this.reservations.set(reservations);
       },
-      error: () => {
-        this.snackBar.open('Impossible de charger les réservations.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.reservations.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });

@@ -74,17 +74,17 @@ export class PadelService {
     return this.httpClient.get<CourtDTO[]>(this.courtsUrl);
   }
 
-setCourtMaintenance(courtId: number, maintenance: boolean) {
-  return this.httpClient.patch<CourtDTO>(
-    `${this.courtsUrl}/${courtId}/maintenance`,
-    null,
-    {
-      params: {
-        maintenance
+  setCourtMaintenance(courtId: number, maintenance: boolean) {
+    return this.httpClient.patch<CourtDTO>(
+      `${this.courtsUrl}/${courtId}/maintenance`,
+      null,
+      {
+        params: {
+          maintenance
+        }
       }
-    }
-  );
-}
+    );
+  }
 
   // =========================
   // RÉSERVATIONS
@@ -170,7 +170,10 @@ setCourtMaintenance(courtId: number, maintenance: boolean) {
     );
   }
 
-  updateOwnMemberProfile(memberId: number, profile: { firstName: string | null; lastName: string | null; email: string | null }) {
+  updateOwnMemberProfile(
+    memberId: number,
+    profile: { firstName: string | null; lastName: string | null; email: string | null }
+  ) {
     return this.httpClient.patch<any>(
       `${this.apiBaseUrl}/members/${memberId}/profile`,
       profile
@@ -190,11 +193,11 @@ setCourtMaintenance(courtId: number, maintenance: boolean) {
     );
   }
 
-getActiveMemberPenalties(memberId: number) {
-  return this.httpClient.get<any[]>(
-    `${this.apiBaseUrl}/penalites/member/${memberId}/active`
-  );
-}
+  getActiveMemberPenalties(memberId: number) {
+    return this.httpClient.get<any[]>(
+      `${this.apiBaseUrl}/penalites/member/${memberId}/active`
+    );
+  }
 
   // =========================
   // ADMINISTRATEURS
@@ -203,6 +206,12 @@ getActiveMemberPenalties(memberId: number) {
   getAdministrators() {
     return this.httpClient.get<any[]>(
       `${this.apiBaseUrl}/administrateurs`
+    );
+  }
+
+  getAdministratorByMatricule(matricule: string) {
+    return this.httpClient.get<any>(
+      `${this.apiBaseUrl}/administrateurs/matricule/${matricule}`
     );
   }
 
@@ -282,12 +291,12 @@ getActiveMemberPenalties(memberId: number) {
     );
   }
 
-initierPaiementPourParticipation(participationId: number) {
-  return this.httpClient.post<any>(
-    `${this.apiBaseUrl}/paiements/participation/${participationId}/initier`,
-    {}
-  );
-}
+  initierPaiementPourParticipation(participationId: number) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/paiements/participation/${participationId}/initier`,
+      {}
+    );
+  }
 
   // =========================
   // MAPPERS FRONT
@@ -326,11 +335,14 @@ initierPaiementPourParticipation(participationId: number) {
     switch (city.toLowerCase()) {
       case 'bruxelles':
         return 'images/bruxelles.jpg';
+
       case 'liège':
       case 'liege':
         return 'images/liege.jpg';
+
       case 'arlon':
         return 'images/arlon.jpg';
+
       default:
         return 'images/bruxelles.jpg';
     }

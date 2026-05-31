@@ -4,11 +4,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../services/auth.service';
 import { PadelService } from '../../../services/padel.service';
 import { PlayerWalletCard } from '../../player-wallet-card/player-wallet-card';
+import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
+import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
 
 @Component({
   selector: 'app-member-dashboard',
@@ -28,6 +31,7 @@ export class MemberDashboard implements OnInit {
   private readonly padelService = inject(PadelService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   currentMember = this.authService.currentMember;
 
@@ -88,29 +92,54 @@ export class MemberDashboard implements OnInit {
 
     this.loading.set(true);
 
-    this.padelService.getMemberWallet(member.id).subscribe({
-      next: (wallet: any) => this.wallet.set(wallet),
-      error: () => this.showError('Impossible de charger le portefeuille membre.')
-    });
+    this.loadWallet(member.id);
+    this.loadActivePenalties(member.id);
+    this.loadReservations(member);
+    this.loadPayments(member);
+  }
 
-    this.padelService.getActiveMemberPenalties(member.id).subscribe({
-      next: (penalties: any[]) => this.activePenalties.set(penalties ?? []),
-      error: () => this.activePenalties.set([])
+  private loadWallet(memberId: number) {
+    this.padelService.getMemberWallet(memberId).subscribe({
+      next: (wallet: any) => {
+        this.wallet.set(wallet);
+      },
+      error: error => {
+        this.wallet.set(null);
+        this.showError(getHttpErrorUserMessage(error));
+      }
     });
+  }
 
+  private loadActivePenalties(memberId: number) {
+    this.padelService.getActiveMemberPenalties(memberId).subscribe({
+      next: (penalties: any[]) => {
+        this.activePenalties.set(penalties ?? []);
+      },
+      error: error => {
+        this.activePenalties.set([]);
+        this.showError(getHttpErrorUserMessage(error));
+      }
+    });
+  }
+
+  private loadReservations(member: any) {
     this.padelService.getAllReservations().subscribe({
       next: (reservations: any[]) => {
         this.reservations.set(
           (reservations ?? []).filter(reservation => this.isMemberReservation(reservation, member))
         );
+
         this.loading.set(false);
       },
-      error: () => {
+      error: error => {
+        this.reservations.set([]);
         this.loading.set(false);
-        this.showError('Impossible de charger les réservations du membre.');
+        this.showError(getHttpErrorUserMessage(error));
       }
     });
+  }
 
+  private loadPayments(member: any) {
     this.padelService.getPayments().subscribe({
       next: (payments: any[]) => {
         this.payments.set(
@@ -119,7 +148,10 @@ export class MemberDashboard implements OnInit {
             .sort((a, b) => this.getPaymentTime(b) - this.getPaymentTime(a))
         );
       },
-      error: () => this.payments.set([])
+      error: error => {
+        this.payments.set([]);
+        this.showError(getHttpErrorUserMessage(error));
+      }
     });
   }
 
@@ -153,6 +185,11 @@ export class MemberDashboard implements OnInit {
 
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
+
+      this.snackBar.open('Corrige les champs du formulaire avant d’enregistrer.', 'OK', {
+        duration: 4000
+      });
+
       return;
     }
 
@@ -164,11 +201,14 @@ export class MemberDashboard implements OnInit {
         this.resetProfileForm(updatedMember);
         this.profileEditMode.set(false);
         this.savingProfile.set(false);
-        this.snackBar.open('Profil mis à jour.', 'OK', { duration: 3000 });
+
+        this.snackBar.open('Profil mis à jour.', 'OK', {
+          duration: 3000
+        });
       },
-      error: () => {
+      error: error => {
         this.savingProfile.set(false);
-        this.showError('Impossible de mettre à jour le profil.');
+        this.showError(getHttpErrorUserMessage(error));
       }
     });
   }
@@ -184,52 +224,57 @@ export class MemberDashboard implements OnInit {
       return;
     }
 
-    this.payingDebts.set(true);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Régler les dettes',
+        message: `Confirmer le paiement de toutes les dettes ouvertes pour un total de ${this.amountDue()} € ?`,
+        confirmLabel: `Payer ${this.amountDue()} €`,
+        cancelLabel: 'Retour'
+      }
+    });
 
-    this.padelService.initierMemberDebtsPayment(member.id).subscribe({
-      next: (payment: any) => {
-        const paymentId = payment?.id ?? payment?.paiementId;
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (!confirmed) {
+        return;
+      }
 
-        if (!paymentId) {
-          this.payingDebts.set(false);
-          this.showError('Le paiement des dettes a été créé, mais son identifiant est introuvable.');
-          this.refreshDashboard();
-          return;
-        }
+      this.payingDebts.set(true);
 
-        this.padelService.confirmPayment(paymentId).subscribe({
-          next: () => {
-            this.snackBar.open('Toutes les dettes ouvertes ont été réglées.', 'OK', {
-              duration: 3500
-            });
+      this.padelService.initierMemberDebtsPayment(member.id).subscribe({
+        next: (payment: any) => {
+          const paymentId = payment?.id ?? payment?.paiementId;
 
+          if (!paymentId) {
             this.payingDebts.set(false);
+            this.showError('Le paiement des dettes a été créé, mais son identifiant est introuvable.');
             this.refreshDashboard();
-          },
-          error: (error: any) => {
-            this.payingDebts.set(false);
-
-            const message =
-              error?.error?.error ??
-              error?.error?.message ??
-              error?.error?.detail ??
-              'Le paiement a été créé, mais la confirmation a échoué.';
-
-            this.showError(message);
-            this.refreshDashboard();
+            return;
           }
+
+          this.confirmDebtsPayment(paymentId, member);
+        },
+        error: error => {
+          this.payingDebts.set(false);
+          this.showError(getHttpErrorUserMessage(error));
+          this.refreshDashboard();
+        }
+      });
+    });
+  }
+
+  private confirmDebtsPayment(paymentId: number, member: any) {
+    this.padelService.confirmPayment(paymentId).subscribe({
+      next: () => {
+        this.snackBar.open('Toutes les dettes ouvertes ont été réglées.', 'OK', {
+          duration: 3500
         });
-      },
-      error: (error: any) => {
+
         this.payingDebts.set(false);
-
-        const message =
-          error?.error?.error ??
-          error?.error?.message ??
-          error?.error?.detail ??
-          'Impossible de créer le paiement des dettes.';
-
-        this.showError(message);
+        this.refreshDashboard();
+      },
+      error: error => {
+        this.payingDebts.set(false);
+        this.showError(getHttpErrorUserMessage(error));
         this.refreshDashboard();
       }
     });
@@ -277,9 +322,16 @@ export class MemberDashboard implements OnInit {
 
     const total = this.getTotalReservationsToPayEuros();
 
-    const confirmed = window.confirm(
-      `Régler les matchs\n\nTu vas régler ${reservationsToPay.length} participation(s), pour un total de ${total} €. Confirmer le paiement ?`
-    );
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Régler les matchs',
+        message: `Tu vas régler ${reservationsToPay.length} participation(s), pour un total de ${total} €. Confirmer le paiement ?`,
+        confirmLabel: `Payer ${total} €`,
+        cancelLabel: 'Retour'
+      }
+    });
+
+    const confirmed = await firstValueFrom(dialogRef.afterClosed());
 
     if (!confirmed) {
       return;
@@ -316,14 +368,7 @@ export class MemberDashboard implements OnInit {
 
       this.refreshDashboard();
     } catch (error: any) {
-      const message =
-        error?.error?.error
-        ?? error?.error?.message
-        ?? error?.error?.detail
-        ?? error?.message
-        ?? 'Impossible de régler toutes les participations.';
-
-      this.showError(message);
+      this.showError(getHttpErrorUserMessage(error));
       this.refreshDashboard();
     } finally {
       this.payingAllReservations.set(false);
@@ -367,12 +412,16 @@ export class MemberDashboard implements OnInit {
     switch (reason) {
       case 'PARTICIPATION_IMPAYEE':
         return 'Participation impayée';
+
       case 'SOLDE_ORGANISATEUR':
         return 'Solde organisateur non réglé';
+
       case 'MATCH_PRIVE_INCOMPLET':
         return 'Match privé incomplet';
+
       case 'ORGANISATEUR_NON_PAYE':
         return 'Organisateur non payé dans les délais';
+
       default:
         return this.cleanDebtLabel(reason || 'Dette à régler');
     }
@@ -476,12 +525,16 @@ export class MemberDashboard implements OnInit {
     switch (rawReason) {
       case 'MATCH_PRIVE_INCOMPLET':
         return 'Match privé incomplet';
+
       case 'ORGANISATEUR_NON_PAYE':
         return 'Organisateur non payé dans les délais';
+
       case 'PARTICIPATION_IMPAYEE':
         return 'Participation non payée dans les délais';
+
       case 'SOLDE_ORGANISATEUR':
         return 'Solde organisateur non réglé';
+
       default:
         return this.cleanSentence(rawReason || 'Pénalité de réservation');
     }
@@ -568,7 +621,9 @@ export class MemberDashboard implements OnInit {
 
     const message = `${this.getPenaltySummary(penalty)} Raison : ${this.getPenaltyReason(penalty)}.`;
 
-    this.snackBar.open(message, 'OK', { duration: 7000 });
+    this.snackBar.open(message, 'OK', {
+      duration: 7000
+    });
   }
 
   getTypeLabel(member: any): string {
@@ -630,13 +685,17 @@ export class MemberDashboard implements OnInit {
     switch (status) {
       case 'VALIDE':
         return 'bg-emerald-100 text-emerald-700';
+
       case 'EN_ATTENTE':
         return 'bg-amber-100 text-amber-700';
+
       case 'REMBOURSE':
         return 'bg-violet-100 text-violet-700';
+
       case 'REFUSE':
       case 'ANNULE':
         return 'bg-red-100 text-red-700';
+
       default:
         return 'bg-slate-100 text-slate-600';
     }
@@ -711,7 +770,9 @@ export class MemberDashboard implements OnInit {
   }
 
   private showError(message: string) {
-    this.snackBar.open(message, 'OK', { duration: 4500 });
+    this.snackBar.open(message, 'OK', {
+      duration: 5000
+    });
   }
 
   private cleanSentence(value: string): string {
@@ -732,10 +793,13 @@ function switchTypeLabel(code: string): string {
   switch (code?.toUpperCase()) {
     case 'GLOBAL':
       return 'Membre global';
+
     case 'SITE':
       return 'Membre du site';
+
     case 'LIBRE':
       return 'Membre libre';
+
     default:
       return 'Type inconnu';
   }

@@ -9,6 +9,7 @@ import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
 import { CreateMemberDialog } from './create-member-dialog/create-member-dialog';
+import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
 
 type MemberTypeFilter = 'ALL' | 'GLOBAL' | 'SITE' | 'LIBRE';
 type MemberStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
@@ -61,9 +62,11 @@ export class AdminMembers implements OnInit {
       next: members => {
         this.members.set(members);
       },
-      error: () => {
-        this.snackBar.open('Impossible de charger les membres.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.members.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -86,9 +89,11 @@ export class AdminMembers implements OnInit {
 
         this.sites.set(sites);
       },
-      error: () => {
-        this.snackBar.open('Impossible de charger les sites.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.sites.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -339,17 +344,8 @@ export class AdminMembers implements OnInit {
           this.loadMembers();
         },
         error: error => {
-          const message =
-            error?.error?.message ||
-            error?.error?.error ||
-            (
-              nextActive
-                ? 'Impossible de réactiver le membre.'
-                : 'Impossible de suspendre le membre.'
-            );
-
-          this.snackBar.open(message, 'OK', {
-            duration: 4000
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+            duration: 5000
           });
         }
       });
@@ -398,12 +394,7 @@ export class AdminMembers implements OnInit {
           this.loadMembers();
         },
         error: error => {
-          const message =
-            error?.error?.message ||
-            error?.error?.error ||
-            'Impossible de créer le membre.';
-
-          this.snackBar.open(message, 'OK', {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
             duration: 5000
           });
         }

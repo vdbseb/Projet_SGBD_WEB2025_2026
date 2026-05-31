@@ -10,6 +10,7 @@ import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { PlayerWalletCard } from '../player-wallet-card/player-wallet-card';
+import { getHttpErrorUserMessage } from '../../shared/api-error.util';
 
 @Component({
   selector: 'app-my-reservation',
@@ -60,10 +61,11 @@ export class MyReservations implements OnInit {
       next: (wallet: any) => {
         this.wallet.set(wallet);
       },
-      error: () => {
+      error: error => {
         this.wallet.set(null);
-        this.snackBar.open('Impossible de charger le compte joueur.', 'OK', {
-          duration: 4000
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -71,15 +73,31 @@ export class MyReservations implements OnInit {
 
   private loadSites() {
     this.padelService.getSites().subscribe({
-      next: (sites: any[]) => this.sites.set(sites ?? []),
-      error: () => this.sites.set([])
+      next: (sites: any[]) => {
+        this.sites.set(sites ?? []);
+      },
+      error: error => {
+        this.sites.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 
   private loadCourts() {
     this.padelService.getCourts().subscribe({
-      next: (courts: any[]) => this.courts.set(courts ?? []),
-      error: () => this.courts.set([])
+      next: (courts: any[]) => {
+        this.courts.set(courts ?? []);
+      },
+      error: error => {
+        this.courts.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 
@@ -97,10 +115,11 @@ export class MyReservations implements OnInit {
 
         this.reservations.set(filteredReservations);
       },
-      error: () => {
+      error: error => {
         this.reservations.set([]);
-        this.snackBar.open('Impossible de charger les réservations.', 'OK', {
-          duration: 4000
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -141,8 +160,10 @@ export class MyReservations implements OnInit {
     switch (status) {
       case 'today':
         return 'Aujourd’hui';
+
       case 'upcoming':
         return 'À venir';
+
       case 'past':
         return 'Passée';
     }
@@ -154,8 +175,10 @@ export class MyReservations implements OnInit {
     switch (status) {
       case 'today':
         return 'bg-orange-100 text-orange-700';
+
       case 'upcoming':
         return 'bg-blue-100 text-blue-700';
+
       case 'past':
         return 'bg-slate-100 text-slate-500';
     }
@@ -322,14 +345,7 @@ export class MyReservations implements OnInit {
 
       this.refreshMemberData(member);
     } catch (error: any) {
-      const message =
-        error?.error?.error
-        ?? error?.error?.message
-        ?? error?.error?.detail
-        ?? error?.message
-        ?? 'Impossible de régler toutes les participations.';
-
-      this.snackBar.open(message, 'OK', {
+      this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
         duration: 5000
       });
 
@@ -384,14 +400,8 @@ export class MyReservations implements OnInit {
 
           this.refreshMemberData(member);
         },
-        error: (error: any) => {
-          const message =
-            error?.error?.error
-            ?? error?.error?.message
-            ?? error?.error?.detail
-            ?? 'Impossible de quitter le match.';
-
-          this.snackBar.open(message, 'OK', {
+        error: error => {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
             duration: 5000
           });
 
@@ -446,14 +456,8 @@ export class MyReservations implements OnInit {
             duration: 3000
           });
         },
-        error: (error: any) => {
-          const message =
-            error?.error?.error
-            ?? error?.error?.message
-            ?? error?.error?.detail
-            ?? 'Impossible d’annuler la réservation.';
-
-          this.snackBar.open(message, 'OK', {
+        error: error => {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
             duration: 5000
           });
 
@@ -569,11 +573,13 @@ export class MyReservations implements OnInit {
 
           if (!paymentId) {
             this.payingReservationId.set(null);
+
             this.snackBar.open(
               'Le paiement a été créé, mais son identifiant est introuvable.',
               'OK',
               { duration: 5000 }
             );
+
             this.refreshMemberData(member);
             return;
           }
@@ -588,16 +594,10 @@ export class MyReservations implements OnInit {
 
               this.refreshMemberData(member);
             },
-            error: (error: any) => {
+            error: error => {
               this.payingReservationId.set(null);
 
-              const message =
-                error?.error?.error
-                ?? error?.error?.message
-                ?? error?.error?.detail
-                ?? 'Impossible de confirmer le paiement.';
-
-              this.snackBar.open(message, 'OK', {
+              this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
                 duration: 5000
               });
 
@@ -605,16 +605,10 @@ export class MyReservations implements OnInit {
             }
           });
         },
-        error: (error: any) => {
+        error: error => {
           this.payingReservationId.set(null);
 
-          const message =
-            error?.error?.error
-            ?? error?.error?.message
-            ?? error?.error?.detail
-            ?? 'Impossible d’initier le paiement.';
-
-          this.snackBar.open(message, 'OK', {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
             duration: 5000
           });
 

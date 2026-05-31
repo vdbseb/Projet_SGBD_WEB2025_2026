@@ -7,6 +7,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
+import { getHttpErrorUserMessage } from '../../shared/api-error.util';
 
 type PublicMatchFilter =
   | 'ALL'
@@ -57,27 +58,51 @@ export class PublicMatchs implements OnInit {
   filteredMatches = computed(() => this.buildFilteredMatches());
 
   ngOnInit() {
-    this.padelService.getCourts().subscribe({
-      next: (courts: any[]) => this.courts.set(courts ?? []),
-      error: () => this.courts.set([])
-    });
-
-    this.padelService.getSites().subscribe({
-      next: (sites: any[]) => this.sites.set(sites ?? []),
-      error: () => this.sites.set([])
-    });
-
+    this.loadCourts();
+    this.loadSites();
     this.loadReservations();
+  }
+
+  private loadCourts() {
+    this.padelService.getCourts().subscribe({
+      next: (courts: any[]) => {
+        this.courts.set(courts ?? []);
+      },
+      error: error => {
+        this.courts.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
+    });
+  }
+
+  private loadSites() {
+    this.padelService.getSites().subscribe({
+      next: (sites: any[]) => {
+        this.sites.set(sites ?? []);
+      },
+      error: error => {
+        this.sites.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
+    });
   }
 
   loadReservations() {
     this.padelService.getAllReservations().subscribe({
-      next: (reservations: any[]) => this.reservations.set(reservations ?? []),
-      error: () => {
+      next: (reservations: any[]) => {
+        this.reservations.set(reservations ?? []);
+      },
+      error: error => {
         this.reservations.set([]);
 
-        this.snackBar.open('Impossible de charger les matchs publics.', 'OK', {
-          duration: 4000
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
       }
     });
@@ -429,16 +454,10 @@ export class PublicMatchs implements OnInit {
 
           this.payJoinedParticipation(participationId);
         },
-        error: (error: any) => {
+        error: error => {
           this.loadingMatchId.set(null);
 
-          const message =
-            error?.error?.error
-            ?? error?.error?.message
-            ?? error?.error?.detail
-            ?? 'Impossible de rejoindre ce match.';
-
-          this.snackBar.open(message, 'OK', {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
             duration: 5000
           });
 
@@ -476,16 +495,10 @@ export class PublicMatchs implements OnInit {
 
             this.loadReservations();
           },
-          error: (error: any) => {
+          error: error => {
             this.loadingMatchId.set(null);
 
-            const message =
-              error?.error?.error
-              ?? error?.error?.message
-              ?? error?.error?.detail
-              ?? 'Tu as rejoint le match, mais la confirmation du paiement a échoué.';
-
-            this.snackBar.open(message, 'OK', {
+            this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
               duration: 6000
             });
 
@@ -493,16 +506,10 @@ export class PublicMatchs implements OnInit {
           }
         });
       },
-      error: (error: any) => {
+      error: error => {
         this.loadingMatchId.set(null);
 
-        const message =
-          error?.error?.error
-          ?? error?.error?.message
-          ?? error?.error?.detail
-          ?? 'Tu as rejoint le match, mais le paiement n’a pas pu être lancé.';
-
-        this.snackBar.open(message, 'OK', {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
           duration: 6000
         });
 
@@ -555,16 +562,10 @@ export class PublicMatchs implements OnInit {
 
           this.loadReservations();
         },
-        error: (error: any) => {
+        error: error => {
           this.loadingMatchId.set(null);
 
-          const message =
-            error?.error?.error
-            ?? error?.error?.message
-            ?? error?.error?.detail
-            ?? 'Impossible de quitter le match.';
-
-          this.snackBar.open(message, 'OK', {
+          this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
             duration: 5000
           });
 
