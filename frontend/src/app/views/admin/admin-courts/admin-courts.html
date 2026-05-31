@@ -1,52 +1,12 @@
-<div class="min-h-screen bg-slate-50 p-8 md:p-12">
-
-  <a
-    routerLink="/admin"
-    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
-  >
-    <mat-icon>arrow_back</mat-icon>
-    Retour admin
-  </a>
-
-  <header class="mb-10">
-    <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
-      <div>
-        <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-          Terrains
-        </h1>
-
-        <p class="text-slate-500 mt-2">
-          Liste des terrains, taux d’occupation estimé et état de maintenance.
-        </p>
-      </div>
-
-      <div class="flex gap-3">
-        <button
-          type="button"
-          (click)="setViewMode('CARDS')"
-          class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
-          [class]="viewMode() === 'CARDS'
-            ? 'bg-slate-900 text-white'
-            : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-100'"
-        >
-          <mat-icon class="text-base">dashboard</mat-icon>
-          Cartes
-        </button>
-
-        <button
-          type="button"
-          (click)="setViewMode('TABLE')"
-          class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
-          [class]="viewMode() === 'TABLE'
-            ? 'bg-slate-900 text-white'
-            : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-100'"
-        >
-          <mat-icon class="text-base">table_rows</mat-icon>
-          Tableau
-        </button>
-      </div>
-    </div>
-  </header>
+<app-admin-page-shell
+  title="Terrains"
+  description="Liste des terrains, taux d’occupation estimé et état de maintenance."
+>
+  <app-admin-view-toggle
+    admin-actions
+    [mode]="viewMode()"
+    (modeChange)="setViewMode($event)"
+  />
 
   <section class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
 
@@ -154,7 +114,7 @@
 
   </section>
 
-  @if (viewMode() === 'CARDS') {
+  @if (viewMode() === 'cards') {
   <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (court of filteredCourts(); track court.id) {
     <article
@@ -184,8 +144,8 @@
               class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
               [class]="getCourtStatusClass(court)"
             >
-                  {{ getCourtStatusLabel(court) }}
-                </span>
+              {{ getCourtStatusLabel(court) }}
+            </span>
           </div>
 
           <h2 class="font-black text-xl text-slate-900">
@@ -201,8 +161,8 @@
           class="px-3 py-1 rounded-full text-xs font-black uppercase"
           [class]="getCourtTypeClass(court)"
         >
-              {{ getCourtType(court) }}
-            </span>
+          {{ getCourtType(court) }}
+        </span>
       </div>
 
       @if (court.maintenance) {
@@ -275,7 +235,7 @@
   </section>
   }
 
-  @if (viewMode() === 'TABLE') {
+  @if (viewMode() === 'table') {
   <section class="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
 
     <div class="overflow-x-auto">
@@ -322,21 +282,21 @@
           </td>
 
           <td class="px-6 py-4">
-                  <span
-                    class="px-3 py-1 rounded-full text-xs font-black uppercase"
-                    [class]="getCourtTypeClass(court)"
-                  >
-                    {{ getCourtType(court) }}
-                  </span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-black uppercase"
+              [class]="getCourtTypeClass(court)"
+            >
+              {{ getCourtType(court) }}
+            </span>
           </td>
 
           <td class="px-6 py-4">
-                  <span
-                    class="px-3 py-1 rounded-full text-xs font-black uppercase"
-                    [class]="getCourtStatusClass(court)"
-                  >
-                    {{ getCourtStatusLabel(court) }}
-                  </span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-black uppercase"
+              [class]="getCourtStatusClass(court)"
+            >
+              {{ getCourtStatusLabel(court) }}
+            </span>
           </td>
 
           <td class="px-6 py-4 text-sm font-bold text-slate-700">
@@ -354,8 +314,8 @@
               </div>
 
               <span class="text-xs font-black text-slate-500">
-                      {{ getOccupationRate(court) }}%
-                    </span>
+                {{ getOccupationRate(court) }}%
+              </span>
             </div>
           </td>
 
@@ -411,4 +371,4 @@
   </div>
   }
 
-</div>
+</app-admin-page-shell>

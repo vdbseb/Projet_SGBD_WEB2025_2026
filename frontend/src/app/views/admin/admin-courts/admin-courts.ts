@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
@@ -8,15 +7,16 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { FormsModule } from '@angular/forms';
 import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
+import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-shell';
+import { AdminViewMode, AdminViewToggleComponent } from '../shared/admin-view-toggle/admin-view-toggle';
 
-type CourtViewMode = 'CARDS' | 'TABLE';
 type CourtTypeFilter = 'ALL' | 'INDOOR' | 'OUTDOOR';
 type CourtStatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
 
 @Component({
   selector: 'app-admin-courts',
   standalone: true,
-  imports: [RouterLink, MatIconModule, FormsModule],
+  imports: [MatIconModule, FormsModule, AdminPageShellComponent, AdminViewToggleComponent],
   templateUrl: './admin-courts.html'
 })
 export class AdminCourts implements OnInit {
@@ -34,7 +34,7 @@ export class AdminCourts implements OnInit {
   selectedSiteId = signal<number | 'ALL'>('ALL');
   selectedType = signal<CourtTypeFilter>('ALL');
   selectedStatus = signal<CourtStatusFilter>('ALL');
-  viewMode = signal<CourtViewMode>('CARDS');
+  viewMode = signal<AdminViewMode>('cards');
 
   ngOnInit() {
     this.loadSites();
@@ -94,7 +94,7 @@ export class AdminCourts implements OnInit {
     this.selectedStatus.set(status);
   }
 
-  setViewMode(mode: CourtViewMode) {
+  setViewMode(mode: AdminViewMode) {
     this.viewMode.set(mode);
   }
 
