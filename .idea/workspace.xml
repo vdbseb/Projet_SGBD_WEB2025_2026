@@ -4,13 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="correction package name">
+    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="modifier horaires site">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/cypress/e2e/public-match.cy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/cypress/e2e/public-match.cy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/cypress/e2e/reservation.cy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/cypress/e2e/reservation.cy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/cypress/e2e/test-guard-admn.cy.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/cypress/e2e/test-guard-admn.cy.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/date-selector/date-selector.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,7 +51,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="admin-modifier-horaires" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -85,6 +83,65 @@
     <commands />
     <urls />
   </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.095013734663612" />
+      <entry key="MS500" value="3.0895374747472815" />
+      <entry key="S2" value="5.519555028083601" />
+      <entry key="S5" value="6.347978002153041" />
+      <entry key="S10" value="6.662986791752787" />
+      <entry key="S30" value="6.885112821103727" />
+      <entry key="S60" value="6.942492020814852" />
+      <entry key="M2" value="7.013783254188202" />
+      <entry key="M5" value="7.899212056973437" />
+      <entry key="M10" value="9.519213895727649" />
+      <entry key="M15" value="10.543248690020567" />
+      <entry key="M30" value="11.981018970801285" />
+      <entry key="H1" value="12.905019117733755" />
+      <entry key="H2" value="13.42928346154315" />
+      <entry key="H4" value="13.708585928967326" />
+      <entry key="D1" value="13.950567873707397" />
+      <entry key="W1" value="13.992916836823232" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="1.071169616920382" />
+      <entry key="MS500" value="3.071995547962741" />
+      <entry key="S2" value="5.511595279272818" />
+      <entry key="S5" value="6.344323674390695" />
+      <entry key="S10" value="6.66107101445167" />
+      <entry key="S30" value="6.884453483080606" />
+      <entry key="S60" value="6.942159656291456" />
+      <entry key="M2" value="7.01361366931939" />
+      <entry key="M5" value="7.899121721303812" />
+      <entry key="M10" value="9.519147923619617" />
+      <entry key="M15" value="10.54319593083837" />
+      <entry key="M30" value="11.980986426527316" />
+      <entry key="H1" value="12.905000864213617" />
+      <entry key="H2" value="13.429273772619672" />
+      <entry key="H4" value="13.708580934751572" />
+      <entry key="D1" value="13.950567019713503" />
+      <entry key="W1" value="13.992916714283458" />
+    </decayedShown>
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
 }</component>
@@ -111,7 +168,7 @@
     "Spring Boot.PadelBackApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "update-test-cypress",
+    "git-widget-placeholder": "124-admin-modifier-horaires-ajouter-jour-de-fermeture",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
@@ -128,7 +185,7 @@
     "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "reference.settings.project.maven.runner",
     "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\vharm\\IdeaProjects\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Users\\capta\\Documents\\Bachelier en Informatique de Gestion\\Année 3\\SGBD\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -148,7 +205,7 @@
       <recent name="C:\Users\Sébastien\IdeaProjects\Projet_SGBD_WEB2025_2026\backend\src\main\java\be\angularpadelclub\Controler" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.cypress:open">
+  <component name="RunManager" selected="Spring Boot.PadelBackApplication">
     <configuration name="PaiementServiceTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="PadelBack" />
       <extension name="coverage">
@@ -200,9 +257,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Spring Boot.PadelBackApplication" />
         <item itemvalue="npm.cypress:open" />
         <item itemvalue="npm.start" />
-        <item itemvalue="Spring Boot.PadelBackApplication" />
         <item itemvalue="JUnit.PaiementServiceTest" />
       </list>
     </recent_temporary>
@@ -221,9 +278,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1779261223306</updated>
-      <workItem from="1780150626331" duration="573000" />
-      <workItem from="1780153488785" duration="98000" />
-      <workItem from="1780162473103" duration="2474000" />
+      <workItem from="1780162392515" duration="1411000" />
+      <workItem from="1780163939842" duration="3019000" />
     </task>
     <task id="LOCAL-00001" summary="Création db,&#10;dockerisation de la db&#10;verification des donnée">
       <option name="closed" value="true" />
@@ -249,7 +305,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779446864134</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="modifier horaires site">
+      <option name="closed" value="true" />
+      <created>1780171142287</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1780171142287</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -271,13 +335,5 @@
     <MESSAGE value="changement architecture &#10;Tentative de passage de H2 à postgr" />
     <MESSAGE value="correction package name" />
     <option name="LAST_COMMIT_MESSAGE" value="correction package name" />
-  </component>
-  <component name="github-copilot-workspace">
-    <instructionFileLocations>
-      <option value=".github/instructions" />
-    </instructionFileLocations>
-    <promptFileLocations>
-      <option value=".github/prompts" />
-    </promptFileLocations>
   </component>
 </project>

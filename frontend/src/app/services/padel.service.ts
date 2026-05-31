@@ -248,6 +248,13 @@ export class PadelService {
     );
   }
 
+  createSiteClosingDay(closure: any) {
+    return this.httpClient.post<any>(
+      `${this.apiBaseUrl}/jours-fermeture`,
+      closure
+    );
+  }
+
   getSiteClosingDays(siteId: number) {
     return this.httpClient.get<any[]>(
       `${this.apiBaseUrl}/jours-fermeture/site/${siteId}`

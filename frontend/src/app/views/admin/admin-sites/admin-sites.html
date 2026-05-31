@@ -191,8 +191,8 @@
           </button>
 
           <button
-            class="px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-widest"
-            disabled
+            (click)="openClosureEditor(site)"
+            class="px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-widest hover:bg-blue-100"
           >
             Ajouter fermeture
           </button>
@@ -230,6 +230,71 @@
         Réinitialiser
       </button>
     </div>
+    }
+
+    @if (addingClosure()) {
+      <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+        <div class="bg-white rounded-4xl p-8 w-full max-w-lg shadow-xl">
+
+          <h2 class="text-2xl font-black uppercase text-slate-900 mb-2">
+            Ajouter fermeture
+          </h2>
+
+          <p class="text-slate-500 mb-6">
+            {{ addingClosure().clubName || addingClosure().name }}
+          </p>
+
+          <div class="grid grid-cols-1 gap-4">
+
+            <div>
+              <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+                Date de fermeture
+              </label>
+
+              <input
+                type="date"
+                class="w-full border rounded-2xl px-4 py-3"
+                [ngModel]="closureForm().dateFermeture"
+                (ngModelChange)="closureForm.set({ ...closureForm(), dateFermeture: $event })"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+                Raison
+              </label>
+
+              <input
+                type="text"
+                class="w-full border rounded-2xl px-4 py-3"
+                placeholder="Ex : travaux, événement, jour férié..."
+                [ngModel]="closureForm().raison"
+                (ngModelChange)="closureForm.set({ ...closureForm(), raison: $event })"
+              />
+            </div>
+
+          </div>
+
+          <div class="flex justify-end gap-3 mt-8">
+
+            <button
+              (click)="closeClosureEditor()"
+              class="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-xs"
+            >
+              Annuler
+            </button>
+
+            <button
+              (click)="saveClosure()"
+              class="px-5 py-3 rounded-2xl bg-blue-600 text-white font-black uppercase text-xs"
+            >
+              Ajouter
+            </button>
+
+          </div>
+
+        </div>
+      </div>
     }
   </div>
 

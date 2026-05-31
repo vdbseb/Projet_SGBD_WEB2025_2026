@@ -34,6 +34,14 @@ export class AdminSites implements OnInit {
   search = signal('');
   selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   selectedCity = signal<string>('ALL');
+  addingClosure = signal<any | null>(null);
+
+  closureForm = signal({
+    siteId: null as number | null,
+    dateFermeture: '',
+    raison: '',
+    global: false
+  });
 
   ngOnInit() {
     this.loadSites();
@@ -256,5 +264,47 @@ export class AdminSites implements OnInit {
     return site.active
       ? 'bg-emerald-100 text-emerald-700'
       : 'bg-red-100 text-red-700';
+  }
+
+  openClosureEditor(site: any) {
+    this.addingClosure.set(site);
+
+    this.closureForm.set({
+      siteId: site.id,
+      dateFermeture: '',
+      raison: '',
+      global: false
+    });
+  }
+
+  closeClosureEditor() {
+    this.addingClosure.set(null);
+  }
+
+  saveClosure() {
+    const form = this.closureForm();
+
+    if (!form.siteId || !form.dateFermeture) {
+      this.snackBar.open('Choisis une date de fermeture.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    this.padelService.createSiteClosingDay(form).subscribe({
+      next: () => {
+        this.snackBar.open('Jour de fermeture ajouté.', 'OK', {
+          duration: 3000
+        });
+
+        this.closeClosureEditor();
+        this.loadSites();
+      },
+      error: () => {
+        this.snackBar.open('Impossible d’ajouter ce jour de fermeture.', 'OK', {
+          duration: 4000
+        });
+      }
+    });
   }
 }
