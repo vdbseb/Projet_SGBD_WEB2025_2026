@@ -20,7 +20,7 @@ describe('Public match flow', () => {
       .should('be.visible');
 
     cy.get('[data-cy="join-public-match-button"]')
-      .contains(/rejoindre ce match/i)
+      .contains(/payer 15€ et rejoindre/i)
       .first()
       .click();
 
