@@ -39,7 +39,7 @@ describe('Closing days flow', () => {
           .should('be.visible')
           .and('be.disabled')
           .and('contain.text', '19')
-          .and('contain.text', 'Fermeture globale');
+          .and('contain.text', 'Fermé');
       });
 
   });
