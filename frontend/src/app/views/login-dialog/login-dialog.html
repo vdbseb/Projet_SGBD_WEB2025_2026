@@ -6,17 +6,31 @@
   <input
     type="text"
     data-cy="login-input"
-    [placeholder]="isAdminMode() ? 'Ex: AG01' : 'Ex: G1234'"
+    [placeholder]="isAdminMode() ? 'Ex: AG01' : 'Ex: G0001'"
     class="w-full border rounded-lg px-4 py-3 mb-4 uppercase"
     [ngModel]="matricule()"
     (ngModelChange)="matricule.set($event)"
+    (keyup.enter)="login()"
   />
+
+  @if (isAdminMode()) {
+  <input
+    type="password"
+    data-cy="admin-password-input"
+    placeholder="Mot de passe"
+    class="w-full border rounded-lg px-4 py-3 mb-4"
+    [ngModel]="password()"
+    (ngModelChange)="password.set($event)"
+    (keyup.enter)="login()"
+  />
+  }
 
   <button
     data-cy="login-button"
-    class="bg-blue-600 text-white px-4 py-2 rounded-lg w-full"
+    class="bg-blue-600 text-white px-4 py-2 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed"
+    [disabled]="loading()"
     (click)="login()"
   >
-    Se connecter
+    {{ loading() ? 'Connexion...' : 'Se connecter' }}
   </button>
 </div>
