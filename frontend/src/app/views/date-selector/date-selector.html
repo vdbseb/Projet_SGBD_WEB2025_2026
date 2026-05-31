@@ -10,31 +10,31 @@
       type="button"
       (click)="selectDate(day.date)"
       [disabled]="isDateDisabled(day.date)"
-      [title]="getDisabledReason(day.date)"
+      [title]="getDisabledTitle(day.date)"
       [ngClass]="
-          isDateDisabled(day.date)
-            ? 'flex-shrink-0 w-20 md:w-24 h-28 md:h-32 flex flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 snap-start bg-slate-100 border-slate-100 text-slate-300 shadow-sm cursor-not-allowed opacity-60'
-            : isSelected(day.date)
-              ? 'flex-shrink-0 w-20 md:w-24 h-28 md:h-32 flex flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 snap-start cursor-pointer bg-emerald-500 border-emerald-500 text-white shadow-lg scale-105'
-              : 'flex-shrink-0 w-20 md:w-24 h-28 md:h-32 flex flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 snap-start cursor-pointer bg-white border-slate-100 text-slate-900 shadow-sm hover:border-slate-300'
-        ">
+        isDateDisabled(day.date)
+          ? 'flex-shrink-0 w-20 md:w-24 h-28 md:h-32 flex flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 snap-start bg-slate-100 border-slate-100 text-slate-300 shadow-sm cursor-not-allowed opacity-60'
+          : isSelected(day.date)
+            ? 'flex-shrink-0 w-20 md:w-24 h-28 md:h-32 flex flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 snap-start cursor-pointer bg-emerald-500 border-emerald-500 text-white shadow-lg scale-105'
+            : 'flex-shrink-0 w-20 md:w-24 h-28 md:h-32 flex flex-col items-center justify-center rounded-2xl border-2 transition-all duration-300 snap-start cursor-pointer bg-white border-slate-100 text-slate-900 shadow-sm hover:border-slate-300'
+      ">
 
-        <span class="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">
-          {{ day.dayName }}
-        </span>
+      <span class="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">
+        {{ day.dayName }}
+      </span>
 
       <span class="text-2xl font-black my-1">
-          {{ day.dayNumber }}
-        </span>
+        {{ day.dayNumber }}
+      </span>
 
       <span class="text-[9px] font-black uppercase tracking-wider">
-          {{ day.monthName }}
-        </span>
+        {{ day.monthName }}
+      </span>
 
       @if (isDateDisabled(day.date)) {
-      <span class="mt-2 text-[8px] font-black uppercase tracking-widest">
-            {{ getDisabledReason(day.date) }}
-          </span>
+      <span class="mt-2 text-[8px] font-black uppercase tracking-widest text-center px-1">
+        {{ getDisabledReason(day.date) }}
+      </span>
       }
     </button>
     }
