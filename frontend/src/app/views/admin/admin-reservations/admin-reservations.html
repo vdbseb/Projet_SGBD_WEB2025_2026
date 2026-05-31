@@ -1,22 +1,7 @@
-<div class="min-h-screen bg-slate-50 p-8 md:p-12">
-
-  <a
-    routerLink="/admin"
-    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
-  >
-    <mat-icon>arrow_back</mat-icon>
-    Retour admin
-  </a>
-
-  <header class="mb-10">
-    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-      Réservations
-    </h1>
-
-    <p class="text-slate-500 mt-2">
-      Vue globale des réservations.
-    </p>
-  </header>
+<app-admin-page-shell
+  title="Réservations"
+  description="Vue globale des réservations."
+>
 
   <div class="bg-white rounded-4xl p-6 shadow-sm border border-slate-100 mb-8">
     <input
@@ -72,25 +57,10 @@
       </div>
 
       <div class="flex gap-3 flex-wrap">
-        <button
-          (click)="showCardsView()"
-          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-          [class]="viewMode() === 'cards'
-            ? 'bg-slate-900 text-white'
-            : 'bg-slate-100 text-slate-500'"
-        >
-          Vue cartes
-        </button>
-
-        <button
-          (click)="showTableView()"
-          class="px-5 py-2 rounded-xl font-bold uppercase text-xs"
-          [class]="viewMode() === 'table'
-            ? 'bg-slate-900 text-white'
-            : 'bg-slate-100 text-slate-500'"
-        >
-          Vue tableau
-        </button>
+        <app-admin-view-toggle
+          [mode]="viewMode()"
+          (modeChange)="setViewMode($event)"
+        />
       </div>
 
     </div>
@@ -120,42 +90,42 @@
           class="px-3 py-1 rounded-full text-xs font-black uppercase"
           [class]="getStatusClass(reservation)"
         >
-              {{ getStatusLabel(reservation) }}
-            </span>
+          {{ getStatusLabel(reservation) }}
+        </span>
       </div>
 
       <div class="space-y-3 text-sm text-slate-500">
 
         <div class="flex gap-2 flex-wrap">
 
-              <span
-                class="px-3 py-1 rounded-full text-xs font-black uppercase"
-                [class]="getMatchTypeClass(reservation)"
-              >
-                {{ getMatchTypeLabel(reservation) }}
-              </span>
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="getMatchTypeClass(reservation)"
+          >
+            {{ getMatchTypeLabel(reservation) }}
+          </span>
 
           <span
             class="px-3 py-1 rounded-full text-xs font-black uppercase"
             [class]="getMatchStatusClass(reservation)"
           >
-                {{ getMatchStatusLabel(reservation) }}
-              </span>
+            {{ getMatchStatusLabel(reservation) }}
+          </span>
 
           <span
             class="px-3 py-1 rounded-full text-xs font-black uppercase"
             [class]="reservation.reservationStatus === 'CONFIRMEE'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : reservation.reservationStatus === 'ANNULEE'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-orange-100 text-orange-700'"
+              ? 'bg-emerald-100 text-emerald-700'
+              : reservation.reservationStatus === 'ANNULEE'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-orange-100 text-orange-700'"
           >
-                {{ reservation.reservationStatus }}
-              </span>
+            {{ reservation.reservationStatus }}
+          </span>
 
           <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-black uppercase">
-                {{ getMatchCapacityLabel(reservation) }}
-              </span>
+            {{ getMatchCapacityLabel(reservation) }}
+          </span>
 
         </div>
 
@@ -236,47 +206,47 @@
           </td>
 
           <td class="px-5 py-4 whitespace-nowrap">
-                  <span
-                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
-                    [class]="getMatchTypeClass(reservation)"
-                  >
-                    {{ getMatchTypeLabel(reservation) }}
-                  </span>
+            <span
+              class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+              [class]="getMatchTypeClass(reservation)"
+            >
+              {{ getMatchTypeLabel(reservation) }}
+            </span>
           </td>
 
           <td class="px-5 py-4">
             <div class="flex flex-wrap gap-2 min-w-56">
-                    <span
-                      class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
-                      [class]="getStatusClass(reservation)"
-                    >
-                      {{ getStatusLabel(reservation) }}
-                    </span>
+              <span
+                class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+                [class]="getStatusClass(reservation)"
+              >
+                {{ getStatusLabel(reservation) }}
+              </span>
 
               <span
                 class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
                 [class]="getMatchStatusClass(reservation)"
               >
-                      {{ getMatchStatusLabel(reservation) }}
-                    </span>
+                {{ getMatchStatusLabel(reservation) }}
+              </span>
 
               <span
                 class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
                 [class]="reservation.reservationStatus === 'CONFIRMEE'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : reservation.reservationStatus === 'ANNULEE'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-orange-100 text-orange-700'"
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : reservation.reservationStatus === 'ANNULEE'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-orange-100 text-orange-700'"
               >
-                      {{ reservation.reservationStatus }}
-                    </span>
+                {{ reservation.reservationStatus }}
+              </span>
             </div>
           </td>
 
           <td class="px-5 py-4 whitespace-nowrap">
-                  <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black uppercase">
-                    {{ getMatchCapacityLabel(reservation) }}
-                  </span>
+            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-black uppercase">
+              {{ getMatchCapacityLabel(reservation) }}
+            </span>
           </td>
 
           <td class="px-5 py-4 text-right whitespace-nowrap">
@@ -309,4 +279,4 @@
   </div>
   }
 
-</div>
+</app-admin-page-shell>

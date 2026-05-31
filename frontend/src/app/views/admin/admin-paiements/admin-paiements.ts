@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -9,11 +8,19 @@ import { MatDialog } from '@angular/material/dialog';
 import { PadelService } from '../../../services/padel.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
+import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-shell';
+import { AdminViewMode, AdminViewToggleComponent } from '../shared/admin-view-toggle/admin-view-toggle';
 
 @Component({
   selector: 'app-admin-paiements',
   standalone: true,
-  imports: [RouterLink, DatePipe, MatIconModule, FormsModule],
+  imports: [
+    DatePipe,
+    MatIconModule,
+    FormsModule,
+    AdminPageShellComponent,
+    AdminViewToggleComponent
+  ],
   templateUrl: './admin-paiements.html'
 })
 export class AdminPaiements implements OnInit {
@@ -27,7 +34,7 @@ export class AdminPaiements implements OnInit {
   search = signal('');
   selectedStatus = signal<'ALL' | 'EN_ATTENTE' | 'VALIDE' | 'REFUSE' | 'REMBOURSE' | 'ANNULE'>('ALL');
   selectedMethod = signal<string>('ALL');
-  viewMode = signal<'cards' | 'table'>('cards');
+  viewMode = signal<AdminViewMode>('cards');
 
   ngOnInit() {
     this.loadPayments();
@@ -91,12 +98,8 @@ export class AdminPaiements implements OnInit {
     });
   }
 
-  showCardsView() {
-    this.viewMode.set('cards');
-  }
-
-  showTableView() {
-    this.viewMode.set('table');
+  setViewMode(mode: AdminViewMode) {
+    this.viewMode.set(mode);
   }
 
   resetFilters() {

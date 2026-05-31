@@ -1,22 +1,7 @@
-<div class="min-h-screen bg-slate-50 p-8 md:p-12">
-
-  <a
-    routerLink="/admin"
-    class="inline-flex items-center gap-2 mb-8 text-slate-500 hover:text-slate-900 font-bold uppercase text-xs tracking-widest no-underline"
-  >
-    <mat-icon>arrow_back</mat-icon>
-    Retour admin
-  </a>
-
-  <header class="mb-10">
-    <h1 class="text-4xl font-black uppercase tracking-tighter text-slate-900">
-      Paiements
-    </h1>
-
-    <p class="text-slate-500 mt-2">
-      Suivi des paiements.
-    </p>
-  </header>
+<app-admin-page-shell
+  title="Paiements"
+  description="Suivi des paiements."
+>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
     <div class="bg-white rounded-4xl p-6 border border-slate-100 shadow-sm">
@@ -161,25 +146,10 @@
       </div>
 
       <div class="flex flex-wrap gap-3">
-        <button
-          (click)="showCardsView()"
-          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
-          [class]="viewMode() === 'cards'
-            ? 'bg-slate-900 text-white'
-            : 'bg-slate-100 text-slate-500'"
-        >
-          Vue cartes
-        </button>
-
-        <button
-          (click)="showTableView()"
-          class="px-4 py-2 rounded-xl font-black uppercase text-xs tracking-widest"
-          [class]="viewMode() === 'table'
-            ? 'bg-slate-900 text-white'
-            : 'bg-slate-100 text-slate-500'"
-        >
-          Vue tableau
-        </button>
+        <app-admin-view-toggle
+          [mode]="viewMode()"
+          (modeChange)="setViewMode($event)"
+        />
       </div>
 
     </div>
@@ -209,8 +179,8 @@
           class="px-3 py-1 rounded-full text-xs font-black uppercase"
           [class]="getStatusClass(payment)"
         >
-              {{ getStatusLabel(payment) }}
-            </span>
+          {{ getStatusLabel(payment) }}
+        </span>
       </div>
 
       <div class="space-y-2 text-sm text-slate-500">
@@ -318,12 +288,12 @@
           </td>
 
           <td class="px-5 py-4 whitespace-nowrap">
-                  <span
-                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
-                    [class]="getStatusClass(payment)"
-                  >
-                    {{ getStatusLabel(payment) }}
-                  </span>
+            <span
+              class="px-3 py-1 rounded-full text-[10px] font-black uppercase"
+              [class]="getStatusClass(payment)"
+            >
+              {{ getStatusLabel(payment) }}
+            </span>
           </td>
 
           <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
@@ -395,4 +365,4 @@
   </div>
   }
 
-</div>
+</app-admin-page-shell>
