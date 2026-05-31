@@ -2,10 +2,8 @@
   title="Sites"
   description="Gestion des centres Angular Padel Club."
 >
-
   <div class="bg-white border border-slate-100 rounded-4xl p-5 shadow-sm mb-8">
     <div class="flex flex-col xl:flex-row gap-4 xl:items-end">
-
       <div class="flex-1">
         <label class="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
           Recherche
@@ -21,7 +19,6 @@
       </div>
 
       <div class="flex flex-wrap gap-3">
-
         <select
           class="px-4 py-4 rounded-2xl border border-slate-200 bg-white text-xs font-black uppercase tracking-widest text-slate-600"
           [ngModel]="selectedStatus()"
@@ -53,7 +50,6 @@
         >
           Réinitialiser
         </button>
-
       </div>
     </div>
 
@@ -65,18 +61,17 @@
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
     @for (site of filteredSites(); track site.id) {
     <div class="bg-white border border-slate-100 rounded-4xl overflow-hidden shadow-sm">
-
       <div
         class="h-36 bg-cover bg-center relative"
         [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
       >
         <div class="absolute top-4 right-4">
-          <span
-            class="px-3 py-1 rounded-full text-xs font-black uppercase"
-            [class]="getSiteStatusClass(site)"
-          >
-            {{ getSiteStatusLabel(site) }}
-          </span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-black uppercase"
+              [class]="getSiteStatusClass(site)"
+            >
+              {{ getSiteStatusLabel(site) }}
+            </span>
         </div>
       </div>
 
@@ -100,8 +95,8 @@
           </div>
 
           <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
-            {{ site.initial || site.city?.charAt(0) }}
-          </span>
+              {{ site.initial || site.city?.charAt(0) }}
+            </span>
         </div>
 
         <div class="bg-slate-50 rounded-2xl p-4 mb-5">
@@ -112,10 +107,10 @@
           <div class="flex items-center gap-2 text-slate-700 font-bold">
             <mat-icon class="text-base">schedule</mat-icon>
             <span>
-              {{ site.openingTime || site.heureOuverture || '—' }}
-              →
-              {{ site.closingTime || site.heureFermeture || '—' }}
-            </span>
+                {{ site.openingTime || site.heureOuverture || '—' }}
+                →
+                {{ site.closingTime || site.heureFermeture || '—' }}
+              </span>
           </div>
         </div>
 
@@ -171,16 +166,16 @@
         <div class="grid grid-cols-1 gap-3">
           <button
             type="button"
-            class="px-4 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs uppercase tracking-widest"
-            disabled
+            (click)="openScheduleEditor(site)"
+            class="px-4 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest hover:bg-slate-700"
           >
             Modifier horaires
           </button>
 
           <button
             type="button"
-            class="px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-widest"
-            disabled
+            (click)="openClosureEditor(site)"
+            class="px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-widest hover:bg-blue-100"
           >
             Ajouter fermeture
           </button>
@@ -190,8 +185,8 @@
             (click)="toggleSiteActive(site)"
             class="px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
             [class]="site.active !== false
-              ? 'bg-red-50 text-red-600 hover:bg-red-100'
-              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+                ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
           >
             {{ site.active !== false ? 'Désactiver' : 'Réactiver' }}
           </button>
@@ -221,103 +216,158 @@
       </button>
     </div>
     }
-
-    @if (addingClosure()) {
-      <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
-        <div class="bg-white rounded-4xl p-8 w-full max-w-lg shadow-xl">
-
-          <h2 class="text-2xl font-black uppercase text-slate-900 mb-2">
-            Ajouter fermeture
-          </h2>
-
-          <p class="text-slate-500 mb-6">
-            {{ addingClosure().clubName || addingClosure().name }}
-          </p>
-
-          <div class="grid grid-cols-1 gap-4">
-
-            <div>
-              <label class="block text-xs font-black uppercase text-slate-400 mb-2">
-                Date de fermeture
-              </label>
-
-              <input
-                type="date"
-                class="w-full border rounded-2xl px-4 py-3"
-                [ngModel]="closureForm().dateFermeture"
-                (ngModelChange)="closureForm.set({ ...closureForm(), dateFermeture: $event })"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-black uppercase text-slate-400 mb-2">
-                Raison
-              </label>
-
-              <input
-                type="text"
-                class="w-full border rounded-2xl px-4 py-3"
-                placeholder="Ex : travaux, événement, jour férié..."
-                [ngModel]="closureForm().raison"
-                (ngModelChange)="closureForm.set({ ...closureForm(), raison: $event })"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-black uppercase text-slate-400 mb-2">
-                Récurrence
-              </label>
-
-              <select
-                class="w-full border rounded-2xl px-4 py-3"
-                [ngModel]="closureForm().recurrence"
-                (ngModelChange)="closureForm.set({ ...closureForm(), recurrence: $event })"
-              >
-                <option value="ONCE">Unique</option>
-                <option value="WEEKLY">Hebdomadaire</option>
-                <option value="MONTHLY">Mensuel</option>
-                <option value="YEARLY">Annuel</option>
-              </select>
-            </div>
-
-            @if (closureForm().recurrence !== 'ONCE') {
-              <div>
-                <label class="block text-xs font-black uppercase text-slate-400 mb-2">
-                  Répéter jusqu’au
-                </label>
-
-                <input
-                  type="date"
-                  class="w-full border rounded-2xl px-4 py-3"
-                  [ngModel]="closureForm().repeatUntil"
-                  (ngModelChange)="closureForm.set({ ...closureForm(), repeatUntil: $event })"
-                />
-              </div>
-            }
-
-          </div>
-
-          <div class="flex justify-end gap-3 mt-8">
-
-            <button
-              (click)="closeClosureEditor()"
-              class="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-xs"
-            >
-              Annuler
-            </button>
-
-            <button
-              (click)="saveClosure()"
-              class="px-5 py-3 rounded-2xl bg-blue-600 text-white font-black uppercase text-xs"
-            >
-              Ajouter
-            </button>
-
-          </div>
-
-        </div>
-      </div>
-    }
   </div>
 
+  @if (editingSchedule()) {
+  <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+    <div class="bg-white rounded-4xl p-8 w-full max-w-lg shadow-xl">
+      <h2 class="text-2xl font-black uppercase text-slate-900 mb-2">
+        Modifier horaires
+      </h2>
+
+      <p class="text-slate-500 mb-6">
+        {{ editingSchedule().clubName || editingSchedule().name }}
+      </p>
+
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+            Heure ouverture
+          </label>
+
+          <input
+            type="time"
+            class="w-full border rounded-2xl px-4 py-3"
+            [ngModel]="scheduleForm().heure_debut"
+            (ngModelChange)="scheduleForm.set({ ...scheduleForm(), heure_debut: $event })"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+            Heure fermeture
+          </label>
+
+          <input
+            type="time"
+            class="w-full border rounded-2xl px-4 py-3"
+            [ngModel]="scheduleForm().heure_fin"
+            (ngModelChange)="scheduleForm.set({ ...scheduleForm(), heure_fin: $event })"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-8">
+        <button
+          type="button"
+          (click)="closeScheduleEditor()"
+          class="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-xs"
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          (click)="saveSchedule()"
+          class="px-5 py-3 rounded-2xl bg-slate-900 text-white font-black uppercase text-xs"
+        >
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+
+  @if (addingClosure()) {
+  <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+    <div class="bg-white rounded-4xl p-8 w-full max-w-lg shadow-xl">
+      <h2 class="text-2xl font-black uppercase text-slate-900 mb-2">
+        Ajouter fermeture
+      </h2>
+
+      <p class="text-slate-500 mb-6">
+        {{ addingClosure().clubName || addingClosure().name }}
+      </p>
+
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+            Date de fermeture
+          </label>
+
+          <input
+            type="date"
+            class="w-full border rounded-2xl px-4 py-3"
+            [ngModel]="closureForm().dateFermeture"
+            (ngModelChange)="closureForm.set({ ...closureForm(), dateFermeture: $event })"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+            Raison
+          </label>
+
+          <input
+            type="text"
+            class="w-full border rounded-2xl px-4 py-3"
+            placeholder="Ex : travaux, événement, jour férié..."
+            [ngModel]="closureForm().raison"
+            (ngModelChange)="closureForm.set({ ...closureForm(), raison: $event })"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+            Récurrence
+          </label>
+
+          <select
+            class="w-full border rounded-2xl px-4 py-3"
+            [ngModel]="closureForm().recurrence"
+            (ngModelChange)="closureForm.set({ ...closureForm(), recurrence: $event })"
+          >
+            <option value="ONCE">Unique</option>
+            <option value="WEEKLY">Hebdomadaire</option>
+            <option value="MONTHLY">Mensuel</option>
+            <option value="YEARLY">Annuel</option>
+          </select>
+        </div>
+
+        @if (closureForm().recurrence !== 'ONCE') {
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-400 mb-2">
+            Répéter jusqu’au
+          </label>
+
+          <input
+            type="date"
+            class="w-full border rounded-2xl px-4 py-3"
+            [ngModel]="closureForm().repeatUntil"
+            (ngModelChange)="closureForm.set({ ...closureForm(), repeatUntil: $event })"
+          />
+        </div>
+        }
+      </div>
+
+      <div class="flex justify-end gap-3 mt-8">
+        <button
+          type="button"
+          (click)="closeClosureEditor()"
+          class="px-5 py-3 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-xs"
+        >
+          Annuler
+        </button>
+
+        <button
+          type="button"
+          (click)="saveClosure()"
+          class="px-5 py-3 rounded-2xl bg-blue-600 text-white font-black uppercase text-xs"
+        >
+          Ajouter
+        </button>
+      </div>
+    </div>
+  </div>
+  }
 </app-admin-page-shell>
