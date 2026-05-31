@@ -1,6 +1,6 @@
-describe('Public match flow', () => {
+describe('Rejoindre match public', () => {
 
-  it('should join a public match successfully', () => {
+  it('un membre rejoin un match public', () => {
 
     cy.visit('http://localhost:4200');
 
