@@ -274,6 +274,13 @@ public class JourFermetureService {
             );
         }
 
+        if (dto.dateFermeture().isBefore(LocalDate.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Impossible d'ajouter un jour de fermeture dans le passé."
+            );
+        }
+
         if (dto.global() && dto.siteId() != null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
