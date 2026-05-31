@@ -2,8 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
+import { getHttpErrorUserMessage } from '../../shared/api-error.util';
 
 @Component({
   selector: 'app-login-dialog',
@@ -16,9 +18,11 @@ export class LoginDialogComponent {
   private dialogRef = inject(MatDialogRef<LoginDialogComponent>);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
+
   data = inject(MAT_DIALOG_DATA, { optional: true });
 
   matricule = signal('');
+  loading = signal(false);
 
   isAdminMode(): boolean {
     return this.data?.mode === 'ADMIN';
@@ -27,7 +31,7 @@ export class LoginDialogComponent {
   login() {
     const value = this.matricule().trim().toUpperCase();
 
-    if (!value) {
+    if (!value || this.loading()) {
       return;
     }
 
@@ -40,34 +44,50 @@ export class LoginDialogComponent {
   }
 
   private loginMember(value: string) {
+    this.loading.set(true);
+
     this.padelService.getMemberByMatricule(value).subscribe({
-      next: (member) => {
+      next: member => {
+        this.loading.set(false);
         this.authService.login(member);
         this.dialogRef.close(member);
       },
-      error: () => {
-        this.snackBar.open('Aucun membre trouvé avec ce matricule.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.loading.set(false);
+
+        this.snackBar.open(this.getLoginErrorMessage(error, 'membre'), 'OK', {
+          duration: 5000
         });
       }
     });
   }
 
   private loginAdmin(value: string) {
-    this.padelService.getAdministrators().subscribe(admins => {
-      const admin = admins.find(admin =>
-        admin.matricule?.toUpperCase() === value
-      );
+    this.loading.set(true);
 
-      if (!admin) {
-        this.snackBar.open('Aucun administrateur trouvé avec ce matricule.', 'OK', {
-          duration: 4000
+    this.padelService.getAdministratorByMatricule(value).subscribe({
+      next: admin => {
+        this.loading.set(false);
+        this.authService.loginAdmin(admin);
+        this.dialogRef.close(admin);
+      },
+      error: error => {
+        this.loading.set(false);
+
+        this.snackBar.open(this.getLoginErrorMessage(error, 'administrateur'), 'OK', {
+          duration: 5000
         });
-        return;
       }
-
-      this.authService.loginAdmin(admin);
-      this.dialogRef.close(admin);
     });
+  }
+
+  private getLoginErrorMessage(error: any, type: 'membre' | 'administrateur'): string {
+    if (error?.status === 404) {
+      return type === 'membre'
+        ? 'Aucun membre trouvé avec ce matricule.'
+        : 'Aucun administrateur trouvé avec ce matricule.';
+    }
+
+    return getHttpErrorUserMessage(error);
   }
 }

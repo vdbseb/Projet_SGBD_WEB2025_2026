@@ -8,6 +8,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
+import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
 
 @Component({
   selector: 'app-admin-sites',
@@ -40,14 +41,32 @@ export class AdminSites implements OnInit {
   }
 
   loadSites() {
-    this.padelService.getSites().subscribe(sites => {
-      this.sites.set(sites);
+    this.padelService.getSites().subscribe({
+      next: sites => {
+        this.sites.set(sites);
+      },
+      error: error => {
+        this.sites.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 
   loadReservations() {
-    this.padelService.getAllReservations().subscribe(reservations => {
-      this.reservations.set(reservations);
+    this.padelService.getAllReservations().subscribe({
+      next: reservations => {
+        this.reservations.set(reservations);
+      },
+      error: error => {
+        this.reservations.set([]);
+
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 
@@ -122,38 +141,45 @@ export class AdminSites implements OnInit {
       }
 
       if (nextActive) {
-        this.padelService.updateSite(site.id, { active: true }).subscribe({
-          next: () => {
-            this.snackBar.open('Site réactivé avec succès.', 'OK', {
-              duration: 3000
-            });
-
-            this.loadSites();
-          },
-          error: () => {
-            this.snackBar.open('Impossible de réactiver le site.', 'OK', {
-              duration: 4000
-            });
-          }
-        });
-
+        this.reactivateSite(site.id);
         return;
       }
 
-      this.padelService.deactivateSite(site.id).subscribe({
-        next: () => {
-          this.snackBar.open('Site désactivé avec succès.', 'OK', {
-            duration: 3000
-          });
+      this.deactivateSite(site.id);
+    });
+  }
 
-          this.loadSites();
-        },
-        error: () => {
-          this.snackBar.open('Impossible de désactiver le site.', 'OK', {
-            duration: 4000
-          });
-        }
-      });
+  private reactivateSite(siteId: number) {
+    this.padelService.updateSite(siteId, { active: true }).subscribe({
+      next: () => {
+        this.snackBar.open('Site réactivé avec succès.', 'OK', {
+          duration: 3000
+        });
+
+        this.loadSites();
+      },
+      error: error => {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
+    });
+  }
+
+  private deactivateSite(siteId: number) {
+    this.padelService.deactivateSite(siteId).subscribe({
+      next: () => {
+        this.snackBar.open('Site désactivé avec succès.', 'OK', {
+          duration: 3000
+        });
+
+        this.loadSites();
+      },
+      error: error => {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
     });
   }
 

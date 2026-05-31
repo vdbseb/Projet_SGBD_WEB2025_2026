@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
 import { PadelSite, PadelCourt } from '../../shared/site.model';
+import { getHttpErrorUserMessage } from '../../shared/api-error.util';
 
 import { PadelCardComponent } from '../padel-card/padel-card';
 import { DateSelectorComponent } from '../date-selector/date-selector';
@@ -69,26 +70,34 @@ export class ReservationPage implements OnInit {
     this.padelService.getSiteById(id).subscribe({
       next: site => {
         this.site.set(site);
-
-        const year = new Date().getFullYear();
-
-        this.padelService.getSiteSchedule(site.id, year).subscribe({
-          next: schedule => {
-            this.matchDurationMinutes.set(schedule.duree_match_minutes ?? 90);
-            this.pauseMinutes.set(schedule.pause_minutes ?? 15);
-          },
-          error: () => {
-            this.matchDurationMinutes.set(90);
-            this.pauseMinutes.set(15);
-          }
-        });
-
+        this.loadSiteSchedule(site.id);
         this.loadClosingDays(site.id);
       },
-      error: () => {
-        this.snackBar.open('Impossible de charger le site.', 'OK', {
-          duration: 4000
+      error: error => {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
         });
+      }
+    });
+  }
+
+  private loadSiteSchedule(siteId: number) {
+    const year = new Date().getFullYear();
+
+    this.padelService.getSiteSchedule(siteId, year).subscribe({
+      next: schedule => {
+        this.matchDurationMinutes.set(schedule.duree_match_minutes ?? 90);
+        this.pauseMinutes.set(schedule.pause_minutes ?? 15);
+      },
+      error: error => {
+        this.matchDurationMinutes.set(90);
+        this.pauseMinutes.set(15);
+
+        this.snackBar.open(
+          `${getHttpErrorUserMessage(error)} Les durées par défaut seront utilisées.`,
+          'OK',
+          { duration: 5000 }
+        );
       }
     });
   }
@@ -96,20 +105,36 @@ export class ReservationPage implements OnInit {
   private loadClosingDays(siteId: number) {
     this.padelService.getSiteClosingDays(siteId).subscribe({
       next: siteDays => {
-        this.padelService.getGlobalClosingDays().subscribe({
-          next: globalDays => {
-            this.closedDays.set([
-              ...siteDays,
-              ...globalDays
-            ]);
-          },
-          error: () => {
-            this.closedDays.set(siteDays);
-          }
-        });
+        this.loadGlobalClosingDays(siteDays);
       },
-      error: () => {
+      error: error => {
         this.closedDays.set([]);
+
+        this.snackBar.open(
+          `${getHttpErrorUserMessage(error)} Les jours de fermeture du site n’ont pas pu être chargés.`,
+          'OK',
+          { duration: 5000 }
+        );
+      }
+    });
+  }
+
+  private loadGlobalClosingDays(siteDays: any[]) {
+    this.padelService.getGlobalClosingDays().subscribe({
+      next: globalDays => {
+        this.closedDays.set([
+          ...siteDays,
+          ...globalDays
+        ]);
+      },
+      error: error => {
+        this.closedDays.set(siteDays);
+
+        this.snackBar.open(
+          `${getHttpErrorUserMessage(error)} Les fermetures globales n’ont pas pu être chargées.`,
+          'OK',
+          { duration: 5000 }
+        );
       }
     });
   }
@@ -121,12 +146,12 @@ export class ReservationPage implements OnInit {
 
     const maxDate = new Date(today);
 
-    if (typeCode === 'GLOBAL') {
+    if (typeCode === 'GLOBAL' || typeCode === 'G') {
       maxDate.setDate(maxDate.getDate() + 21);
       return maxDate;
     }
 
-    if (typeCode === 'SITE') {
+    if (typeCode === 'SITE' || typeCode === 'S') {
       maxDate.setDate(maxDate.getDate() + 14);
       return maxDate;
     }
@@ -139,11 +164,11 @@ export class ReservationPage implements OnInit {
     const member = this.authService.currentMember();
     const typeCode = this.getMemberTypeCode(member);
 
-    if (typeCode === 'GLOBAL') {
+    if (typeCode === 'GLOBAL' || typeCode === 'G') {
       return 'Ton abonnement permet de réserver jusqu’à 3 semaines à l’avance.';
     }
 
-    if (typeCode === 'SITE') {
+    if (typeCode === 'SITE' || typeCode === 'S') {
       return 'Ton abonnement permet de réserver jusqu’à 2 semaines à l’avance, uniquement sur ton site.';
     }
 
@@ -155,7 +180,7 @@ export class ReservationPage implements OnInit {
     const typeCode = this.getMemberTypeCode(member);
     const site = this.site();
 
-    if (typeCode !== 'SITE' || !site) {
+    if ((typeCode !== 'SITE' && typeCode !== 'S') || !site) {
       return null;
     }
 
@@ -272,8 +297,14 @@ export class ReservationPage implements OnInit {
             .map((reservation: any) => reservation.startTime)
         );
       },
-      error: () => {
+      error: error => {
         this.reservedTimes.set([]);
+
+        this.snackBar.open(
+          `${getHttpErrorUserMessage(error)} Les créneaux réservés n’ont pas pu être chargés.`,
+          'OK',
+          { duration: 5000 }
+        );
       }
     });
   }
@@ -365,14 +396,8 @@ export class ReservationPage implements OnInit {
         this.selectedTime.set(null);
         this.loadReservedTimes();
       },
-      error: (error: any) => {
-        const message =
-          error?.error?.detail ??
-          error?.error?.message ??
-          error?.error?.error ??
-          'Erreur lors de la réservation. Veuillez réessayer.';
-
-        this.snackBar.open(message, 'OK', {
+      error: error => {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
           duration: 5000
         });
       }

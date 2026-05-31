@@ -1,9 +1,12 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, LOCALE_ID } from '@angular/core'; // Ajoute LOCALE_ID ici
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, LOCALE_ID } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { routes } from './app.routes';
-import {provideHttpClient} from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
-import localeFrBe from '@angular/common/locales/fr-BE'
+import localeFrBe from '@angular/common/locales/fr-BE';
+
+import { routes } from './app.routes';
+import { apiErrorInterceptor } from './interceptors/api-error.interceptor';
+
 registerLocaleData(localeFrBe);
 
 export const appConfig: ApplicationConfig = {
@@ -11,6 +14,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     { provide: LOCALE_ID, useValue: 'fr-BE' },
-    provideHttpClient()
+    provideHttpClient(withInterceptors([apiErrorInterceptor]))
   ]
 };
