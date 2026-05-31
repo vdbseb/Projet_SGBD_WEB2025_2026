@@ -47,6 +47,50 @@ public final class ClubBusinessRules {
     private ClubBusinessRules() {
     }
 
+    public static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    public static String normalizeMatricule(String matricule) {
+        return matricule == null
+                ? null
+                : matricule.trim().toUpperCase();
+    }
+
+    public static List<String> normalizeParticipantMatricules(
+            List<String> participantMatricules
+    ) {
+        if (participantMatricules == null) {
+            return List.of();
+        }
+
+        return participantMatricules.stream()
+                .filter(matricule -> !isBlank(matricule))
+                .map(ClubBusinessRules::normalizeMatricule)
+                .toList();
+    }
+
+    public static boolean isGlobalMemberMatricule(String matricule) {
+        String normalizedMatricule = normalizeMatricule(matricule);
+        return normalizedMatricule != null && normalizedMatricule.startsWith("G");
+    }
+
+    public static boolean isSiteMemberMatricule(String matricule) {
+        String normalizedMatricule = normalizeMatricule(matricule);
+        return normalizedMatricule != null && normalizedMatricule.startsWith("S");
+    }
+
+    public static boolean isFreeMemberMatricule(String matricule) {
+        String normalizedMatricule = normalizeMatricule(matricule);
+        return normalizedMatricule != null && normalizedMatricule.startsWith("L");
+    }
+
+    public static boolean isKnownMemberMatricule(String matricule) {
+        return isGlobalMemberMatricule(matricule)
+                || isSiteMemberMatricule(matricule)
+                || isFreeMemberMatricule(matricule);
+    }
+
     public static boolean isActiveParticipationStatus(ParticipationStatut statut) {
         return statut != null && ACTIVE_PARTICIPATION_STATUSES.contains(statut);
     }
@@ -61,6 +105,17 @@ public final class ClubBusinessRules {
                 && participation.getStatut() == ParticipationStatut.PAYEE;
     }
 
+    public static long countActiveParticipations(MatchEntity match) {
+        if (match == null || match.getParticipations() == null) {
+            return 0;
+        }
+
+        return match.getParticipations()
+                .stream()
+                .filter(ClubBusinessRules::isActiveParticipation)
+                .count();
+    }
+
     public static boolean isCancellableMatchStatus(MatchStatus statut) {
         return statut != MatchStatus.ANNULE && statut != MatchStatus.TERMINE;
     }
@@ -69,6 +124,12 @@ public final class ClubBusinessRules {
         return match != null
                 && match.getStatut() != null
                 && PUBLIC_CONVERTIBLE_MATCH_STATUSES.contains(match.getStatut());
+    }
+
+    public static boolean isPublicBillableMatch(MatchEntity match) {
+        return match != null
+                && match.getStatut() != null
+                && PUBLIC_BILLABLE_MATCH_STATUSES.contains(match.getStatut());
     }
 
     public static MatchStatus resolveMatchStatusAfterParticipantCount(

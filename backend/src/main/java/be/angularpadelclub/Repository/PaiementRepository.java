@@ -5,7 +5,6 @@ import be.angularpadelclub.Enum.PaiementStatut;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface PaiementRepository extends JpaRepository<PaiementEntity, Integer> {
 
@@ -30,24 +29,6 @@ public interface PaiementRepository extends JpaRepository<PaiementEntity, Intege
 
     List<PaiementEntity> findByMembre_IdAndParticipationIsNullAndReservationIsNullAndStatut(
             Integer membreId,
-            PaiementStatut statut
-    );
-
-    Optional<PaiementEntity> findFirstByReservation_IdOrderByDateCreationDesc(
-            Integer reservationId
-    );
-
-    Optional<PaiementEntity> findFirstByParticipation_IdOrderByDateCreationDesc(
-            Integer participationId
-    );
-
-    Optional<PaiementEntity> findFirstByMembre_IdAndParticipationIsNullAndReservationIsNullAndStatutOrderByDateCreationDesc(
-            Integer membreId,
-            PaiementStatut statut
-    );
-
-    boolean existsByReservation_IdAndStatut(
-            Integer reservationId,
             PaiementStatut statut
     );
 

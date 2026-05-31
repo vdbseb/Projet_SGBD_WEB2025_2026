@@ -8,6 +8,4 @@ import java.util.List;
 
 public interface CourtRepository extends JpaRepository<CourtEntity, Integer> {
     List<CourtEntity> findByActifTrue();
-
-    List<CourtEntity> findBySiteIdAndActifTrue(Integer siteId);
 }

@@ -106,9 +106,14 @@ public class ReservationService {
                 dto.memberId()
         );
 
-        List<String> participantMatricules = normalizeParticipants(
+        reservationValidationService.validateParticipants(
                 dto.participantMatricules()
         );
+
+        List<String> participantMatricules =
+                ClubBusinessRules.normalizeParticipantMatricules(
+                        dto.participantMatricules()
+                );
 
         validateOrganizerIsNotInParticipants(
                 member,
@@ -122,10 +127,6 @@ public class ReservationService {
                         dto.date(),
                         dto.startTime()
                 );
-
-        reservationValidationService.validateParticipants(
-                participantMatricules
-        );
 
         LocalTime startTime = dto.startTime();
         LocalTime endTime = startTime.plusMinutes(
@@ -240,20 +241,6 @@ public class ReservationService {
         }
     }
 
-    private List<String> normalizeParticipants(
-            List<String> participantMatricules
-    ) {
-        if (participantMatricules == null) {
-            return List.of();
-        }
-
-        return participantMatricules.stream()
-                .filter(matricule -> matricule != null && !matricule.isBlank())
-                .map(matricule -> matricule.trim().toUpperCase())
-                .distinct()
-                .toList();
-    }
-
     private void validateOrganizerIsNotInParticipants(
             MembreEntity organizer,
             List<String> participantMatricules
@@ -263,7 +250,7 @@ public class ReservationService {
         }
 
         boolean organizerAlsoParticipant = participantMatricules.contains(
-                organizer.getMatricule().trim().toUpperCase()
+                ClubBusinessRules.normalizeMatricule(organizer.getMatricule())
         );
 
         if (organizerAlsoParticipant) {

@@ -8,8 +8,6 @@ import java.util.List;
 
 public interface PenaliteRepository extends JpaRepository<PenaliteEntity, Integer> {
 
-    boolean existsByMembre_IdAndActiveTrue(Integer membreId);
-
     boolean existsByMembre_IdAndActiveTrueAndDateFinGreaterThanEqual(
             Integer membreId,
             LocalDate date
