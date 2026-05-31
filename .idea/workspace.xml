@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="ajout jour fermeture">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="aed8a947-c25d-420e-adff-683fc206b0c9" name="Changes" comment="ajout récurrence">
       <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/services/padel.service.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/views/admin/admin-sites/admin-sites.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,21 +59,15 @@
     &quot;assignee&quot;: &quot;vdbseb&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/vdbseb/Projet_SGBD_WEB2025_2026.git&quot;,
-    &quot;accountId&quot;: &quot;bb4e93e7-14f1-4967-b9c5-2f969951372e&quot;
-  }
-}</component>
   <component name="GithubDefaultAccount">
     <option name="defaultAccountId" value="0d4d2dee-2c03-4190-9ab6-b4515df46086" />
   </component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/vdbseb/Projet_SGBD_WEB2025_2026",
-    "accountId": "0d4d2dee-2c03-4190-9ab6-b4515df46086"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/vdbseb/Projet_SGBD_WEB2025_2026&quot;,
+    &quot;accountId&quot;: &quot;0d4d2dee-2c03-4190-9ab6-b4515df46086&quot;
   }
-}]]></component>
+}</component>
   <component name="KubernetesApiPersistence">{}</component>
   <component name="KubernetesApiProvider">{
   &quot;isMigrated&quot;: true
@@ -96,23 +85,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.1339716828170365" />
-      <entry key="MS500" value="1.668963777393056" />
-      <entry key="S2" value="1.9043801551723163" />
-      <entry key="S5" value="1.9684554281085564" />
-      <entry key="S10" value="2.169701906364966" />
-      <entry key="S30" value="3.7622287852063807" />
-      <entry key="S60" value="5.745404833427006" />
-      <entry key="M2" value="8.384026043712236" />
-      <entry key="M5" value="13.160818187971167" />
-      <entry key="M10" value="18.709880970337437" />
-      <entry key="M15" value="22.548535394237422" />
-      <entry key="M30" value="28.84469562522285" />
-      <entry key="H1" value="33.58078023908317" />
-      <entry key="H2" value="36.53947440873137" />
-      <entry key="H4" value="38.20099533193522" />
-      <entry key="D1" value="39.69005622476304" />
-      <entry key="W1" value="39.955467024346106" />
+      <entry key="MS100" value="1.4233726561812636" />
+      <entry key="MS500" value="1.842062984637248" />
+      <entry key="S2" value="1.9797555577043957" />
+      <entry key="S5" value="2.3679410864377965" />
+      <entry key="S10" value="3.1430360434693236" />
+      <entry key="S30" value="4.588323684954335" />
+      <entry key="S60" value="5.253389425612688" />
+      <entry key="M2" value="6.310782251938576" />
+      <entry key="M5" value="10.782660497091287" />
+      <entry key="M10" value="17.393925344059117" />
+      <entry key="M15" value="22.224560303368747" />
+      <entry key="M30" value="30.482495556273314" />
+      <entry key="H1" value="36.94138949127428" />
+      <entry key="H2" value="41.07510220160012" />
+      <entry key="H4" value="43.427934587685534" />
+      <entry key="D1" value="45.55508240084279" />
+      <entry key="W1" value="45.93602860247756" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -134,23 +123,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.8072231987280696" />
-      <entry key="MS500" value="1.5537611282918757" />
-      <entry key="S2" value="1.8701917856405492" />
-      <entry key="S5" value="1.95417911626287" />
-      <entry key="S10" value="2.161207544296979" />
-      <entry key="S30" value="3.7550897671567403" />
-      <entry key="S60" value="5.73984238051094" />
-      <entry key="M2" value="8.380440392287502" />
-      <entry key="M5" value="13.159107174949979" />
-      <entry key="M10" value="18.708949999639234" />
-      <entry key="M15" value="22.547887944041857" />
-      <entry key="M30" value="28.844351582384228" />
-      <entry key="H1" value="33.58060074198253" />
-      <entry key="H2" value="36.5393823247336" />
-      <entry key="H4" value="38.20094863247373" />
-      <entry key="D1" value="39.69004834308374" />
-      <entry key="W1" value="39.955465895881844" />
+      <entry key="MS100" value="1.361589027322828" />
+      <entry key="MS500" value="1.826589302652527" />
+      <entry key="S2" value="1.975632552715873" />
+      <entry key="S5" value="2.3659620195188253" />
+      <entry key="S10" value="3.141663295990389" />
+      <entry key="S30" value="4.5876021144039205" />
+      <entry key="S60" value="5.252927376241854" />
+      <entry key="M2" value="6.310242251301897" />
+      <entry key="M5" value="10.781920180219132" />
+      <entry key="M10" value="17.393305214215083" />
+      <entry key="M15" value="22.224060015358823" />
+      <entry key="M30" value="30.48218672893228" />
+      <entry key="H1" value="36.941215768156475" />
+      <entry key="H2" value="41.07500965575922" />
+      <entry key="H4" value="43.42788676043534" />
+      <entry key="D1" value="45.555074200917005" />
+      <entry key="W1" value="45.93602742527938" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -164,6 +153,8 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "JUnit.PaiementServiceTest.executor": "Run",
+    "Notification.DisplayName-DoNotAsk-No data sources detected": "No data sources detected",
+    "Notification.DoNotAsk-No data sources detected": "true",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
     "RequestMappingsPanelWidth0": "75",
@@ -177,7 +168,6 @@
     "Spring Boot.PadelBackApplication.executor": "Run",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "admin-modifier-horaires",
     "git-widget-placeholder": "124-admin-modifier-horaires-ajouter-jour-de-fermeture",
     "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
@@ -188,20 +178,11 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
     "npm.cypress:open.executor": "Run",
     "npm.start.executor": "Run",
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\capta\\Documents\\Bachelier en Informatique de Gestion\\Année 3\\SGBD\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
     "settings.editor.selected.configurable": "reference.settings.project.maven.runner",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "C:\\Users\\capta\\Documents\\Bachelier en Informatique de Gestion\\Année 3\\SGBD\\Projet_SGBD_WEB2025_2026\\frontend\\node_modules\\typescript\\lib",
@@ -286,8 +267,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.33514.17" />
       </set>
     </attachedChunks>
   </component>
@@ -341,11 +321,16 @@
       <option name="project" value="LOCAL" />
       <updated>1780220373818</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="ajout récurrence">
+      <option name="closed" value="true" />
+      <created>1780221482522</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1780221482522</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
-  </component>
-  <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="3" />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
@@ -366,6 +351,7 @@
     <MESSAGE value="changement architecture &#10;Tentative de passage de H2 à postgr" />
     <MESSAGE value="correction package name" />
     <MESSAGE value="ajout jour fermeture" />
-    <option name="LAST_COMMIT_MESSAGE" value="ajout jour fermeture" />
+    <MESSAGE value="ajout récurrence" />
+    <option name="LAST_COMMIT_MESSAGE" value="ajout récurrence" />
   </component>
 </project>
