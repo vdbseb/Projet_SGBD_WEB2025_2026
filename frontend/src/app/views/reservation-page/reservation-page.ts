@@ -126,9 +126,12 @@ export class ReservationPage implements OnInit {
           ...siteDays,
           ...globalDays
         ]);
+
+        this.clearSelectedDateIfClosed();
       },
       error: error => {
         this.closedDays.set(siteDays);
+        this.clearSelectedDateIfClosed();
 
         this.snackBar.open(
           `${getHttpErrorUserMessage(error)} Les fermetures globales n’ont pas pu être chargées.`,
@@ -210,26 +213,17 @@ export class ReservationPage implements OnInit {
       this.snackBar.open(this.getReservationRuleLabel(), 'OK', {
         duration: 5000
       });
+
       this.selectedDate.set(null);
       this.selectedTime.set(null);
       this.reservedTimes.set([]);
       return;
     }
 
-    const formattedDate = this.formatLocalDate(date);
-
-    const closingDay = this.closedDays().find(day =>
-      day.dateFermeture === formattedDate
-    );
+    const closingDay = this.getClosingDayForDate(date);
 
     if (closingDay) {
-      const reason = closingDay.raison
-        ? ` : ${closingDay.raison}`
-        : '.';
-
-      this.snackBar.open(`Le centre est fermé à cette date${reason}`, 'OK', {
-        duration: 5000
-      });
+      this.showClosedDayMessage(closingDay);
 
       this.selectedDate.set(null);
       this.selectedTime.set(null);
@@ -269,20 +263,20 @@ export class ReservationPage implements OnInit {
     this.loadReservedTimes();
   }
 
-  private formatLocalDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  }
-
   loadReservedTimes() {
     const court = this.selectedCourt();
     const date = this.selectedDate();
 
     if (!court || !date) {
       this.reservedTimes.set([]);
+      return;
+    }
+
+    const closingDay = this.getClosingDayForDate(date);
+
+    if (closingDay) {
+      this.reservedTimes.set([]);
+      this.showClosedDayMessage(closingDay);
       return;
     }
 
@@ -341,6 +335,16 @@ export class ReservationPage implements OnInit {
       return;
     }
 
+    const closingDay = this.getClosingDayForDate(date);
+
+    if (closingDay) {
+      this.showClosedDayMessage(closingDay);
+      this.selectedDate.set(null);
+      this.selectedTime.set(null);
+      this.reservedTimes.set([]);
+      return;
+    }
+
     if (this.getSiteMemberRestrictionMessage()) {
       this.snackBar.open(this.getSiteMemberRestrictionMessage() ?? '', 'OK', {
         duration: 5000
@@ -356,7 +360,6 @@ export class ReservationPage implements OnInit {
     }
 
     const startTime = `${time}:00`;
-
     const slotDateTime = this.buildSlotDateTime(date, time);
 
     if (slotDateTime <= new Date()) {
@@ -404,6 +407,52 @@ export class ReservationPage implements OnInit {
     });
   }
 
+  private clearSelectedDateIfClosed() {
+    const selectedDate = this.selectedDate();
+
+    if (!selectedDate) {
+      return;
+    }
+
+    const closingDay = this.getClosingDayForDate(selectedDate);
+
+    if (!closingDay) {
+      return;
+    }
+
+    this.selectedDate.set(null);
+    this.selectedTime.set(null);
+    this.reservedTimes.set([]);
+
+    this.showClosedDayMessage(closingDay);
+  }
+
+  private getClosingDayForDate(date: Date | null): any | null {
+    if (!date) {
+      return null;
+    }
+
+    const formattedDate = this.formatLocalDate(date);
+
+    return this.closedDays().find(day =>
+      day.dateFermeture === formattedDate
+    ) ?? null;
+  }
+
+  private showClosedDayMessage(closingDay: any) {
+    const scope = closingDay.global
+      ? 'Le centre est fermé globalement à cette date'
+      : 'Le centre est fermé à cette date';
+
+    const reason = closingDay.raison
+      ? ` : ${closingDay.raison}`
+      : '.';
+
+    this.snackBar.open(`${scope}${reason}`, 'OK', {
+      duration: 5000
+    });
+  }
+
   private getMemberTypeCode(member: any): string {
     return (
       member?.type?.code
@@ -427,5 +476,13 @@ export class ReservationPage implements OnInit {
     slotDateTime.setHours(hour, minute, 0, 0);
 
     return slotDateTime;
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 }

@@ -1,8 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { forkJoin } from 'rxjs';
 
 import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
@@ -14,10 +16,11 @@ import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-s
   selector: 'app-admin-sites',
   standalone: true,
   imports: [
-    MatIconModule,
-    FormsModule,
-    MatSnackBarModule,
-    AdminPageShellComponent
+   CommonModule,
+     MatIconModule,
+     FormsModule,
+     MatSnackBarModule,
+     AdminPageShellComponent
   ],
   templateUrl: './admin-sites.html'
 })
@@ -47,6 +50,17 @@ export class AdminSites implements OnInit {
     global: false,
     recurrence: 'ONCE',
     repeatUntil: ''
+  });
+
+  editingSchedule = signal<any | null>(null);
+  scheduleForm = signal({
+    id: null as number | null,
+    siteId: null as number | null,
+    annee: new Date().getFullYear(),
+    heure_debut: '',
+    heure_fin: '',
+    duree_match_minutes: 90,
+    pause_minutes: 15
   });
 
   ngOnInit() {
@@ -164,7 +178,7 @@ export class AdminSites implements OnInit {
   }
 
   private reactivateSite(siteId: number) {
-    this.padelService.updateSite(siteId, {active: true}).subscribe({
+    this.padelService.updateSite(siteId, { active: true }).subscribe({
       next: () => {
         this.snackBar.open('Site réactivé avec succès.', 'OK', {
           duration: 3000
@@ -272,17 +286,6 @@ export class AdminSites implements OnInit {
       : 'bg-red-100 text-red-700';
   }
 
-  editingSchedule = signal<any | null>(null);
-  scheduleForm = signal({
-    id: null as number | null,
-    siteId: null as number | null,
-    annee: new Date().getFullYear(),
-    heure_debut: '',
-    heure_fin: '',
-    duree_match_minutes: 90,
-    pause_minutes: 15
-  });
-
   openScheduleEditor(site: any) {
     const year = new Date().getFullYear();
 
@@ -336,6 +339,7 @@ export class AdminSites implements OnInit {
 
   closeScheduleEditor() {
     this.editingSchedule.set(null);
+    this.originalSchedule.set(null);
   }
 
   saveSchedule() {
@@ -379,6 +383,59 @@ export class AdminSites implements OnInit {
 
   closeClosureEditor() {
     this.addingClosure.set(null);
+
+    this.closureForm.set({
+      siteId: null,
+      dateFermeture: '',
+      raison: '',
+      global: false,
+      recurrence: 'ONCE',
+      repeatUntil: ''
+    });
+  }
+
+  onClosureGlobalChange(isGlobal: boolean) {
+    if (isGlobal && !this.authService.isGlobalAdmin()) {
+      this.snackBar.open(
+        'Seul un administrateur global peut créer une fermeture globale.',
+        'OK',
+        { duration: 4000 }
+      );
+
+      this.closureForm.set({
+        ...this.closureForm(),
+        global: false
+      });
+
+      return;
+    }
+
+    this.closureForm.set({
+      ...this.closureForm(),
+      global: isGlobal
+    });
+  }
+
+  isClosureFormValid(): boolean {
+    const form = this.closureForm();
+
+    if (!form.dateFermeture || !form.raison.trim()) {
+      return false;
+    }
+
+    if (form.recurrence !== 'ONCE' && !form.repeatUntil) {
+      return false;
+    }
+
+    if (form.recurrence !== 'ONCE' && form.repeatUntil < form.dateFermeture) {
+      return false;
+    }
+
+    if (form.global) {
+      return this.authService.isGlobalAdmin();
+    }
+
+    return !!form.siteId;
   }
 
   generateClosureDates(
@@ -387,11 +444,13 @@ export class AdminSites implements OnInit {
     repeatUntil: string
   ): string[] {
     const dates: string[] = [];
-    const current = new Date(startDate);
-    const end = repeatUntil ? new Date(repeatUntil) : new Date(startDate);
+    const current = this.parseLocalDate(startDate);
+    const end = repeatUntil
+      ? this.parseLocalDate(repeatUntil)
+      : this.parseLocalDate(startDate);
 
     while (current <= end) {
-      dates.push(current.toISOString().split('T')[0]);
+      dates.push(this.formatLocalDate(current));
 
       if (recurrence === 'ONCE') {
         break;
@@ -417,10 +476,12 @@ export class AdminSites implements OnInit {
   saveClosure() {
     const form = this.closureForm();
 
-    if (!form.siteId || !form.dateFermeture) {
-      this.snackBar.open('Choisis une date de fermeture.', 'OK', {
-        duration: 3000
-      });
+    if (!this.isClosureFormValid()) {
+      this.snackBar.open(
+        'Complète la date, la raison et la portée de la fermeture.',
+        'OK',
+        { duration: 3000 }
+      );
       return;
     }
 
@@ -430,35 +491,55 @@ export class AdminSites implements OnInit {
       form.repeatUntil
     );
 
-    let completed = 0;
-
-    dates.forEach(date => {
-      this.padelService.createSiteClosingDay({
-        siteId: form.siteId,
-        dateFermeture: date,
-        raison: form.raison,
-        global: form.global
-      }).subscribe({
-        next: () => {
-          completed++;
-
-          if (completed === dates.length) {
-            this.snackBar.open('Jour(s) de fermeture ajouté(s).', 'OK', {
-              duration: 3000
-            });
-
-            this.closeClosureEditor();
-            this.loadSites();
-          }
-        },
-        error: error => {
-          this.snackBar.open(
-            getHttpErrorUserMessage(error),
-            'OK',
-            { duration: 5000 }
-          );
-        }
+    if (dates.length === 0) {
+      this.snackBar.open('Aucune date de fermeture à créer.', 'OK', {
+        duration: 3000
       });
+      return;
+    }
+
+    const requests = dates.map(date =>
+      this.padelService.createSiteClosingDay({
+        siteId: form.global ? null : form.siteId,
+        dateFermeture: date,
+        raison: form.raison.trim(),
+        global: form.global
+      })
+    );
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.snackBar.open(
+          form.global
+            ? 'Fermeture globale ajoutée avec succès.'
+            : 'Jour(s) de fermeture ajouté(s) pour le site.',
+          'OK',
+          { duration: 3000 }
+        );
+
+        this.closeClosureEditor();
+        this.loadSites();
+      },
+      error: error => {
+        this.snackBar.open(
+          getHttpErrorUserMessage(error),
+          'OK',
+          { duration: 5000 }
+        );
+      }
     });
+  }
+
+  private parseLocalDate(value: string): Date {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 }

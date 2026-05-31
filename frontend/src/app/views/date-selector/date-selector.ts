@@ -19,13 +19,15 @@ export class DateSelectorComponent implements OnInit {
   courtName = input<string>('');
   initialDate = input<Date | null>(null);
   maxReservationDate = input<Date | null>(null);
+  closedDays = input<any[]>([]);
+
   tomorrowDayNumber = new Date(new Date().setDate(new Date().getDate() + 1)).getDate();
 
   dateChange = output<Date>();
 
   private datePipe = inject(DatePipe);
 
-  selectedDate = signal<Date>(this.resetTime(new Date()));
+  selectedDate = signal<Date | null>(this.resetTime(new Date()));
   daysList = signal<DayItem[]>([]);
 
   ngOnInit() {
@@ -35,6 +37,11 @@ export class DateSelectorComponent implements OnInit {
 
     if (initial && !this.isDateDisabled(initial)) {
       this.selectedDate.set(this.resetTime(initial));
+      return;
+    }
+
+    if (this.selectedDate() && this.isDateDisabled(this.selectedDate() as Date)) {
+      this.selectedDate.set(null);
     }
   }
 
@@ -68,7 +75,13 @@ export class DateSelectorComponent implements OnInit {
   }
 
   isSelected(date: Date): boolean {
-    return date.getTime() === this.selectedDate().getTime();
+    const selected = this.selectedDate();
+
+    if (!selected) {
+      return false;
+    }
+
+    return date.getTime() === selected.getTime();
   }
 
   isDateDisabled(date: Date): boolean {
@@ -76,6 +89,10 @@ export class DateSelectorComponent implements OnInit {
     const today = this.resetTime(new Date());
 
     if (cleanDate < today) {
+      return true;
+    }
+
+    if (this.isClosedDate(cleanDate)) {
       return true;
     }
 
@@ -88,18 +105,70 @@ export class DateSelectorComponent implements OnInit {
     return cleanDate > this.resetTime(max);
   }
 
-  getDisabledReason(date: Date): string {
-    if (!this.isDateDisabled(date)) {
-      return '';
-    }
+  isClosedDate(date: Date): boolean {
+    const formattedDate = this.formatLocalDate(date);
 
+    return this.closedDays().some(day =>
+      day.dateFermeture === formattedDate
+    );
+  }
+
+  getDisabledReason(date: Date): string {
+    const cleanDate = this.resetTime(date);
     const max = this.maxReservationDate();
 
-    if (max && this.resetTime(date) > this.resetTime(max)) {
+    if (this.isClosedDate(cleanDate)) {
+      const closingDay = this.getClosingDay(cleanDate);
+
+      if (closingDay?.global) {
+        return 'Fermeture globale';
+      }
+
+      return 'Fermé';
+    }
+
+    if (max && cleanDate > this.resetTime(max)) {
       return 'Hors délai';
     }
 
+    if (cleanDate < this.resetTime(new Date())) {
+      return 'Passé';
+    }
+
     return 'Indisponible';
+  }
+
+  getDisabledTitle(date: Date): string {
+    const cleanDate = this.resetTime(date);
+    const closingDay = this.getClosingDay(cleanDate);
+
+    if (closingDay) {
+      const scope = closingDay.global
+        ? 'Fermeture globale'
+        : 'Fermeture du site';
+
+      return closingDay.raison
+        ? `${scope} : ${closingDay.raison}`
+        : scope;
+    }
+
+    return this.getDisabledReason(date);
+  }
+
+  private getClosingDay(date: Date): any | null {
+    const formattedDate = this.formatLocalDate(date);
+
+    return this.closedDays().find(day =>
+      day.dateFermeture === formattedDate
+    ) ?? null;
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   private resetTime(date: Date): Date {

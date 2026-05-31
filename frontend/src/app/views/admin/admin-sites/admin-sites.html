@@ -66,12 +66,12 @@
         [style.background-image]="'url(' + (site.image || 'images/bruxelles.jpg') + ')'"
       >
         <div class="absolute top-4 right-4">
-            <span
-              class="px-3 py-1 rounded-full text-xs font-black uppercase"
-              [class]="getSiteStatusClass(site)"
-            >
-              {{ getSiteStatusLabel(site) }}
-            </span>
+          <span
+            class="px-3 py-1 rounded-full text-xs font-black uppercase"
+            [class]="getSiteStatusClass(site)"
+          >
+            {{ getSiteStatusLabel(site) }}
+          </span>
         </div>
       </div>
 
@@ -95,8 +95,8 @@
           </div>
 
           <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black">
-              {{ site.initial || site.city?.charAt(0) }}
-            </span>
+            {{ site.initial || site.city?.charAt(0) }}
+          </span>
         </div>
 
         <div class="bg-slate-50 rounded-2xl p-4 mb-5">
@@ -106,11 +106,12 @@
 
           <div class="flex items-center gap-2 text-slate-700 font-bold">
             <mat-icon class="text-base">schedule</mat-icon>
+
             <span>
-                {{ site.openingTime || site.heureOuverture || '—' }}
-                →
-                {{ site.closingTime || site.heureFermeture || '—' }}
-              </span>
+              {{ site.openingTime || site.heureOuverture || '—' }}
+              →
+              {{ site.closingTime || site.heureFermeture || '—' }}
+            </span>
           </div>
         </div>
 
@@ -119,6 +120,7 @@
             <p class="text-xl font-black text-slate-900">
               {{ getCourtCount(site) }}
             </p>
+
             <p class="text-[10px] uppercase font-black text-slate-400">
               Terrains
             </p>
@@ -128,6 +130,7 @@
             <p class="text-xl font-black text-blue-700">
               {{ getIndoorCount(site) }}
             </p>
+
             <p class="text-[10px] uppercase font-black text-blue-400">
               Indoor
             </p>
@@ -137,6 +140,7 @@
             <p class="text-xl font-black text-emerald-700">
               {{ getOutdoorCount(site) }}
             </p>
+
             <p class="text-[10px] uppercase font-black text-emerald-400">
               Outdoor
             </p>
@@ -148,6 +152,7 @@
             <p class="text-xl font-black text-violet-700">
               {{ getSiteReservationCount(site) }}
             </p>
+
             <p class="text-[10px] uppercase font-black text-violet-400">
               Réservations
             </p>
@@ -157,6 +162,7 @@
             <p class="text-xl font-black text-orange-700">
               {{ getSiteRevenue(site) }}€
             </p>
+
             <p class="text-[10px] uppercase font-black text-orange-400">
               CA théorique
             </p>
@@ -184,9 +190,9 @@
             type="button"
             (click)="toggleSiteActive(site)"
             class="px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
-            [class]="site.active !== false
-                ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
+            [ngClass]="site.active !== false
+              ? 'bg-red-50 text-red-600 hover:bg-red-100'
+              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'"
           >
             {{ site.active !== false ? 'Désactiver' : 'Réactiver' }}
           </button>
@@ -267,15 +273,13 @@
         </button>
 
         <button
+          type="button"
           (click)="saveSchedule()"
           [disabled]="!hasScheduleChanged()"
           class="px-5 py-3 rounded-2xl font-black uppercase text-xs transition-all"
-          [class.bg-slate-900]="hasScheduleChanged()"
-          [class.text-white]="hasScheduleChanged()"
-          [class.hover:bg-slate-700]="hasScheduleChanged()"
-          [class.bg-slate-200]="!hasScheduleChanged()"
-          [class.text-slate-400]="!hasScheduleChanged()"
-          [class.cursor-not-allowed]="!hasScheduleChanged()"
+          [ngClass]="hasScheduleChanged()
+            ? 'bg-slate-900 text-white hover:bg-slate-700'
+            : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
         >
           Enregistrer
         </button>
@@ -294,6 +298,32 @@
       <p class="text-slate-500 mb-6">
         {{ addingClosure().clubName || addingClosure().name }}
       </p>
+
+      @if (authService.isGlobalAdmin()) {
+      <label class="mb-6 flex items-start gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4 cursor-pointer">
+        <input
+          type="checkbox"
+          class="mt-1 h-5 w-5 accent-blue-600"
+          [ngModel]="closureForm().global"
+          (ngModelChange)="onClosureGlobalChange($event)"
+        />
+
+        <span>
+          <span class="block text-sm font-black text-blue-900 uppercase tracking-widest">
+            Fermeture globale
+          </span>
+
+          <span class="block text-sm text-blue-700 mt-1">
+            Si cette option est cochée, la date sera fermée pour tous les sites.
+            Sinon, elle ne concernera que le site sélectionné.
+          </span>
+        </span>
+      </label>
+      } @else {
+      <div class="mb-6 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+        En tant qu’administrateur de site, tu peux uniquement créer une fermeture pour ton site.
+      </div>
+      }
 
       <div class="grid grid-cols-1 gap-4">
         <div>
@@ -332,7 +362,11 @@
           <select
             class="w-full border rounded-2xl px-4 py-3"
             [ngModel]="closureForm().recurrence"
-            (ngModelChange)="closureForm.set({ ...closureForm(), recurrence: $event })"
+            (ngModelChange)="closureForm.set({
+              ...closureForm(),
+              recurrence: $event,
+              repeatUntil: $event === 'ONCE' ? '' : closureForm().repeatUntil
+            })"
           >
             <option value="ONCE">Unique</option>
             <option value="WEEKLY">Hebdomadaire</option>
@@ -350,10 +384,19 @@
           <input
             type="date"
             class="w-full border rounded-2xl px-4 py-3"
+            [min]="closureForm().dateFermeture || today"
             [ngModel]="closureForm().repeatUntil"
             (ngModelChange)="closureForm.set({ ...closureForm(), repeatUntil: $event })"
           />
         </div>
+        }
+      </div>
+
+      <div class="mt-5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-500">
+        @if (closureForm().global) {
+        Cette fermeture sera appliquée à tous les sites.
+        } @else {
+        Cette fermeture sera appliquée uniquement au site sélectionné.
         }
       </div>
 
@@ -367,14 +410,13 @@
         </button>
 
         <button
+          type="button"
           (click)="saveClosure()"
-          [disabled]="!closureForm().raison.trim() || !closureForm().dateFermeture"
+          [disabled]="!isClosureFormValid()"
           class="px-5 py-3 rounded-2xl font-black uppercase text-xs transition-all"
-          [class.bg-blue-600]="closureForm().raison.trim() && closureForm().dateFermeture"
-          [class.text-white]="closureForm().raison.trim() && closureForm().dateFermeture"
-          [class.bg-slate-200]="!closureForm().raison.trim() || !closureForm().dateFermeture"
-          [class.text-slate-400]="!closureForm().raison.trim() || !closureForm().dateFermeture"
-          [class.cursor-not-allowed]="!closureForm().raison.trim() || !closureForm().dateFermeture"
+          [ngClass]="isClosureFormValid()
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : 'bg-slate-200 text-slate-400 cursor-not-allowed'"
         >
           Ajouter
         </button>
