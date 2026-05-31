@@ -62,6 +62,22 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html").permitAll()
 
                         /*
+                         * Routes explicitement utilisées côté membre.
+                         * Elles doivent rester accessibles sans JWT admin.
+                         */
+                        .requestMatchers(HttpMethod.GET, "/api/penalites/member/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/paiements/member/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/paiements").permitAll()
+
+                        /*
+                         * Paiements côté membre/mock.
+                         */
+                        .requestMatchers(HttpMethod.POST, "/api/paiements/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/paiements/*/confirmer").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/paiements/*/refuser").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/paiements/*/annuler").permitAll()
+
+                        /*
                          * Administrateurs : jamais public.
                          */
                         .requestMatchers("/api/administrateurs/**").hasAnyRole("GLOBAL", "SITE")
@@ -77,7 +93,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/members/**").hasAnyRole("GLOBAL", "SITE")
 
                         /*
-                         * Sites : lecture publique, écriture admin.
+                         * Sites : lecture publique, écriture admin global.
                          */
                         .requestMatchers(HttpMethod.POST, "/api/sites/**").hasRole("GLOBAL")
                         .requestMatchers(HttpMethod.PUT, "/api/sites/**").hasRole("GLOBAL")
@@ -106,24 +122,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/jours-fermeture/**").hasAnyRole("GLOBAL", "SITE")
 
                         /*
-                         * Paiements :
-                         * - initier/confirmer un paiement reste utilisable côté membre.
-                         * - lecture globale/remboursement = admin.
+                         * Paiements admin sensibles.
+                         * On garde le remboursement protégé.
                          */
-                        .requestMatchers(HttpMethod.GET, "/api/paiements").hasAnyRole("GLOBAL", "SITE")
-                        .requestMatchers(HttpMethod.GET, "/api/paiements/*").hasAnyRole("GLOBAL", "SITE")
-                        .requestMatchers(HttpMethod.GET, "/api/paiements/reservation/**").hasAnyRole("GLOBAL", "SITE")
                         .requestMatchers(HttpMethod.PATCH, "/api/paiements/*/rembourser").hasAnyRole("GLOBAL", "SITE")
 
                         /*
-                         * Pénalités : vue admin.
+                         * Pénalités admin.
+                         * Les routes /api/penalites/member/** sont déjà autorisées plus haut.
                          */
                         .requestMatchers("/api/penalites/**").hasAnyRole("GLOBAL", "SITE")
 
                         /*
                          * Le reste reste accessible :
                          * login membre par matricule, matches publics, réservations membre,
-                         * paiements membre, lecture sites/courts/horaires/fermetures.
+                         * lecture sites/courts/horaires/fermetures.
                          */
                         .requestMatchers("/api/**").permitAll()
 
