@@ -368,13 +368,13 @@
 
         <button
           (click)="saveClosure()"
-          [disabled]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
+          [disabled]="!closureForm().raison.trim() || !closureForm().dateFermeture"
           class="px-5 py-3 rounded-2xl font-black uppercase text-xs transition-all"
-          [class.bg-blue-600]="closureForm().raison?.trim() && closureForm().dateFermeture"
-          [class.text-white]="closureForm().raison?.trim() && closureForm().dateFermeture"
-          [class.bg-slate-200]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
-          [class.text-slate-400]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
-          [class.cursor-not-allowed]="!closureForm().raison?.trim() || !closureForm().dateFermeture"
+          [class.bg-blue-600]="closureForm().raison.trim() && closureForm().dateFermeture"
+          [class.text-white]="closureForm().raison.trim() && closureForm().dateFermeture"
+          [class.bg-slate-200]="!closureForm().raison.trim() || !closureForm().dateFermeture"
+          [class.text-slate-400]="!closureForm().raison.trim() || !closureForm().dateFermeture"
+          [class.cursor-not-allowed]="!closureForm().raison.trim() || !closureForm().dateFermeture"
         >
           Ajouter
         </button>

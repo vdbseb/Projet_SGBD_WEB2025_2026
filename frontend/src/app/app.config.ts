@@ -6,6 +6,7 @@ import localeFrBe from '@angular/common/locales/fr-BE';
 
 import { routes } from './app.routes';
 import { apiErrorInterceptor } from './interceptors/api-error.interceptor';
+import { authTokenInterceptor } from './interceptors/auth-token.interceptor';
 
 registerLocaleData(localeFrBe);
 
@@ -14,6 +15,9 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     { provide: LOCALE_ID, useValue: 'fr-BE' },
-    provideHttpClient(withInterceptors([apiErrorInterceptor]))
+    provideHttpClient(withInterceptors([
+      authTokenInterceptor,
+      apiErrorInterceptor
+    ]))
   ]
 };

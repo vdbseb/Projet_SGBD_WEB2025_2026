@@ -2,6 +2,7 @@ package be.angularpadelclub.Mapper;
 
 import be.angularpadelclub.DTO.AdministrateurDTO;
 import be.angularpadelclub.Entity.AdministrateurEntity;
+import be.angularpadelclub.Entity.SiteEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,6 +15,11 @@ public class AdministrateurMapper {
             return null;
         }
 
+        SiteEntity site = entity.getSite();
+
+        Integer siteId = site != null ? site.getId() : null;
+        String siteNom = site != null ? site.getNom() : null;
+
         return new AdministrateurDTO(
                 entity.getId(),
                 entity.getMatricule(),
@@ -21,14 +27,12 @@ public class AdministrateurMapper {
                 entity.getPrenom(),
                 entity.getEmail(),
                 entity.getTypeAdmin(),
-                entity.getSite() != null ? entity.getSite().getId() : null,
-                entity.getSite() != null ? entity.getSite().getNom() : null
+                siteId,
+                siteNom
         );
     }
 
-    public List<AdministrateurDTO> toDTOList(
-            List<AdministrateurEntity> entities
-    ) {
+    public List<AdministrateurDTO> toDTOList(List<AdministrateurEntity> entities) {
         if (entities == null) {
             return List.of();
         }

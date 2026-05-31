@@ -5,6 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { PadelService } from '../../services/padel.service';
 import { AuthService } from '../../services/auth.service';
+import { AdminAuthApiService } from '../../services/admin-auth-api.service';
 import { getHttpErrorUserMessage } from '../../shared/api-error.util';
 
 @Component({
@@ -15,6 +16,7 @@ import { getHttpErrorUserMessage } from '../../shared/api-error.util';
 })
 export class LoginDialogComponent {
   private padelService = inject(PadelService);
+  private adminAuthApiService = inject(AdminAuthApiService);
   private dialogRef = inject(MatDialogRef<LoginDialogComponent>);
   private snackBar = inject(MatSnackBar);
   private authService = inject(AuthService);
@@ -22,6 +24,7 @@ export class LoginDialogComponent {
   data = inject(MAT_DIALOG_DATA, { optional: true });
 
   matricule = signal('');
+  password = signal('');
   loading = signal(false);
 
   isAdminMode(): boolean {
@@ -63,13 +66,22 @@ export class LoginDialogComponent {
   }
 
   private loginAdmin(value: string) {
+    const password = this.password();
+
+    if (!password) {
+      this.snackBar.open('Le mot de passe administrateur est obligatoire.', 'OK', {
+        duration: 5000
+      });
+      return;
+    }
+
     this.loading.set(true);
 
-    this.padelService.getAdministratorByMatricule(value).subscribe({
-      next: admin => {
+    this.adminAuthApiService.loginAdmin(value, password).subscribe({
+      next: response => {
         this.loading.set(false);
-        this.authService.loginAdmin(admin);
-        this.dialogRef.close(admin);
+        this.authService.loginAdmin(response.admin, response.token);
+        this.dialogRef.close(response.admin);
       },
       error: error => {
         this.loading.set(false);
@@ -82,6 +94,10 @@ export class LoginDialogComponent {
   }
 
   private getLoginErrorMessage(error: any, type: 'membre' | 'administrateur'): string {
+    if (type === 'administrateur' && error?.status === 401) {
+      return 'Matricule ou mot de passe administrateur incorrect.';
+    }
+
     if (error?.status === 404) {
       return type === 'membre'
         ? 'Aucun membre trouvé avec ce matricule.'

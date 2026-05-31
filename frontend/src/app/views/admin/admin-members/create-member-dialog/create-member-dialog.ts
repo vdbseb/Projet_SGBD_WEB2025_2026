@@ -22,6 +22,11 @@ export class CreateMemberDialog implements OnInit {
   email = signal('');
 
   ngOnInit() {
+    if (this.isEditMode()) {
+      this.initializeEditMode();
+      return;
+    }
+
     if (this.data?.admin?.typeAdmin === 'SITE') {
       this.typeId.set(2);
     }
@@ -29,7 +34,23 @@ export class CreateMemberDialog implements OnInit {
     this.loadNextMatricule();
   }
 
+  isEditMode(): boolean {
+    return this.data?.mode === 'EDIT';
+  }
+
+  getTitle(): string {
+    return this.isEditMode() ? 'Modifier le membre' : 'Ajouter un membre';
+  }
+
+  getSubmitLabel(): string {
+    return this.isEditMode() ? 'Modifier' : 'Créer';
+  }
+
   onTypeChange(value: number) {
+    if (this.isEditMode()) {
+      return;
+    }
+
     if (this.data?.admin?.typeAdmin === 'SITE') {
       this.typeId.set(2);
       this.loadNextMatricule();
@@ -45,14 +66,25 @@ export class CreateMemberDialog implements OnInit {
       return;
     }
 
+    if (this.isEditMode()) {
+      this.dialogRef.close({
+        id: this.data?.member?.id,
+        matricule: this.matricule().toUpperCase(),
+        firstName: this.firstName().trim(),
+        lastName: this.lastName().trim(),
+        email: this.email().trim()
+      });
+      return;
+    }
+
     const admin = this.data?.admin;
     const isSiteAdmin = admin?.typeAdmin === 'SITE';
 
     this.dialogRef.close({
       matricule: this.matricule().toUpperCase(),
-      firstName: this.firstName(),
-      lastName: this.lastName(),
-      email: this.email(),
+      firstName: this.firstName().trim(),
+      lastName: this.lastName().trim(),
+      email: this.email().trim(),
       type: this.buildType(),
       siteId: isSiteAdmin ? admin.siteId : null,
       active: true
@@ -61,6 +93,20 @@ export class CreateMemberDialog implements OnInit {
 
   close() {
     this.dialogRef.close();
+  }
+
+  private initializeEditMode() {
+    const member = this.data?.member;
+
+    if (!member) {
+      return;
+    }
+
+    this.typeId.set(member.type?.id ?? this.getTypeIdFromCode(member.type?.code));
+    this.matricule.set(member.matricule ?? '');
+    this.firstName.set(member.firstName ?? '');
+    this.lastName.set(member.lastName ?? '');
+    this.email.set(member.email ?? '');
   }
 
   private loadNextMatricule() {
@@ -83,6 +129,18 @@ export class CreateMemberDialog implements OnInit {
     }
 
     return 'LIBRE';
+  }
+
+  private getTypeIdFromCode(code: string | undefined): number {
+    if (code === 'GLOBAL') {
+      return 1;
+    }
+
+    if (code === 'SITE') {
+      return 2;
+    }
+
+    return 3;
   }
 
   private buildType() {

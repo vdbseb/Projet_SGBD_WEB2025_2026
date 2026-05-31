@@ -30,6 +30,13 @@ public class AdministrateurEntity {
     @Column(name = "type_admin", nullable = false, length = 20)
     private String typeAdmin;
 
+    /*
+     * Mot de passe admin stocké sous forme hashée.
+     * Il ne doit jamais être exposé dans un DTO envoyé au frontend.
+     */
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id")
     private SiteEntity site;

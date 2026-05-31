@@ -1,12 +1,13 @@
 <div class="p-6 min-w-90">
   <h2 class="text-xl font-black mb-6 uppercase">
-    Ajouter un membre
+    {{ getTitle() }}
   </h2>
 
   @if (data?.admin?.typeAdmin === 'GLOBAL') {
   <select
     class="w-full border rounded-xl px-4 py-3 mb-3"
     [ngModel]="typeId()"
+    [disabled]="isEditMode()"
     (ngModelChange)="onTypeChange($event)"
   >
     <option [ngValue]="1">GLOBAL — 21 jours</option>
@@ -61,7 +62,7 @@
       (click)="save()"
       class="flex-1 px-4 py-3 rounded-xl bg-slate-900 text-white font-bold uppercase text-xs"
     >
-      Créer
+      {{ getSubmitLabel() }}
     </button>
   </div>
 </div>

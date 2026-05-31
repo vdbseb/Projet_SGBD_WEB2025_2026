@@ -348,6 +348,66 @@ export class AdminMembers implements OnInit {
       });
     });
   }
+openEditMemberDialog(member: any) {
+  const admin = this.authService.currentAdmin();
+
+  if (this.isSiteAdmin(admin) && !this.canSiteAdminManageMember(member, admin)) {
+    this.snackBar.open(
+      'Un administrateur de site ne peut modifier que les membres de son site.',
+      'OK',
+      { duration: 4000 }
+    );
+    return;
+  }
+
+  if (member.active === false) {
+    this.snackBar.open(
+      'Modification impossible : ce membre est suspendu. Réactive-le d’abord.',
+      'OK',
+      { duration: 4000 }
+    );
+    return;
+  }
+
+  const dialogRef = this.dialog.open(CreateMemberDialog, {
+    data: {
+      mode: 'EDIT',
+      member,
+      admin,
+      sites: this.sites(),
+      isSiteAdmin: this.isSiteAdmin(admin),
+      adminSiteId: this.getAdminSiteId(admin)
+    }
+  });
+
+  dialogRef.afterClosed().subscribe(updatedMember => {
+    if (!updatedMember) {
+      return;
+    }
+
+    this.padelService.updateOwnMemberProfile(
+      member.id,
+      {
+        firstName: updatedMember.firstName,
+        lastName: updatedMember.lastName,
+        email: updatedMember.email
+      }
+    ).subscribe({
+      next: () => {
+        this.snackBar.open('Membre modifié avec succès.', 'OK', {
+          duration: 3000
+        });
+
+        this.loadMembers();
+      },
+      error: error => {
+        this.snackBar.open(getHttpErrorUserMessage(error), 'OK', {
+          duration: 5000
+        });
+      }
+    });
+  });
+}
 
   openCreateMemberDialog() {
     if (!this.canCreateMember()) {
