@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,15 +8,16 @@ import { PadelService } from '../../../services/padel.service';
 import { AuthService } from '../../../services/auth.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
+import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-shell';
 
 @Component({
   selector: 'app-admin-sites',
   standalone: true,
   imports: [
-    RouterLink,
     MatIconModule,
     FormsModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    AdminPageShellComponent
   ],
   templateUrl: './admin-sites.html'
 })

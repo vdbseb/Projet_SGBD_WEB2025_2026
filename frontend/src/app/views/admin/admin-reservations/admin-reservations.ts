@@ -1,5 +1,4 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
@@ -10,11 +9,18 @@ import { PadelService } from '../../../services/padel.service';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog';
 import { AuthService } from '../../../services/auth.service';
 import { getHttpErrorUserMessage } from '../../../shared/api-error.util';
+import { AdminPageShellComponent } from '../shared/admin-page-shell/admin-page-shell';
+import { AdminViewMode, AdminViewToggleComponent } from '../shared/admin-view-toggle/admin-view-toggle';
 
 @Component({
   selector: 'app-admin-reservations',
   standalone: true,
-  imports: [RouterLink, DatePipe, MatIconModule],
+  imports: [
+    DatePipe,
+    MatIconModule,
+    AdminPageShellComponent,
+    AdminViewToggleComponent
+  ],
   templateUrl: './admin-reservations.html'
 })
 export class AdminReservations implements OnInit {
@@ -31,7 +37,7 @@ export class AdminReservations implements OnInit {
 
   search = signal('');
   selectedFilter = signal<'all' | 'today' | 'upcoming' | 'past'>('all');
-  viewMode = signal<'cards' | 'table'>('cards');
+  viewMode = signal<AdminViewMode>('cards');
 
   ngOnInit() {
     this.loadData();
@@ -56,7 +62,7 @@ export class AdminReservations implements OnInit {
         if (this.authService.isSiteAdmin()) {
           visibleReservations = reservations.filter(reservation => {
             const court = courts.find(c => c.id === reservation.courtId);
-            return court?.siteId === admin.siteId;
+            return court?.siteId === admin?.siteId;
           });
         }
 
@@ -77,12 +83,8 @@ export class AdminReservations implements OnInit {
     });
   }
 
-  showCardsView() {
-    this.viewMode.set('cards');
-  }
-
-  showTableView() {
-    this.viewMode.set('table');
+  setViewMode(mode: AdminViewMode) {
+    this.viewMode.set(mode);
   }
 
   getReservationStatus(reservation: any): 'today' | 'upcoming' | 'past' {
